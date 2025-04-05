@@ -1,0 +1,4 @@
+BasedOnStyle: Google
+IndentWidth: 2  # Optional: Google uses 2 spaces
+ColumnLimit: 0
+SortIncludes: false

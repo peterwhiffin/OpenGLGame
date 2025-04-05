@@ -1,0 +1,9 @@
+### VS Code ###
+.vscode/
+
+
+### Extra ###
+/Resources
+/include
+/lib
+/build
