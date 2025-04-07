@@ -3,11 +3,47 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
 
-#include "loader.h"
 #include "glm/ext/quaternion_float.hpp"
 
-struct Transform : Component {
+struct Entity;
+struct Material;
+struct Transform;
+
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+};
+
+struct Texture {
+    std::string path;
+    unsigned int id;
+};
+
+struct Mesh {
+    std::string name;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
+};
+
+struct Model {
+    std::vector<Mesh> meshes;
+    std::vector<Material> materials;
+};
+
+struct Component {
+    Entity* entity;
+    Transform* transform;
+
+    Component(Entity* newEntity);
+};
+
+struct Transform {
     glm::vec3 localPosition;
     glm::vec3 localEulerAngles;
     glm::vec3 localScale;
@@ -22,18 +58,11 @@ struct Entity {
     std::vector<Component*> components;
 };
 
-struct Component {
-    Entity* entity;
-    Transform* transform;
-
-    Component(Entity* newEntity);
-};
-
 struct Material {
     unsigned int shader;
-    std::vector<unsigned int> uniformLocations;
-    std::vector<unsigned int> samplerLocations;
-    std::vector<unsigned int> textures;
+    std::string name;
+    std::vector<Texture> textures;
+    glm::vec3 baseColor;
 };
 
 struct MeshRenderer : Component {

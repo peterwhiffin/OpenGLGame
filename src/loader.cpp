@@ -16,10 +16,12 @@
 #include "utils/stb_image.h"
 #include "shader.h"
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model newModel);
-Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform);
-unsigned int loadTexture(aiMaterial* mat, aiTextureType type, std::string typeName, bool gamma = false);
-Model* loadModel(std::string path) {
+void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures);
+Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures);
+Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
+void createMeshBuffers(Mesh* mesh);
+
+Model* loadModel(std::string path, std::vector<Texture>* allTextures) {
     Assimp::Importer importer;
     std::string directory;
 
@@ -27,29 +29,29 @@ Model* loadModel(std::string path) {
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-        return;
+        return nullptr;
     }
 
     directory = path.substr(0, path.find_last_of('/'));
-    Model newModel = Model();
-    processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel);
-    return &newModel;
+    Model* newModel = new Model();
+    processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, &directory, allTextures);
+    return newModel;
 }
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel) {
+void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
 
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        newModel->meshes.push_back(processMesh(mesh, scene, globalTransform));
+        newModel->meshes.push_back(processMesh(mesh, scene, globalTransform, newModel, directory, allTextures));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene, globalTransform, newModel);
+        processNode(node->mChildren[i], scene, globalTransform, newModel, directory, allTextures);
     }
 }
-Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform) {
+Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Material> materials;
@@ -88,13 +90,113 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform)
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         Material newMaterial = Material();
-        unsigned int diffuseTexture;
-        unsigned int specularTexture;
-
+        Texture diffuseTexture;
+        Texture specularTexture;
         newMaterial.shader = 1;
-        // glUniform3fv(uniform_location::kBaseColor, 1, glm::vec3(1.0f, 1.0f, 1.0f))
-        //  diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, true);
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
+        newMaterial.baseColor.r = baseColor.r;
+        newMaterial.baseColor.g = baseColor.g;
+        newMaterial.baseColor.b = baseColor.b;
+        diffuseTexture = loadhhTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
+        specularTexture = loadhhTexture(material, aiTextureType_SPECULAR, directory, allTextures, false);
+        newMaterial.textures.push_back(diffuseTexture);
+        newMaterial.textures.push_back(specularTexture);
+        newMaterial.name = material->GetName().C_Str();
+        model->materials.push_back(newMaterial);
     }
+
+    Mesh newMesh = Mesh();
+    newMesh.vertices = vertices;
+    newMesh.indices = indices;
+    newMesh.name = mesh->mName.C_Str();
+    createMeshBuffers(&newMesh);
+    return newMesh;
 }
-unsigned int loadTexture(aiMaterial* mat, aiTextureType type, bool gamma = false) {
+
+void createMeshBuffers(Mesh* mesh) {
+    glGenVertexArrays(1, &mesh->VAO);
+    glGenBuffers(1, &mesh->VBO);
+    glGenBuffers(1, &mesh->EBO);
+
+    glBindVertexArray(mesh->VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Vertex), &mesh->vertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexPosition);
+    glVertexAttribPointer(vertex_attribute_location::kVertexPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexNormal);
+    glVertexAttribPointer(vertex_attribute_location::kVertexNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
+    glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+
+    glBindVertexArray(0);
+}
+
+Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma) {
+    Texture newTexture;
+    newTexture.path = "default";
+    newTexture.id = 1;
+
+    if (mat->GetTextureCount(type) != 0) {
+        aiString texPath;
+        mat->GetTexture(type, 0, &texPath);
+
+        for (unsigned int i = 0; i < allTextures->size(); i++) {
+            if (std::strcmp(allTextures->at(i).path.data(), texPath.C_Str()) == 0) {
+                newTexture = allTextures->at(i);
+                return newTexture;
+            }
+        }
+
+        std::string fullPath = *directory + '/' + texPath.C_Str();
+        newTexture.path = texPath.C_Str();
+        newTexture.id = loadTextureFromFile(fullPath.data(), gamma);
+        allTextures->push_back(newTexture);
+    }
+
+    return newTexture;
+}
+
+unsigned int loadTextureFromFile(const char* path, bool gamma) {
+    unsigned int textureID = 1;
+    int width;
+    int height;
+    int componentCount;
+
+    unsigned char* data = stbi_load(path, &width, &height, &componentCount, 0);
+
+    if (data) {
+        glGenTextures(1, &textureID);
+        GLenum format = GL_RED;
+        GLenum internalFormat = GL_RED;
+
+        if (componentCount == 3) {
+            format = GL_RGB;
+            internalFormat = gamma ? GL_SRGB : GL_RGB;
+        } else if (componentCount == 4) {
+            format = GL_RGBA;
+            internalFormat = gamma ? GL_SRGB_ALPHA : GL_RGBA;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    } else {
+        std::cerr << "ERROR::TEXTURE_FAILED_TO_LOAD at: " << path << std::endl;
+    }
+
+    stbi_image_free(data);
+    return textureID;
 }

@@ -22,6 +22,5 @@ constexpr unsigned int kNormalMatrix = 3;
 constexpr unsigned int kBaseColor = 3;
 }  // namespace uniform_location
 
-unsigned int
-loadShader(const char *vertexPath, const char *fragmentPath);
+unsigned int loadShader(const char *vertexPath, const char *fragmentPath);
 #endif

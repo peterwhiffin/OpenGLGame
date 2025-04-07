@@ -6,23 +6,8 @@
 
 #include "component.h"
 
-struct Vertex {
-    glm::vec2 position;
-    glm::vec2 normal;
-    glm::vec1 texCoord;
-};
+Model* loadModel(std::string path, std::vector<Texture>* allTextures);
 
-struct Mesh {
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-};
-
-struct Model {
-    std::vector<Mesh> meshes;
-    std::vector<Material> materials;
-};
-
-Model* loadModel(std::string path);
-unsigned int loadTexture(const char* path);
+unsigned int loadTextureFromFile(const char* path, bool gamma);
 
 #endif

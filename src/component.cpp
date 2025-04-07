@@ -8,4 +8,5 @@ MeshRenderer* addMeshRenderer(Entity* entity, std::vector<MeshRenderer>* rendere
     MeshRenderer* newMeshRenderer = new MeshRenderer(entity);
     entity->components.push_back(newMeshRenderer);
     renderers->push_back(*newMeshRenderer);
+    return newMeshRenderer;
 }
