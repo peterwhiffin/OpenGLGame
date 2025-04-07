@@ -2,18 +2,21 @@
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <vector>
 
 #include "input.h"
 #include "loader.h"
+#include "component.h"
 
-GLFWwindow* InitContex();
+GLFWwindow* createContext();
 
 int screenWidth = 800;
 int screenHeight = 600;
 
 int main() {
-    GLFWwindow* window = InitContex();
+    GLFWwindow* window = createContext();
     InputActions input = InputActions();
+    std::vector<MeshRenderer> renderers;
 
     while (!glfwWindowShouldClose(window)) {
         updateInput(window, &input);
@@ -34,7 +37,7 @@ int main() {
     return 0;
 }
 
-GLFWwindow* InitContex() {
+GLFWwindow* createContext() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
