@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <glm/gtc/type_ptr.hpp>
+#include <unordered_map>
 
 #include "utils/stb_image.h"
 #include "loader.h"
@@ -17,7 +18,7 @@
 #include "shader.h"
 
 void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures);
-Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures);
+void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures);
 Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
 void createMeshBuffers(Mesh* mesh);
 
@@ -41,17 +42,16 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures) {
 void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
-
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        newModel->meshes.push_back(processMesh(mesh, scene, globalTransform, newModel, directory, allTextures));
+        processMesh(mesh, scene, globalTransform, newModel, directory, allTextures);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         processNode(node->mChildren[i], scene, globalTransform, newModel, directory, allTextures);
     }
 }
-Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures) {
+void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Material> materials;
@@ -84,33 +84,34 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform,
     }
 
     aiColor3D baseColor(1.0f, 1.0f, 1.0f);
-
     std::string name;
+    Material newMaterial;
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Material newMaterial = Material();
         Texture diffuseTexture;
         Texture specularTexture;
         newMaterial.shader = 1;
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
-        newMaterial.baseColor.r = baseColor.r;
-        newMaterial.baseColor.g = baseColor.g;
-        newMaterial.baseColor.b = baseColor.b;
+        newMaterial.baseColor = glm::vec3(baseColor.r, baseColor.g, baseColor.b);
         diffuseTexture = loadhhTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
         specularTexture = loadhhTexture(material, aiTextureType_SPECULAR, directory, allTextures, false);
         newMaterial.textures.push_back(diffuseTexture);
         newMaterial.textures.push_back(specularTexture);
         newMaterial.name = material->GetName().C_Str();
-        model->materials.push_back(newMaterial);
+    } else {
+        newMaterial.baseColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        newMaterial.name = "default";
+        newMaterial.shader = 1;
     }
 
-    Mesh newMesh = Mesh();
+    Mesh newMesh;
     newMesh.vertices = vertices;
     newMesh.indices = indices;
     newMesh.name = mesh->mName.C_Str();
     createMeshBuffers(&newMesh);
-    return newMesh;
+    newMesh.material = newMaterial;
+    model->meshes.push_back(newMesh);
 }
 
 void createMeshBuffers(Mesh* mesh) {

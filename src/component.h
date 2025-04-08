@@ -10,6 +10,8 @@
 struct Entity;
 struct Material;
 struct Transform;
+struct MeshRenderer;
+struct Component;
 
 struct Vertex {
     glm::vec3 position;
@@ -22,25 +24,12 @@ struct Texture {
     unsigned int id;
 };
 
-struct Mesh {
-    std::string name;
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
-};
-
-struct Model {
-    std::vector<Mesh> meshes;
-    std::vector<Material> materials;
-};
-
 struct Component {
     Entity* entity;
     Transform* transform;
 
     Component(Entity* newEntity);
+    Component();
 };
 
 struct Transform {
@@ -64,14 +53,21 @@ struct Material {
     std::vector<Texture> textures;
     glm::vec3 baseColor;
 };
-
-struct MeshRenderer : Component {
-    Mesh mesh;
+struct Mesh : Component {
+    std::string name;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
     Material material;
-
-    MeshRenderer(Entity* newEntity);
 };
 
-MeshRenderer* addMeshRenderer(Entity* entity);
-
+struct Model {
+    std::vector<Mesh> meshes;
+};
+/* struct MeshRenderer : Component {
+    Mesh* mesh;
+};
+ */
 #endif
