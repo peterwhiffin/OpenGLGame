@@ -1,6 +1,9 @@
 #include <glfw/glfw3.h>
 #include "input.h"
 
+double oldX = 0;
+double oldY = 0;
+
 void updateInput(GLFWwindow* window, InputActions* actions) {
     actions->movement.x = 0;
     actions->movement.y = 0;
@@ -12,4 +15,19 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
     actions->movement.x += glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? 1 : 0;
     actions->movement.y += glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? -1 : 0;
     actions->movement.y += glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? 1 : 0;
+
+    if (actions->movement != glm::vec2(0.0f)) {
+        actions->movement = glm::normalize(actions->movement);
+    }
+
+    double xPos = 0;
+    double yPos = 0;
+
+    glfwGetCursorPos(window, &xPos, &yPos);
+
+    actions->lookX = xPos - oldX;
+    actions->lookY = yPos - oldY;
+
+    oldX = xPos;
+    oldY = yPos;
 }

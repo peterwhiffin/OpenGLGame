@@ -14,7 +14,6 @@
 #include "assimp/material.h"
 #include "assimp/types.h"
 #include "glm/ext/quaternion_float.hpp"
-#include "utils/stb_image.h"
 #include "shader.h"
 
 void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures);
@@ -109,8 +108,8 @@ void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform,
     newMesh.vertices = vertices;
     newMesh.indices = indices;
     newMesh.name = mesh->mName.C_Str();
-    createMeshBuffers(&newMesh);
     newMesh.material = newMaterial;
+    createMeshBuffers(&newMesh);
     model->meshes.push_back(newMesh);
 }
 
@@ -142,7 +141,7 @@ void createMeshBuffers(Mesh* mesh) {
 Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma) {
     Texture newTexture;
     newTexture.path = "default";
-    newTexture.id = 1;
+    newTexture.id = allTextures->at(0).id;
 
     if (mat->GetTextureCount(type) != 0) {
         aiString texPath;

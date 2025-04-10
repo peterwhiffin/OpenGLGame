@@ -8,7 +8,8 @@ struct InputActions {
     bool menu;
     bool jump;
     glm::vec2 movement;
-    glm::vec2 look;
+    double lookX;
+    double lookY;
 };
 
 void updateInput(GLFWwindow* window, InputActions* actions);

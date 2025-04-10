@@ -19,7 +19,7 @@ constexpr unsigned int kModelMatrix = 0;
 constexpr unsigned int kViewMatrix = 1;
 constexpr unsigned int kProjectionMatrix = 2;
 constexpr unsigned int kNormalMatrix = 3;
-constexpr unsigned int kBaseColor = 3;
+constexpr unsigned int kBaseColor = 4;
 }  // namespace uniform_location
 
 unsigned int loadShader(const char *vertexPath, const char *fragmentPath);
