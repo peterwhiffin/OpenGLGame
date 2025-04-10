@@ -9,9 +9,9 @@ layout (location = 1) uniform mat4 view;
 layout (location = 2) uniform mat4 projection;
 layout (location = 3) uniform mat4 normalMatrix;
 
-out vec2 texCoord;
-out vec3 normal;
-out vec3 fragPos;
+layout (location = 0) out vec2 texCoord;
+layout (location = 1) out vec3 normal;
+layout (location = 2) out vec3 fragPos;
 
 void main(){
     fragPos = vec3(model * vec4(aPos, 1.0));

@@ -32,7 +32,8 @@ struct Material {
     unsigned int shader;
     std::string name;
     std::vector<Texture> textures;
-    glm::vec3 baseColor;
+    glm::vec4 baseColor;
+    float shininess;
 };
 
 struct Component {

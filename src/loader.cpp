@@ -82,9 +82,10 @@ void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform,
         }
     }
 
-    aiColor3D baseColor(1.0f, 1.0f, 1.0f);
+    aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
     std::string name;
     Material newMaterial;
+    newMaterial.shininess = 32.0f;
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -92,14 +93,14 @@ void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform,
         Texture specularTexture;
         newMaterial.shader = 1;
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
-        newMaterial.baseColor = glm::vec3(baseColor.r, baseColor.g, baseColor.b);
+        newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
         diffuseTexture = loadhhTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
         specularTexture = loadhhTexture(material, aiTextureType_SPECULAR, directory, allTextures, false);
         newMaterial.textures.push_back(diffuseTexture);
         newMaterial.textures.push_back(specularTexture);
         newMaterial.name = material->GetName().C_Str();
     } else {
-        newMaterial.baseColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        newMaterial.baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         newMaterial.name = "default";
         newMaterial.shader = 1;
     }

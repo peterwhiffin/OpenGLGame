@@ -21,6 +21,17 @@ void updateCamera(InputActions* input, CameraController* camera);
 void setViewProjection(Camera* camera);
 void exitProgram(int code);
 
+struct DirectionalLight {
+    glm::vec3 position;
+    glm::vec3 lookDirection;
+    glm::vec3 color;
+    glm::vec3 brightness;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
 int screenWidth = 800;
 int screenHeight = 600;
 float currentFrame = 0.0f;
@@ -31,21 +42,40 @@ int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
 
-    unsigned int defaultSpecTex;
-    glGenTextures(1, &defaultSpecTex);
-    unsigned char blackPixel[3] = {0, 0, 0};
-    glBindTexture(GL_TEXTURE_2D, defaultSpecTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, blackPixel);
+    unsigned int defaultTexture;
+    glGenTextures(1, &defaultTexture);
+    unsigned char whitePixel[3] = {255, 255, 255};
+    glBindTexture(GL_TEXTURE_2D, defaultTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, whitePixel);
 
     unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
+    glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
+    glUniform1i(uniform_location::kTextureShadowMap, uniform_location::kTextureShadowMapUnit);
+    glUniform1i(uniform_location::kTextureNoise, uniform_location::kTextureNoiseUnit);
+
+    glUseProgram(defaultShader);
+    DirectionalLight sun;
+    sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
+    sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+    sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
+    sun.ambient = glm::vec3(0.21f);
+    sun.diffuse = glm::vec3(0.94f);
+    sun.specular = glm::vec3(0.65f);
+
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(sun.position));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(sun.specular));
 
     std::vector<MeshRenderer*> renderers;
     std::vector<Entity*> entities;
     std::vector<Texture> allTextures;
 
-    Texture defaultTexture;
-    defaultTexture.id = defaultSpecTex;
-    allTextures.push_back(defaultTexture);
+    Texture default;
+    default.id = defaultTexture;
+    default.path = "default";
+    allTextures.push_back(default);
 
     Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures);
 
@@ -53,7 +83,6 @@ int main() {
         Entity* newEntity = new Entity();
         MeshRenderer* meshRenderer = new MeshRenderer(newEntity, &sponzaModel->meshes[i], &sponzaModel->meshes[i].material);
         newEntity->transform.scale = glm::vec3(0.01f, 0.01f, 0.01f);
-        // newEntity->components.push_back(meshRenderer);
 
         entities.push_back(newEntity);
         renderers.push_back(meshRenderer);
@@ -97,7 +126,10 @@ int main() {
             glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.viewMatrix));
             glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
             glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-            glActiveTexture(GL_TEXTURE0);
+            glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(renderer->material->baseColor));
+            glUniform1f(uniform_location::kShininess, renderer->material->shininess);
+            glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(camera.transform->position));
+            glActiveTexture(uniform_location::kTextureDiffuseUnit);
             glBindTexture(GL_TEXTURE_2D, renderer->material->textures[0].id);
 
             glBindVertexArray(renderer->mesh->VAO);
