@@ -5,6 +5,7 @@ struct DirectionalLight {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+    bool enabled;
 };
 
 layout (location = 5) uniform sampler2D texture_diffuse;
@@ -39,8 +40,14 @@ void main(){
 
     vec3 ambient = dirLight.ambient;
     diffuseColor *= baseColor; 
-    vec4 finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, vec3(baseColor.r, baseColor.g, baseColor.b), ambient), 1.0f);
+    vec4 finalColor;
 
+    if(dirLight.enabled){
+        finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, vec3(baseColor.r, baseColor.g, baseColor.b), ambient), 1.0f);
+    }
+    else{
+        finalColor = diffuseColor;
+    }
 
     FragColor = finalColor;
 }

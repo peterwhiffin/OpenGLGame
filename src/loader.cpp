@@ -16,11 +16,11 @@
 #include "glm/ext/quaternion_float.hpp"
 #include "shader.h"
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures);
+void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures, int layer);
 void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures);
 Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
 void createMeshBuffers(Mesh* mesh);
-
+int layerCount = 0;
 Model* loadModel(std::string path, std::vector<Texture>* allTextures) {
     Assimp::Importer importer;
     std::string directory;
@@ -34,21 +34,56 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures) {
 
     directory = path.substr(0, path.find_last_of('/'));
     Model* newModel = new Model();
-    processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, &directory, allTextures);
+    newModel->parent = nullptr;
+    newModel->name = scene->mName.C_Str();
+    processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, &directory, allTextures, 0);
+    std::cout << "layers: " << layerCount << std::endl;
     return newModel;
 }
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* newModel, std::string* directory, std::vector<Texture>* allTextures) {
+void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* parentModel, std::string* directory, std::vector<Texture>* allTextures, int layer) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMesh(mesh, scene, globalTransform, newModel, directory, allTextures);
+    Model* targetParent = parentModel;
+    layer++;
+    if (node->mNumMeshes != 0) {
+        Model* childModel;
+
+        for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+            childModel = new Model();
+            childModel->parent = parentModel;
+            parentModel->children.push_back(childModel);
+
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            processMesh(mesh, scene, globalTransform, childModel, directory, allTextures);
+        }
+
+        targetParent = childModel;
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene, globalTransform, newModel, directory, allTextures);
+        processNode(node->mChildren[i], scene, globalTransform, targetParent, directory, allTextures, layer);
     }
+
+    if (layer > layerCount) {
+        layerCount = layer;
+    }
+    /*
+        for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+            Model* siblingModel = new Model();
+            siblingModel->parent = parentModel;
+            parentModel->children.push_back(siblingModel);
+
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            processMesh(mesh, scene, globalTransform, siblingModel, directory, allTextures);
+        }
+
+        for (unsigned int i = 0; i < parentModel->children.size(); i++) {
+            // Model* childModel = new Model();
+            // childModel->parent = newModel;
+            // newModel->children.push_back(childModel);
+            processNode(node->mChildren[i], scene, globalTransform, parentModel->children[i], directory, allTextures);
+        } */
 }
 void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform, Model* model, std::string* directory, std::vector<Texture>* allTextures) {
     std::vector<Vertex> vertices;
@@ -111,7 +146,8 @@ void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform,
     newMesh.name = mesh->mName.C_Str();
     newMesh.material = newMaterial;
     createMeshBuffers(&newMesh);
-    model->meshes.push_back(newMesh);
+    model->mesh = newMesh;
+    model->hasMesh = true;
 }
 
 void createMeshBuffers(Mesh* mesh) {
@@ -150,7 +186,8 @@ Texture loadhhTexture(aiMaterial* mat, aiTextureType type, std::string* director
 
         for (unsigned int i = 0; i < allTextures->size(); i++) {
             if (std::strcmp(allTextures->at(i).path.data(), texPath.C_Str()) == 0) {
-                newTexture = allTextures->at(i);
+                newTexture.id = allTextures->at(i).id;
+                newTexture.path = allTextures->at(i).path;
                 return newTexture;
             }
         }

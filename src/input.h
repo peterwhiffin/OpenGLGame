@@ -7,6 +7,8 @@
 struct InputActions {
     bool menu;
     bool jump;
+    bool fire;
+    bool altFire;
     glm::vec2 movement;
     double lookX;
     double lookY;

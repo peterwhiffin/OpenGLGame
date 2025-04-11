@@ -50,6 +50,9 @@ struct Transform : Component {
     Transform(Entity* entity);
 };
 
+struct SubMesh {
+};
+
 struct Mesh {
     std::string name;
     std::vector<Vertex> vertices;
@@ -61,7 +64,11 @@ struct Mesh {
 };
 
 struct Model {
-    std::vector<Mesh> meshes;
+    std::string name;
+    Model* parent;
+    std::vector<Model*> children;
+    Mesh mesh;
+    bool hasMesh = false;
 };
 
 struct Camera : Component {
@@ -80,7 +87,7 @@ struct CameraController : Component {
     float pitch = 0;
     float yaw = 0;
     float sensitivity = .3;
-    float moveSpeed = 15;
+    float moveSpeed = 10;
 
     CameraController(Entity* entity, Camera& camera);
 };
@@ -97,6 +104,9 @@ struct MeshRenderer : Component {
 
 struct Entity {
     Transform transform;
+    std::string name;
+    Entity* parent;
+    std::vector<Entity*> children;
     std::vector<Component*> components;
 
     Entity();

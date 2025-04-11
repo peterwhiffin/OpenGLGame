@@ -17,8 +17,12 @@
 #include "shader.h"
 
 GLFWwindow* createContext();
-void updateCamera(InputActions* input, CameraController* camera);
+void updateCamera(GLFWwindow* window, InputActions* input, CameraController* camera);
 void setViewProjection(Camera* camera);
+void onScreenChanged(GLFWwindow* window, int width, int height);
+void initializeIMGUI(GLFWwindow* window);
+void createEntityFromModel(Model* model, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* newEntity, glm::vec3 scale, glm::vec3 position);
+void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 void exitProgram(int code);
 
 struct DirectionalLight {
@@ -31,16 +35,17 @@ struct DirectionalLight {
     glm::vec3 diffuse;
     glm::vec3 specular;
 };
-
 int screenWidth = 800;
 int screenHeight = 600;
 float currentFrame = 0.0f;
 float lastFrame = 0.0f;
 float deltaTime = 0.0f;
-
+Camera* mainCamera;
+int counter = 0;
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
+    initializeIMGUI(window);
 
     unsigned int defaultTexture;
     glGenTextures(1, &defaultTexture);
@@ -78,18 +83,24 @@ int main() {
     allTextures.push_back(default);
 
     Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures);
+    Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures);
 
-    for (int i = 0; i < sponzaModel->meshes.size(); i++) {
-        Entity* newEntity = new Entity();
-        MeshRenderer* meshRenderer = new MeshRenderer(newEntity, &sponzaModel->meshes[i], &sponzaModel->meshes[i].material);
-        newEntity->transform.scale = glm::vec3(0.01f, 0.01f, 0.01f);
+    createEntityFromModel(sponzaModel, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
+    createEntityFromModel(m4Model, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 15.0f, 0.0f));
+    /*
+        for (int i = 0; i < sponzaModel->meshes.size(); i++) {
+            Entity* newEntity = new Entity();
+            MeshRenderer* meshRenderer = new MeshRenderer(newEntity, &sponzaModel->meshes[i], &sponzaModel->meshes[i].material);
+            newEntity->transform.scale = glm::vec3(0.01f, 0.01f, 0.01f);
 
-        entities.push_back(newEntity);
-        renderers.push_back(meshRenderer);
-    }
-
+            entities.push_back(newEntity);
+            renderers.push_back(meshRenderer);
+        }
+     */
+    std::cout << "entity count: " << counter << std::endl;
     Entity* playerEntity = new Entity();
     Camera camera(playerEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.1, 10000);
+    mainCamera = &camera;
     CameraController cameraController(playerEntity, camera);
 
     glEnable(GL_DEPTH_TEST);
@@ -97,18 +108,47 @@ int main() {
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    bool enableDemoWindow = false;
+    bool enableDirLight = false;
+    float dirLightBrightness = 1.0f;
+    float ambientBrightness = 0.21f;
+    Entity* nodeClicked = nullptr;
+
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
+                                   ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                                   ImGuiTreeNodeFlags_SpanAvailWidth |
+                                   ImGuiTreeNodeFlags_DefaultOpen;
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         updateInput(window, &input);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("The Window");
+        ImGui::Text("This is a ImGui window");
+        ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
+        ImGui::Checkbox("Enable Directional Light", &enableDirLight);
+        ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
+        ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
+        ImGui::SliderFloat("Move Speed", &cameraController.moveSpeed, 0.0f, 25.0f);
 
-        if (input.menu) {
-            glfwSetWindowShouldClose(window, true);
+        // createImGuiEntityTree(entities[0], nodeFlags, &nodeClicked);
+
+        for (Entity* entity : entities) {
+            createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
         }
 
-        updateCamera(&input, &cameraController);
+        if (enableDemoWindow) {
+            ImGui::ShowDemoWindow();
+        }
+        ImGui::End();
+
+        sun.ambient = glm::vec3(ambientBrightness);
+
+        updateCamera(window, &input, &cameraController);
         setViewProjection(&camera);
 
         glViewport(0, 0, screenWidth, screenHeight);
@@ -129,23 +169,92 @@ int main() {
             glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(renderer->material->baseColor));
             glUniform1f(uniform_location::kShininess, renderer->material->shininess);
             glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(camera.transform->position));
+
+            glUniform1i(glGetUniformLocation(defaultShader, "dirLight.enabled"), enableDirLight);
+            glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
+            glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse * dirLightBrightness));
+            glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
+
             glActiveTexture(uniform_location::kTextureDiffuseUnit);
             glBindTexture(GL_TEXTURE_2D, renderer->material->textures[0].id);
-
             glBindVertexArray(renderer->mesh->VAO);
             glDrawElements(GL_TRIANGLES, renderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
         }
 
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
-    glfwTerminate();
+    exitProgram(0);
     return 0;
 }
 
-void updateCamera(InputActions* input, CameraController* camera) {
+void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked) {
+    ImGui::PushID(entity);
+    bool node_open = ImGui::TreeNodeEx(entity->name.c_str(), node_flags);
+
+    if (ImGui::IsItemClicked()) {
+        *node_clicked = entity;
+    }
+
+    if (node_open) {
+        for (Entity* child : entity->children) {
+            createImGuiEntityTree(child, node_flags, node_clicked);
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID();
+}
+
+void createEntityFromModel(Model* model, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
+    if (model->parent == nullptr) {
+        parentEntity = new Entity();
+        parentEntity->name = model->name;
+        entities->push_back(parentEntity);
+    }
+
+    for (int i = 0; i < model->children.size(); i++) {
+        Entity* childEntity = new Entity();
+        childEntity->name = "poo poo head";
+        if (model->children[i]->hasMesh) {
+            MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &model->children[i]->mesh, &model->children[i]->mesh.material);
+            renderers->push_back(meshRenderer);
+            childEntity->name = model->children[i]->mesh.name;
+        }
+
+        childEntity->parent = parentEntity;
+        childEntity->transform.scale = scale;
+        childEntity->transform.position = position;
+
+        parentEntity->children.push_back(childEntity);
+
+        for (int j = 0; j < model->children[i]->children.size(); j++) {
+            createEntityFromModel(model->children[i], entities, renderers, childEntity, scale, position);
+        }
+    }
+
+    /*
+        for (int i = 0; i < model->children.size(); i++) {
+            Entity* childEntity = new Entity();
+            childEntity->parent = newEntity;
+            newEntity->children.push_back(childEntity);
+            createEntityFromModel(model->children[i], entities, renderers, childEntity);
+        } */
+}
+
+void updateCamera(GLFWwindow* window, InputActions* input, CameraController* camera) {
+    if (!input->altFire) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        return;
+    }
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     float xOffset = input->lookX * camera->sensitivity;
     float yOffset = input->lookY * camera->sensitivity;
     float pitch = camera->pitch;
@@ -205,11 +314,31 @@ GLFWwindow* createContext() {
         exitProgram(-1);
     }
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetFramebufferSizeCallback(window, onScreenChanged);
     return window;
 }
 
+void onScreenChanged(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    screenWidth = width;
+    screenHeight = height;
+    mainCamera->aspectRatio = (float)screenWidth / screenHeight;
+}
+
+void initializeIMGUI(GLFWwindow* window) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");
+}
+
 void exitProgram(int code) {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
     exit(code);
 }

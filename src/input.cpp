@@ -16,6 +16,9 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
     actions->movement.y += glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? -1 : 0;
     actions->movement.y += glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? 1 : 0;
 
+    actions->fire = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS ? true : false;
+    actions->altFire = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS ? true : false;
+
     if (actions->movement != glm::vec2(0.0f)) {
         actions->movement = glm::normalize(actions->movement);
     }
