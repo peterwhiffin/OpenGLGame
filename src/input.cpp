@@ -23,14 +23,11 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
         actions->movement = glm::normalize(actions->movement);
     }
 
-    double xPos = 0;
-    double yPos = 0;
+    glfwGetCursorPos(window, &actions->cursorPosition.x, &actions->cursorPosition.y);
 
-    glfwGetCursorPos(window, &xPos, &yPos);
+    actions->lookX = actions->cursorPosition.x - oldX;
+    actions->lookY = actions->cursorPosition.y - oldY;
 
-    actions->lookX = xPos - oldX;
-    actions->lookY = yPos - oldY;
-
-    oldX = xPos;
-    oldY = yPos;
+    oldX = actions->cursorPosition.x;
+    oldY = actions->cursorPosition.y;
 }

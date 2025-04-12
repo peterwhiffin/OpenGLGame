@@ -7,7 +7,7 @@
 Entity::Entity() : transform(this) {}
 Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {}
 Transform::Transform(Entity* entity) : Component(entity) {}
-MeshRenderer::MeshRenderer(Entity* entity, Mesh* mesh, Material* material) : Component(entity), mesh(mesh), material(material) {}
+MeshRenderer::MeshRenderer(Entity* entity, Mesh* mesh) : Component(entity), mesh(mesh) {}
 Camera::Camera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane) : Component(entity), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
 CameraController::CameraController(Entity* entity, Camera& camera) : Component(entity), camera(camera) {}
 

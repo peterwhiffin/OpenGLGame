@@ -12,6 +12,7 @@ struct InputActions {
     glm::vec2 movement;
     double lookX;
     double lookY;
+    glm::dvec2 cursorPosition;
 };
 
 void updateInput(GLFWwindow* window, InputActions* actions);

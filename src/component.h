@@ -11,6 +11,8 @@
 struct Entity;
 struct Component;
 struct Transform;
+struct SubMesh;
+struct Mesh;
 
 glm::vec3 right(Transform* transform);
 glm::vec3 up(Transform* transform);
@@ -51,24 +53,34 @@ struct Transform : Component {
 };
 
 struct SubMesh {
+    Mesh* mesh;
+    unsigned int indexOffset;
+    unsigned int indexCount;
+    Material material;
 };
 
 struct Mesh {
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
+    std::vector<SubMesh*> subMeshes;
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
-    Material material;
+};
+
+struct ModelNode {
+    std::string name;
+    ModelNode* parent;
+    std::vector<ModelNode*> children;
+    Mesh mesh;
 };
 
 struct Model {
     std::string name;
-    Model* parent;
-    std::vector<Model*> children;
-    Mesh mesh;
-    bool hasMesh = false;
+    std::vector<Mesh*> meshes;
+    std::vector<Material*> materials;
+    ModelNode* rootNode;
 };
 
 struct Camera : Component {
@@ -97,13 +109,12 @@ struct Player : Component {
 
 struct MeshRenderer : Component {
     Mesh* mesh;
-    Material* material;
-
-    MeshRenderer(Entity* entity, Mesh* mesh, Material* material);
+    MeshRenderer(Entity* entity, Mesh* mesh);
 };
 
 struct Entity {
     Transform transform;
+    unsigned int id;
     std::string name;
     Entity* parent;
     std::vector<Entity*> children;
