@@ -24,7 +24,8 @@ void initializeIMGUI(GLFWwindow* window);
 void createEntityFromModel(Model* model, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
-void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera, bool picking);
+void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
+void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
 
@@ -45,7 +46,7 @@ float lastFrame = 0.0f;
 float deltaTime = 0.0f;
 Camera* mainCamera;
 int counter = 0;
-unsigned int nextEntityID = 100000;
+unsigned int nextEntityID = 1000000;
 Entity* nodeClicked = nullptr;
 bool enableDemoWindow = false;
 bool enableDirLight = false;
@@ -55,32 +56,38 @@ DirectionalLight sun;
 unsigned int pickingShader;
 bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
+glm::vec3 gunPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
     initializeIMGUI(window);
 
-    unsigned int defaultTexture;
-    glGenTextures(1, &defaultTexture);
-    unsigned char whitePixel[3] = {255, 255, 255};
-    glBindTexture(GL_TEXTURE_2D, defaultTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, whitePixel);
+    unsigned int whiteTexture;
+    unsigned int blackTexture;
+    glGenTextures(1, &whiteTexture);
+    glGenTextures(1, &blackTexture);
+    unsigned char whitePixel[4] = {255, 255, 255, 255};
+    unsigned char blackPixel[4] = {0, 0, 0, 255};
+    glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+    glBindTexture(GL_TEXTURE_2D, blackTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, blackPixel);
 
     unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
     // unsigned int pickingShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    glUseProgram(defaultShader);
     glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
     glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
     glUniform1i(uniform_location::kTextureShadowMap, uniform_location::kTextureShadowMapUnit);
     glUniform1i(uniform_location::kTextureNoise, uniform_location::kTextureNoiseUnit);
 
-    glUseProgram(defaultShader);
     sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
     sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
     sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
     sun.ambient = glm::vec3(0.21f);
     sun.diffuse = glm::vec3(0.94f);
-    sun.specular = glm::vec3(0.65f);
+    sun.specular = glm::vec3(0.18f);
 
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(sun.position));
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
@@ -91,16 +98,22 @@ int main() {
     std::vector<Entity*> entities;
     std::vector<Texture> allTextures;
 
-    Texture default;
-    default.id = defaultTexture;
-    default.path = "default";
-    allTextures.push_back(default);
+    Texture white;
+    Texture black;
+    white.id = whiteTexture;
+    black.id = blackTexture;
+    white.path = "white";
+    black.path = "black";
+    allTextures.push_back(white);
+    allTextures.push_back(black);
 
-    Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures, defaultShader);
-    Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures, defaultShader);
+    // Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures, defaultShader);
+    // Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures, defaultShader);
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
 
-    createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
-    createEntityFromModel(m4Model, m4Model->rootNode, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 15.0f, 0.0f));
+    // createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
+    // createEntityFromModel(m4Model, m4Model->rootNode, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 15.0f, 0.0f));
+    createEntityFromModel(testRoom, testRoom->rootNode, &entities, &renderers, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
     Entity* playerEntity = new Entity();
     Camera camera(playerEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.1, 10000);
@@ -160,7 +173,7 @@ int main() {
         ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
         ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
         ImGui::SliderFloat("Move Speed", &cameraController.moveSpeed, 0.0f, 25.0f);
-        ImGui::Image((ImTextureID)(intptr_t)allTextures[4].id, ImVec2(200, 200));
+        ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
         for (Entity* entity : entities) {
             createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
         }
@@ -178,15 +191,21 @@ int main() {
         glViewport(0, 0, screenWidth, screenHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawScene(renderers, camera, true);
+        drawPickingScene(renderers, camera);
 
         if (isPicking) {
             glReadPixels(pickPosition.x, screenHeight - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
             unsigned int id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
+            bool foundEntity = false;
             for (Entity* entity : entities) {
                 if (searchEntities(entity, id)) {
+                    foundEntity = true;
                     break;
                 }
+            }
+
+            if (!foundEntity) {
+                nodeClicked = nullptr;
             }
         }
 
@@ -195,7 +214,7 @@ int main() {
         glClearColor(0.34, 0.34, 0.8, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawScene(renderers, camera, false);
+        drawScene(renderers, camera);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -210,13 +229,11 @@ int main() {
 bool searchEntities(Entity* entity, unsigned int id) {
     if (entity->id == id) {
         nodeClicked = entity;
-        std::cout << "found an entity: " << entity->name << std::endl;
         return true;
     }
 
     for (Entity* childEntity : entity->children) {
         if (searchEntities(childEntity, id)) {
-            std::cout << "found an entity: " << entity->name << std::endl;
             return true;
         }
     }
@@ -224,47 +241,67 @@ bool searchEntities(Entity* entity, unsigned int id) {
     return false;
 }
 
-void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera, bool picking) {
+void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
     for (MeshRenderer* renderer : renderers) {
-        counter++;
         glm::mat4 model = glm::translate(glm::mat4(1.0f), renderer->transform->position);
         model *= glm::mat4_cast(renderer->transform->rotation);
         model = glm::scale(model, renderer->transform->scale);
+
+        glBindVertexArray(renderer->mesh->VAO);
+
+        for (SubMesh* subMesh : renderer->mesh->subMeshes) {
+            unsigned char r = renderer->entity->id & 0xFF;
+            unsigned char g = (renderer->entity->id >> 8) & 0xFF;
+            unsigned char b = (renderer->entity->id >> 16) & 0xFF;
+            glm::vec3 idColor = glm::vec3(r, g, b) / 255.0f;
+
+            glUseProgram(pickingShader);
+            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.viewMatrix));
+            glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
+            glUniform3fv(uniform_location::kBaseColor, 1, glm::value_ptr(idColor));
+
+            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
+        }
+
+        glBindVertexArray(0);
+    }
+}
+
+void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
+    for (MeshRenderer* renderer : renderers) {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), renderer->transform->position);
+        model *= glm::mat4_cast(renderer->transform->rotation);
+        model = glm::scale(model, renderer->transform->scale);
+        model = renderer->transform->localToWorldMatrix;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
         glBindVertexArray(renderer->mesh->VAO);
+
         for (SubMesh* subMesh : renderer->mesh->subMeshes) {
             unsigned int shader = subMesh->material.shader;
-            glm::vec4 baseColor = subMesh->material.baseColor;
-            if (picking) {
-                shader = pickingShader;
-                unsigned char r = renderer->entity->id & 0xFF;
-                unsigned char g = (renderer->entity->id >> 8) & 0xFF;
-                unsigned char b = (renderer->entity->id >> 16) & 0xFF;
-                glm::vec3 color = glm::vec3(r, g, b) / 255.0f;
-                baseColor = glm::vec4(color, 1.0f);
-            }
-            glUseProgram(shader);
+            glm::vec4 baseColor = (renderer->entity == nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh->material.baseColor;
 
+            glUseProgram(shader);
             glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
             glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.viewMatrix));
             glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
             glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
             glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
-            glUniform1f(uniform_location::kShininess, subMesh->material.shininess);
+            // glUniform1f(uniform_location::kShininess, subMesh->material.shininess);
+            glUniform1f(uniform_location::kShininess, 512.0f);
             glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(camera.transform->position));
-
-            if (!picking && renderer->entity == nodeClicked) {
-                glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(glm::vec4(0.0f, 1.0f, 0.0f, 0.3f)));
-            }
 
             glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), enableDirLight);
             glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
             glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse * dirLightBrightness));
+            // glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
             glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
-
-            glActiveTexture(uniform_location::kTextureDiffuseUnit);
+            // std::cout << "spec map: " << subMesh->material.textures[1].path << std::endl;
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureDiffuseUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);
+            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[1].id);
             glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
 
@@ -308,9 +345,14 @@ void createEntityFromModel(Model* model, ModelNode* parentNode, std::vector<Enti
         childEntity->id = getEntityID();
         childEntity->name = parentNode->children[i]->name;
         childEntity->parent = parentEntity;
-        childEntity->transform.scale = scale;
-        childEntity->transform.position = position;
-        parentEntity->children.push_back(childEntity);
+        setScale(childEntity->transform, scale);
+        // childEntity->transform.scale = scale;
+        childEntity->transform.position = parentNode->children[i]->transform[3];
+        // childEntity->transform.position += position;
+
+        setPosition(childEntity->transform, position);
+        setParent(childEntity->transform, parentEntity->transform);
+        // parentEntity->children.push_back(childEntity);
 
         for (int j = 0; j < parentNode->children[i]->children.size(); j++) {
             createEntityFromModel(model, parentNode->children[i]->children[j], entities, renderers, childEntity, scale, position);

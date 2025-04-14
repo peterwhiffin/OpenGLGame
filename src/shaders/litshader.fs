@@ -29,17 +29,18 @@ vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, ve
 
 void main(){
      diffuseColor = texture(texture_diffuse, texCoord);
-     specularColor = texture(texture_specular, texCoord);
 
     if(diffuseColor.a < 0.1f){
         discard;
     }
     
+    specularColor = texture(texture_specular, texCoord);
+
     vec3 norm = normalize(normal);
     vec3 viewDir = normalize(viewPos - fragPos);
 
     vec3 ambient = dirLight.ambient;
-    diffuseColor *= baseColor; 
+    //diffuseColor *= baseColor; 
     vec4 finalColor;
 
     if(dirLight.enabled){

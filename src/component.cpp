@@ -1,15 +1,120 @@
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <glm/gtc/type_ptr.hpp>
 #include "component.h"
 #include "renderer.h"
 
 Entity::Entity() : transform(this) {}
 Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {}
-Transform::Transform(Entity* entity) : Component(entity) {}
+Transform::Transform(Entity* entity) : Component(entity) {
+    localToWorldMatrix = glm::translate(glm::mat4(1.0f), position);
+    localToWorldMatrix *= glm::mat4_cast(rotation);
+    localToWorldMatrix = glm::scale(localToWorldMatrix, scale);
+}
 MeshRenderer::MeshRenderer(Entity* entity, Mesh* mesh) : Component(entity), mesh(mesh) {}
 Camera::Camera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane) : Component(entity), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
 CameraController::CameraController(Entity* entity, Camera& camera) : Component(entity), camera(camera) {}
+
+void updateTransformMatrices(Transform& transform) {
+    transform.localToWorldMatrix = glm::translate(glm::mat4(1.0f), transform.position);
+    transform.localToWorldMatrix *= glm::mat4_cast(transform.rotation);
+    transform.localToWorldMatrix = glm::scale(transform.localToWorldMatrix, transform.scale);
+
+    if (transform.entity->parent != nullptr) {
+        transform.localToWorldMatrix = transform.entity->parent->transform.localToWorldMatrix * transform.localToWorldMatrix;
+    }
+
+    for (Transform child : transform.entity->children) {
+        updateTransformMatrices(child);
+    }
+}
+
+glm::vec3 getPosition(Transform& transform) {
+    return transform.localToWorldMatrix[3];
+}
+
+glm::quat getRotation(Transform& transform) {
+    return quatFromMatrix(transform.localToWorldMatrix);
+}
+
+glm::vec3 getScale(Transform& transform) {
+    glm::vec3 scale;
+    scale.x = glm::length(glm::vec3(transform.localToWorldMatrix[0]));
+    scale.y = glm::length(glm::vec3(transform.localToWorldMatrix[1]));
+    scale.z = glm::length(glm::vec3(transform.localToWorldMatrix[2]));
+    return scale;
+}
+
+glm::vec3 positionFromMatrix(glm::mat4& matrix) {
+    return matrix[3];
+}
+
+glm::quat quatFromMatrix(glm::mat4& matrix) {
+    glm::vec3 scale;
+    scale.x = glm::length(glm::vec3(matrix[0]));
+    scale.y = glm::length(glm::vec3(matrix[1]));
+    scale.z = glm::length(glm::vec3(matrix[2]));
+
+    glm::mat3 rotationMatrix;
+    rotationMatrix[0] = glm::vec3(matrix[0]) / scale.x;
+    rotationMatrix[1] = glm::vec3(matrix[1]) / scale.y;
+    rotationMatrix[2] = glm::vec3(matrix[2]) / scale.z;
+
+    return glm::quat_cast(rotationMatrix);
+}
+
+glm::vec3 scaleFromMatrix(glm::mat4 matrix) {
+    glm::vec3 scale;
+    scale.x = glm::length(glm::vec3(matrix[0]));
+    scale.y = glm::length(glm::vec3(matrix[1]));
+    scale.z = glm::length(glm::vec3(matrix[2]));
+    return scale;
+}
+
+void setLocalPosition(Transform& transform, glm::vec3 localPosition) {
+    transform.position = localPosition;
+    updateTransformMatrices(transform);
+}
+void setLocalRotation(Transform& transform, glm::quat localRotation) {
+    transform.rotation = localRotation;
+    updateTransformMatrices(transform);
+}
+void setLocalScale(Transform& transform, glm::vec3 localScale) {
+    transform.scale = localScale;
+    updateTransformMatrices(transform);
+}
+void setPosition(Transform& transform, glm::vec3 position) {
+    if (transform.entity->parent == nullptr) {
+        transform.position = position;
+    } else {
+        transform.position = glm::vec3(glm::inverse(transform.entity->parent->transform.localToWorldMatrix) * glm::vec4(position, 1.0f));
+    }
+
+    updateTransformMatrices(transform);
+}
+
+void setRotation(Transform& transform, glm::quat rotation) {
+    if (transform.entity->parent == nullptr) {
+        transform.rotation = rotation;
+    } else {
+        glm::quat parentRotation = quatFromMatrix(transform.entity->parent->transform.localToWorldMatrix);
+        transform.rotation = glm::inverse(parentRotation) * rotation;
+    }
+
+    updateTransformMatrices(transform);
+}
+
+void setScale(Transform& transform, glm::vec3 scale) {
+    if (transform.entity->parent == nullptr) {
+        transform.scale = scale;
+    } else {
+        transform.scale = scale / getScale(transform.entity->parent->transform);
+    }
+
+    updateTransformMatrices(transform);
+}
 
 glm::vec3 right(Transform* transform) {
     return QuaternionByVector3(transform->rotation, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -23,6 +128,36 @@ glm::vec3 forward(Transform* transform) {
     return QuaternionByVector3(transform->rotation, glm::vec3(0.0f, 0.0f, -1.0f));
 }
 
+void setParent(Transform& child, Transform& parent) {
+    removeParent(child);
+
+    glm::mat4 parentWorldToLocalMatrix = glm::inverse(parent.localToWorldMatrix) * child.transform->localToWorldMatrix;
+
+    child.position = positionFromMatrix(parentWorldToLocalMatrix);
+    child.rotation = quatFromMatrix(parentWorldToLocalMatrix);
+    child.scale = scaleFromMatrix(parentWorldToLocalMatrix);
+
+    parent.entity->children.push_back(child.entity);
+    child.entity->parent = parent.entity;
+    updateTransformMatrices(parent);
+}
+
+void removeParent(Transform& transform) {
+    if (transform.entity->parent == nullptr) {
+        return;
+    }
+
+    transform.position = getPosition(transform);
+    transform.rotation = getRotation(transform);
+    transform.scale = getScale(transform);
+
+    transform.entity->parent->children.erase(
+        std::remove(transform.entity->parent->children.begin(), transform.entity->parent->children.end(), transform.entity),
+        transform.entity->parent->children.end());
+
+    transform.entity->parent = nullptr;
+    updateTransformMatrices(transform);
+}
 glm::vec3 QuaternionByVector3(glm::quat rotation, glm::vec3 point) {
     float num = rotation.x + rotation.x;
     float num2 = rotation.y + rotation.y;

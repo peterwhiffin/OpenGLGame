@@ -19,6 +19,22 @@ glm::vec3 up(Transform* transform);
 glm::vec3 forward(Transform* transform);
 glm::vec3 QuaternionByVector3(glm::quat rotation, glm::vec3 point);
 
+void updateTransformMatrices(Transform& transform);
+
+glm::vec3 getPosition(Transform& transform);
+glm::quat getRotation(Transform& transform);
+glm::vec3 getScale(Transform& transform);
+glm::quat quatFromMatrix(glm::mat4& matrix);
+
+void setLocalPosition(Transform& transform, glm::vec3 localPosition);
+void setLocalRotation(Transform& transform, glm::quat localRotation);
+void setLocalScale(Transform& transform, glm::vec3 localScale);
+void setPosition(Transform& transform, glm::vec3 position);
+void setRotation(Transform& transform, glm::quat rotation);
+void setScale(Transform& transform, glm::vec3 scale);
+void setParent(Transform& child, Transform& parent);
+void removeParent(Transform& transform);
+
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -48,7 +64,7 @@ struct Transform : Component {
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-
+    glm::mat4 localToWorldMatrix = glm::mat4(1.0f);
     Transform(Entity* entity);
 };
 
@@ -72,6 +88,7 @@ struct Mesh {
 struct ModelNode {
     std::string name;
     ModelNode* parent;
+    glm::mat4 transform;
     std::vector<ModelNode*> children;
     Mesh mesh;
 };
@@ -81,6 +98,8 @@ struct Model {
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
     ModelNode* rootNode;
+    glm::vec3 center;
+    glm::vec3 halfExtents;
 };
 
 struct Camera : Component {
@@ -110,6 +129,9 @@ struct Player : Component {
 struct MeshRenderer : Component {
     Mesh* mesh;
     MeshRenderer(Entity* entity, Mesh* mesh);
+};
+
+struct BoxCollider : Component {
 };
 
 struct Entity {

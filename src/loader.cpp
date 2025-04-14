@@ -20,6 +20,7 @@ void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, 
 Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
 void createMeshBuffers(Mesh* mesh);
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader);
+int nodeCounter = 0;
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader) {
     Assimp::Importer importer;
@@ -41,6 +42,7 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
     rootNode->parent = nullptr;
     newModel->rootNode = rootNode;
     processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, rootNode, &directory, allTextures, shader);
+    std::cout << "nodes processed: " << nodeCounter << std::endl;
     return newModel;
 }
 
@@ -48,10 +50,12 @@ void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, 
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* targetParent = parentNode;
+
     if (node->mNumMeshes != 0) {
         ModelNode* childNode = new ModelNode();
         childNode->parent = parentNode;
         parentNode->children.push_back(childNode);
+        childNode->transform = globalTransform;
 
         childNode->name = node->mName.C_Str();
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -84,10 +88,12 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         Vertex vertex;
 
         glm::vec4 position(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
-        vertex.position = glm::vec3(transform * position);
+        // vertex.position = glm::vec3(transform * position);
+        vertex.position = position;
 
         glm::vec4 normal(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
-        vertex.normal = glm::normalize(glm::vec3(transform * normal));
+        // vertex.normal = glm::normalize(glm::vec3(transform * normal));
+        vertex.normal = glm::normalize(normal);
 
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
 
@@ -121,10 +127,11 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         Texture diffuseTexture;
         Texture specularTexture;
         newMaterial.shader = shader;
+        material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
         newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
         diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
-        specularTexture = loadTexture(material, aiTextureType_SPECULAR, directory, allTextures, false);
+        specularTexture = loadTexture(material, aiTextureType_SHININESS, directory, allTextures, false);
         newMaterial.textures.push_back(diffuseTexture);
         newMaterial.textures.push_back(specularTexture);
         newMaterial.name = material->GetName().C_Str();
@@ -165,7 +172,7 @@ void createMeshBuffers(Mesh* mesh) {
 Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma) {
     Texture newTexture;
     newTexture.path = "default";
-    newTexture.id = allTextures->at(0).id;
+    newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(0).id;
 
     if (mat->GetTextureCount(type) != 0) {
         aiString texPath;
@@ -211,12 +218,14 @@ unsigned int loadTextureFromFile(const char* path, bool gamma) {
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     } else {
         std::cerr << "ERROR::TEXTURE_FAILED_TO_LOAD at: " << path << std::endl;
