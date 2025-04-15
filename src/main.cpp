@@ -17,17 +17,18 @@
 #include "shader.h"
 
 GLFWwindow* createContext();
-void updateCamera(GLFWwindow* window, InputActions* input, CameraController* camera);
 void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
+void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
 void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
+bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut);
 Entity* m4;
 struct DirectionalLight {
     glm::vec3 position;
@@ -57,7 +58,11 @@ unsigned int pickingShader;
 bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
 glm::vec3 gunPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-Entity* m4Entity;
+// Entity* m4Entity;
+Entity* levelEntity;
+float gravity = -9.81f;
+float yVelocity = 0.0f;
+float terminalVelocity = 56.0f;
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
@@ -98,6 +103,7 @@ int main() {
     std::vector<MeshRenderer*> renderers;
     std::vector<Entity*> entities;
     std::vector<Texture> allTextures;
+    std::vector<BoxCollider*> colliders;
 
     Texture white;
     Texture black;
@@ -113,20 +119,39 @@ int main() {
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
 
     // createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
-    m4Entity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f));
-    createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    // m4Entity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, &colliders, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f));
+    levelEntity = createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, &colliders, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
     Entity* playerEntity = new Entity();
+    Entity* cameraTarget = new Entity();
+    Entity* cameraEntity = new Entity();
+
+    cameraTarget->name = "Camera Target";
+    cameraEntity->name = "Camera";
     playerEntity->id = getEntityID();
     playerEntity->name = "Player";
-    Camera camera(playerEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
+    Player* player = new Player(playerEntity);
+    Camera camera(cameraEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
+    BoxCollider* playerCollider = new BoxCollider(playerEntity);
+    playerCollider->center = getPosition(playerEntity->transform);
+    playerCollider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
+    player->collider = playerCollider;
     mainCamera = &camera;
-    CameraController cameraController(playerEntity, camera);
+
+    CameraController cameraController(playerEntity, &camera);
+    cameraController.cameraTarget = &cameraTarget->transform;
+
+    entities.push_back(cameraTarget);
     entities.push_back(playerEntity);
-    playerEntity->components.push_back(&camera);
+    entities.push_back(cameraEntity);
+    player->cameraController = &cameraController;
     playerEntity->components.push_back(&cameraController);
-    setParent(m4Entity->transform, playerEntity->transform);
-    updateTransformMatrices(playerEntity->transform);
+    playerEntity->components.push_back(player);
+    // setParent(m4Entity->transform, playerEntity->transform);
+    setParent(cameraTarget->transform, playerEntity->transform);
+    setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
+    setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
+
     unsigned int pickingFBO;
     unsigned int pickingRBO;
     unsigned int pickingTexture;
@@ -164,7 +189,7 @@ int main() {
     unsigned char pixel[3];
     glm::vec3 gunOffset = glm::vec3(0.0f, -0.09f, -0.2f);
     glm::vec3 gunLocalRot = glm::vec3(0.0f, glm::radians(90.0f), 0.0f);
-    setPosition(m4Entity->transform, glm::vec3(0.0f, 2.0f, 0.0f));
+    // setPosition(m4Entity->transform, glm::vec3(0.0f, 2.0f, 0.0f));
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -182,16 +207,16 @@ int main() {
         ImGui::InputFloat("gun rot X", &gunLocalRot.x);
         ImGui::InputFloat("gun rot Y", &gunLocalRot.y);
         ImGui::InputFloat("gun rot Z", &gunLocalRot.z);
-        ImGui::Text("GunPosX: (%.1f)", getPosition(m4Entity->transform).x);
-        ImGui::Text("GunPosY: (%.1f)", getPosition(m4Entity->transform).y);
-        ImGui::Text("GunPosZ: (%.1f)", getPosition(m4Entity->transform).z);
+        // ImGui::Text("GunPosX: (%.1f)", getPosition(m4Entity->transform).x);
+        // ImGui::Text("GunPosY: (%.1f)", getPosition(m4Entity->transform).y);
+        // ImGui::Text("GunPosZ: (%.1f)", getPosition(m4Entity->transform).z);
         ImGui::Text("Cursor: (%.1f, %.1f)", input.cursorPosition.x, input.cursorPosition.y);
         ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
         ImGui::Checkbox("Enable Directional Light", &enableDirLight);
         ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
         ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
         ImGui::SliderFloat("Move Speed", &cameraController.moveSpeed, 0.0f, 25.0f);
-        ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
+        // ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
         for (Entity* entity : entities) {
             createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
         }
@@ -203,9 +228,9 @@ int main() {
 
         sun.ambient = glm::vec3(ambientBrightness);
 
-        setLocalPosition(m4Entity->transform, gunOffset);
-        setLocalRotation(m4Entity->transform, glm::quat(glm::radians(gunLocalRot)));
-        updateCamera(window, &input, &cameraController);
+        // setLocalPosition(m4Entity->transform, gunOffset);
+        // setLocalRotation(m4Entity->transform, glm::quat(glm::radians(gunLocalRot)));
+        updateCamera(window, &input, player, colliders);
         setViewProjection(&camera);
         glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
         glViewport(0, 0, screenWidth, screenHeight);
@@ -309,9 +334,7 @@ void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
             glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), enableDirLight);
             glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
             glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse * dirLightBrightness));
-            // glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
             glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
-            // std::cout << "spec map: " << subMesh->material.textures[1].path << std::endl;
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureDiffuseUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);
@@ -343,7 +366,7 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
     if (parentEntity == nullptr) {
         Entity* rootEntity = new Entity();
         rootEntity->name = model->name;
@@ -358,7 +381,13 @@ Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode,
 
         counter++;
         MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &parentNode->children[i]->mesh);
+        BoxCollider* collider = new BoxCollider(childEntity);
+        collider->center = meshRenderer->mesh->center;
+        collider->extent = meshRenderer->mesh->extent;
+        childEntity->components.push_back(collider);
         childEntity->components.push_back(meshRenderer);
+
+        colliders->push_back(collider);
         renderers->push_back(meshRenderer);
         childEntity->id = getEntityID();
         childEntity->name = parentNode->children[i]->name;
@@ -367,8 +396,10 @@ Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode,
         setPosition(childEntity->transform, position);
         setParent(childEntity->transform, parentEntity->transform);
 
+        collider->center = getPosition(childEntity->transform) + meshRenderer->mesh->center;
+
         for (int j = 0; j < parentNode->children[i]->children.size(); j++) {
-            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, childEntity, scale, position);
+            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, colliders, childEntity, scale, position);
         }
     }
 
@@ -381,27 +412,28 @@ unsigned int getEntityID() {
     return id;
 }
 
-void updateCamera(GLFWwindow* window, InputActions* input, CameraController* camera) {
-    if (!input->altFire) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
+    /*   if (!input->altFire) {
+          glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-        if (input->fire && !isPicking) {
-            isPicking = true;
-            glfwGetCursorPos(window, &pickPosition.x, &pickPosition.y);
-        }
+          if (input->fire && !isPicking) {
+              isPicking = true;
+              glfwGetCursorPos(window, &pickPosition.x, &pickPosition.y);
+          }
 
-        if (!input->fire && isPicking) {
-            isPicking = false;
-        }
-        return;
-    }
+          if (!input->fire && isPicking) {
+              isPicking = false;
+          }
+          return;
+      }
+   */
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    float xOffset = input->lookX * camera->sensitivity;
-    float yOffset = input->lookY * camera->sensitivity;
-    float pitch = camera->pitch;
-    float yaw = camera->yaw;
+    float xOffset = input->lookX * player->cameraController->sensitivity;
+    float yOffset = input->lookY * player->cameraController->sensitivity;
+    float pitch = player->cameraController->pitch;
+    float yaw = player->cameraController->yaw;
 
     yaw -= xOffset;
     pitch -= yOffset;
@@ -414,22 +446,101 @@ void updateCamera(GLFWwindow* window, InputActions* input, CameraController* cam
         pitch = -89.0f;
     }
 
-    camera->pitch = pitch;
-    camera->yaw = yaw;
+    player->cameraController->pitch = pitch;
+    player->cameraController->yaw = yaw;
 
     float upTest = 0.0f;
     if (input->jump) {
         upTest = 1.0f;
     }
 
-    glm::vec3 euler = glm::vec3(glm::radians(camera->pitch), glm::radians(camera->yaw), 0.0f);
-    camera->transform->rotation = glm::quat(euler);
+    glm::vec3 cameraTargetRotation = glm::vec3(glm::radians(player->cameraController->pitch), 0.0f, 0.0f);
+    glm::vec3 playerRotation = glm::vec3(0.0f, glm::radians(player->cameraController->yaw), 0.0f);
+
+    setLocalRotation(*player->cameraController->cameraTarget, glm::quat(cameraTargetRotation));
+    setRotation(*player->transform, glm::quat(playerRotation));
 
     glm::vec3 moveDir = glm::vec3(0.0f);
-    moveDir += input->movement.y * forward(camera->transform) + input->movement.x * right(camera->transform);
+    moveDir += input->movement.y * forward(player->transform) + input->movement.x * right(player->transform);
+    glm::vec3 finalMove = moveDir * player->moveSpeed;
 
-    // camera->transform->position += moveDir * camera->moveSpeed * deltaTime;
-    setPosition(*camera->transform, camera->transform->position + moveDir * camera->moveSpeed * deltaTime);
+    if (player->isGrounded) {
+        if (input->jump) {
+            yVelocity = 5.0f;
+        }
+    }
+
+    player->isGrounded = false;
+
+    finalMove.y += yVelocity;
+    glm::vec3 oldPos = getPosition(*player->transform);
+    setPosition(*player->transform, player->transform->position + finalMove * deltaTime);
+
+    glm::vec3 collisionResolution = glm::vec3(0.0f);
+    player->collider->center = getPosition(*player->transform);
+    // player->collider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
+    for (BoxCollider* collider : colliders) {
+        if (collider == player->collider) {
+            continue;
+        }
+
+        if (checkAABB(player->collider->center, player->collider->extent, collider->center, collider->extent, collisionResolution)) {
+            // setPosition(*player->transform, oldPos + ((finalMove * deltaTime) - collisionResolution));
+            setPosition(*player->transform, getPosition(*player->transform) - collisionResolution);
+            player->collider->center = getPosition(*player->transform);
+            // player->collider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
+
+            // glm::vec3 newDir = oldPos + collisionResolution + moveDir - collisionResolution;
+            // setPosition(*player->transform, oldPos);
+            if (collisionResolution.y != 0.0f) {
+                player->isGrounded = true;
+            }
+            // yVelocity = 0.0f;
+        }
+    }
+
+    if (!player->isGrounded) {
+        yVelocity += gravity * deltaTime;
+        yVelocity = glm::min(yVelocity, terminalVelocity);
+    } else {
+        yVelocity = 0.0f;
+    }
+
+    setPosition(*player->cameraController->camera->transform, getPosition(*player->cameraController->cameraTarget));
+    setRotation(*player->cameraController->camera->transform, getRotation(*player->cameraController->cameraTarget));
+}
+
+bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut) {
+    glm::vec3 delta = centerB - centerA;
+    glm::vec3 overlap = extentA + extentB - glm::abs(delta);
+
+    resolutionOut = glm::vec3(0.0f);
+
+    if (overlap.x <= 0.0f || overlap.y <= 0.0f || overlap.z <= 0.0f) {
+        return false;
+    }
+
+    float minOverlap = overlap.x;
+    float push = delta.x < 0 ? -1.0f : 1.0f;
+    glm::vec3 pushDir = glm::vec3(push, 0.0f, 0.0f);
+
+    if (overlap.y < minOverlap) {
+        minOverlap = overlap.y;
+        push = delta.y < 0 ? -1.0f : 1.0f;
+        pushDir = glm::vec3(0.0f, push, 0.0f);
+    }
+
+    if (overlap.z < minOverlap) {
+        minOverlap = overlap.z;
+        push = delta.z < 0 ? -1.0f : 1.0f;
+        pushDir = glm::vec3(0.0f, 0.0f, push);
+    }
+
+    resolutionOut = pushDir * minOverlap;
+    return true;
+}
+
+void checkGround() {
 }
 
 void setViewProjection(Camera* camera) {

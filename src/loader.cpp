@@ -58,10 +58,16 @@ void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, 
         childNode->transform = globalTransform;
 
         childNode->name = node->mName.C_Str();
+        childNode->mesh.min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
+        childNode->mesh.max = childNode->mesh.min;
+
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
             processSubMesh(mesh, scene, &childNode->mesh, globalTransform, directory, allTextures, shader);
         }
+
+        childNode->mesh.center = (childNode->mesh.min + childNode->mesh.max) * 0.5f;
+        childNode->mesh.extent = (childNode->mesh.max - childNode->mesh.min) * 0.5f;
 
         model->meshes.push_back(&childNode->mesh);
 
@@ -90,6 +96,8 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         glm::vec4 position(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
         // vertex.position = glm::vec3(transform * position);
         vertex.position = position;
+        parentMesh->min = glm::min(parentMesh->min, vertex.position);
+        parentMesh->max = glm::max(parentMesh->max, vertex.position);
 
         glm::vec4 normal(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
         // vertex.normal = glm::normalize(glm::vec3(transform * normal));

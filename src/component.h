@@ -13,6 +13,7 @@ struct Component;
 struct Transform;
 struct SubMesh;
 struct Mesh;
+struct BoxCollider;
 
 glm::vec3 right(Transform* transform);
 glm::vec3 up(Transform* transform);
@@ -80,6 +81,10 @@ struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<SubMesh*> subMeshes;
+    glm::vec3 center;
+    glm::vec3 extent;
+    glm::vec3 min;
+    glm::vec3 max;
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
@@ -114,16 +119,23 @@ struct Camera : Component {
 };
 
 struct CameraController : Component {
-    Camera& camera;
+    Camera* camera;
+    Transform* cameraTarget;
     float pitch = 0;
     float yaw = 0;
     float sensitivity = .3;
     float moveSpeed = 10;
 
-    CameraController(Entity* entity, Camera& camera);
+    CameraController(Entity* entity, Camera* camera);
 };
 
 struct Player : Component {
+    bool isGrounded = false;
+    BoxCollider* collider;
+    CameraController* cameraController;
+    float moveSpeed = 10.0f;
+    float groundCheckDistance = 0.2f;
+    Player(Entity* entity);
 };
 
 struct MeshRenderer : Component {
@@ -132,6 +144,9 @@ struct MeshRenderer : Component {
 };
 
 struct BoxCollider : Component {
+    glm::vec3 center;
+    glm::vec3 extent;
+    BoxCollider(Entity* entity);
 };
 
 struct Entity {
