@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
 #include <glm/ext/quaternion_float.hpp>
@@ -6,7 +7,6 @@
 #include <iostream>
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
@@ -201,21 +201,15 @@ int main() {
         ImGui::NewFrame();
         ImGui::Begin("The Window");
         ImGui::Text("This is a ImGui window");
-        ImGui::InputFloat("gun offset X", &gunOffset.x);
-        ImGui::InputFloat("gun offset Y", &gunOffset.y);
-        ImGui::InputFloat("gun offset Z", &gunOffset.z);
-        ImGui::InputFloat("gun rot X", &gunLocalRot.x);
-        ImGui::InputFloat("gun rot Y", &gunLocalRot.y);
-        ImGui::InputFloat("gun rot Z", &gunLocalRot.z);
-        // ImGui::Text("GunPosX: (%.1f)", getPosition(m4Entity->transform).x);
-        // ImGui::Text("GunPosY: (%.1f)", getPosition(m4Entity->transform).y);
-        // ImGui::Text("GunPosZ: (%.1f)", getPosition(m4Entity->transform).z);
-        ImGui::Text("Cursor: (%.1f, %.1f)", input.cursorPosition.x, input.cursorPosition.y);
+        ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
+        ImGui::InputFloat("jump height", &player->jumpHeight);
+        ImGui::InputFloat("gravity", &gravity);
         ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
         ImGui::Checkbox("Enable Directional Light", &enableDirLight);
-        ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
-        ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
-        ImGui::SliderFloat("Move Speed", &cameraController.moveSpeed, 0.0f, 25.0f);
+        if (enableDirLight) {
+            ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
+            ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
+        }
         // ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
         for (Entity* entity : entities) {
             createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
@@ -466,7 +460,7 @@ void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::
 
     if (player->isGrounded) {
         if (input->jump) {
-            yVelocity = 5.0f;
+            yVelocity = player->jumpHeight;
         }
     }
 

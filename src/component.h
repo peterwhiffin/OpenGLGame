@@ -130,6 +130,7 @@ struct CameraController : Component {
 };
 
 struct Player : Component {
+    float jumpHeight = 10.0f;
     bool isGrounded = false;
     BoxCollider* collider;
     CameraController* cameraController;
