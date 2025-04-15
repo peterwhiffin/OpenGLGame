@@ -40,7 +40,7 @@ void main(){
     vec3 viewDir = normalize(viewPos - fragPos);
 
     vec3 ambient = dirLight.ambient;
-    //diffuseColor *= baseColor; 
+    diffuseColor *= baseColor; 
     vec4 finalColor;
 
     if(dirLight.enabled){

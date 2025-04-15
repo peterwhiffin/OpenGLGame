@@ -6,12 +6,12 @@
 #include "component.h"
 #include "renderer.h"
 
-Entity::Entity() : transform(this) {}
-Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {}
+Entity::Entity() : transform(this) {
+    parent = nullptr;
+}
+Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {
+}
 Transform::Transform(Entity* entity) : Component(entity) {
-    localToWorldMatrix = glm::translate(glm::mat4(1.0f), position);
-    localToWorldMatrix *= glm::mat4_cast(rotation);
-    localToWorldMatrix = glm::scale(localToWorldMatrix, scale);
 }
 MeshRenderer::MeshRenderer(Entity* entity, Mesh* mesh) : Component(entity), mesh(mesh) {}
 Camera::Camera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane) : Component(entity), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
@@ -26,8 +26,8 @@ void updateTransformMatrices(Transform& transform) {
         transform.localToWorldMatrix = transform.entity->parent->transform.localToWorldMatrix * transform.localToWorldMatrix;
     }
 
-    for (Transform child : transform.entity->children) {
-        updateTransformMatrices(child);
+    for (Entity* child : transform.entity->children) {
+        updateTransformMatrices(child->transform);
     }
 }
 

@@ -21,14 +21,14 @@ void updateCamera(GLFWwindow* window, InputActions* input, CameraController* cam
 void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-void createEntityFromModel(Model* model, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
 void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
-
+Entity* m4;
 struct DirectionalLight {
     glm::vec3 position;
     glm::vec3 lookDirection;
@@ -57,6 +57,7 @@ unsigned int pickingShader;
 bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
 glm::vec3 gunPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+Entity* m4Entity;
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
@@ -108,18 +109,24 @@ int main() {
     allTextures.push_back(black);
 
     // Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures, defaultShader);
-    // Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures, defaultShader);
+    Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures, defaultShader);
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
 
     // createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
-    // createEntityFromModel(m4Model, m4Model->rootNode, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 15.0f, 0.0f));
-    createEntityFromModel(testRoom, testRoom->rootNode, &entities, &renderers, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    m4Entity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f));
+    createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
     Entity* playerEntity = new Entity();
-    Camera camera(playerEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.1, 10000);
+    playerEntity->id = getEntityID();
+    playerEntity->name = "Player";
+    Camera camera(playerEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
     mainCamera = &camera;
     CameraController cameraController(playerEntity, camera);
-
+    entities.push_back(playerEntity);
+    playerEntity->components.push_back(&camera);
+    playerEntity->components.push_back(&cameraController);
+    setParent(m4Entity->transform, playerEntity->transform);
+    updateTransformMatrices(playerEntity->transform);
     unsigned int pickingFBO;
     unsigned int pickingRBO;
     unsigned int pickingTexture;
@@ -152,10 +159,12 @@ int main() {
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                                   ImGuiTreeNodeFlags_SpanAvailWidth |
-                                   ImGuiTreeNodeFlags_DefaultOpen;
+                                   ImGuiTreeNodeFlags_SpanAvailWidth;
 
     unsigned char pixel[3];
+    glm::vec3 gunOffset = glm::vec3(0.0f, -0.09f, -0.2f);
+    glm::vec3 gunLocalRot = glm::vec3(0.0f, glm::radians(90.0f), 0.0f);
+    setPosition(m4Entity->transform, glm::vec3(0.0f, 2.0f, 0.0f));
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -167,6 +176,15 @@ int main() {
         ImGui::NewFrame();
         ImGui::Begin("The Window");
         ImGui::Text("This is a ImGui window");
+        ImGui::InputFloat("gun offset X", &gunOffset.x);
+        ImGui::InputFloat("gun offset Y", &gunOffset.y);
+        ImGui::InputFloat("gun offset Z", &gunOffset.z);
+        ImGui::InputFloat("gun rot X", &gunLocalRot.x);
+        ImGui::InputFloat("gun rot Y", &gunLocalRot.y);
+        ImGui::InputFloat("gun rot Z", &gunLocalRot.z);
+        ImGui::Text("GunPosX: (%.1f)", getPosition(m4Entity->transform).x);
+        ImGui::Text("GunPosY: (%.1f)", getPosition(m4Entity->transform).y);
+        ImGui::Text("GunPosZ: (%.1f)", getPosition(m4Entity->transform).z);
         ImGui::Text("Cursor: (%.1f, %.1f)", input.cursorPosition.x, input.cursorPosition.y);
         ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
         ImGui::Checkbox("Enable Directional Light", &enableDirLight);
@@ -185,6 +203,8 @@ int main() {
 
         sun.ambient = glm::vec3(ambientBrightness);
 
+        setLocalPosition(m4Entity->transform, gunOffset);
+        setLocalRotation(m4Entity->transform, glm::quat(glm::radians(gunLocalRot)));
         updateCamera(window, &input, &cameraController);
         setViewProjection(&camera);
         glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
@@ -243,10 +263,7 @@ bool searchEntities(Entity* entity, unsigned int id) {
 
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
     for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), renderer->transform->position);
-        model *= glm::mat4_cast(renderer->transform->rotation);
-        model = glm::scale(model, renderer->transform->scale);
-
+        glm::mat4 model = renderer->transform->localToWorldMatrix;
         glBindVertexArray(renderer->mesh->VAO);
 
         for (SubMesh* subMesh : renderer->mesh->subMeshes) {
@@ -270,10 +287,7 @@ void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
 
 void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
     for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), renderer->transform->position);
-        model *= glm::mat4_cast(renderer->transform->rotation);
-        model = glm::scale(model, renderer->transform->scale);
-        model = renderer->transform->localToWorldMatrix;
+        glm::mat4 model = renderer->transform->localToWorldMatrix;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
         glBindVertexArray(renderer->mesh->VAO);
@@ -318,6 +332,8 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     }
 
     if (node_open) {
+        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(entity->transform).x, getPosition(entity->transform).y, getPosition(entity->transform).z);
+
         for (Entity* child : entity->children) {
             createImGuiEntityTree(child, node_flags, node_clicked);
         }
@@ -327,13 +343,14 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-void createEntityFromModel(Model* model, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
     if (parentEntity == nullptr) {
         Entity* rootEntity = new Entity();
         rootEntity->name = model->name;
         rootEntity->id = getEntityID();
         parentEntity = rootEntity;
         entities->push_back(parentEntity);
+        root = rootEntity;
     }
 
     for (int i = 0; i < parentNode->children.size(); i++) {
@@ -341,23 +358,21 @@ void createEntityFromModel(Model* model, ModelNode* parentNode, std::vector<Enti
 
         counter++;
         MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &parentNode->children[i]->mesh);
+        childEntity->components.push_back(meshRenderer);
         renderers->push_back(meshRenderer);
         childEntity->id = getEntityID();
         childEntity->name = parentNode->children[i]->name;
-        childEntity->parent = parentEntity;
-        setScale(childEntity->transform, scale);
-        // childEntity->transform.scale = scale;
-        childEntity->transform.position = parentNode->children[i]->transform[3];
-        // childEntity->transform.position += position;
 
+        setScale(childEntity->transform, scale);
         setPosition(childEntity->transform, position);
         setParent(childEntity->transform, parentEntity->transform);
-        // parentEntity->children.push_back(childEntity);
 
         for (int j = 0; j < parentNode->children[i]->children.size(); j++) {
-            createEntityFromModel(model, parentNode->children[i]->children[j], entities, renderers, childEntity, scale, position);
+            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, childEntity, scale, position);
         }
     }
+
+    return root;
 }
 
 unsigned int getEntityID() {
@@ -413,11 +428,12 @@ void updateCamera(GLFWwindow* window, InputActions* input, CameraController* cam
     glm::vec3 moveDir = glm::vec3(0.0f);
     moveDir += input->movement.y * forward(camera->transform) + input->movement.x * right(camera->transform);
 
-    camera->transform->position += moveDir * camera->moveSpeed * deltaTime;
+    // camera->transform->position += moveDir * camera->moveSpeed * deltaTime;
+    setPosition(*camera->transform, camera->transform->position + moveDir * camera->moveSpeed * deltaTime);
 }
 
 void setViewProjection(Camera* camera) {
-    glm::vec3 position = camera->transform->position;
+    glm::vec3 position = getPosition(*camera->transform);
     camera->viewMatrix = glm::lookAt(position, position + forward(camera->transform), up(camera->transform));
     camera->projectionMatrix = glm::perspective(camera->fov, camera->aspectRatio, camera->nearPlane, camera->farPlane);
 }
