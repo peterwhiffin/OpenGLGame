@@ -155,6 +155,8 @@ struct BoxCollider : Component {
 struct RigidBody : Component {
     glm::vec3 linearVelocity;
     glm::vec3 angularVelocity;
+    glm::vec3 momentOfInertia;
+    bool lockAngular = false;
     float linearDrag;
     float angularDrag;
     float mass = 1.0f;
