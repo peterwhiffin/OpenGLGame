@@ -14,6 +14,7 @@ struct Transform;
 struct SubMesh;
 struct Mesh;
 struct BoxCollider;
+struct RigidBody;
 
 glm::vec3 right(Transform* transform);
 glm::vec3 up(Transform* transform);
@@ -103,8 +104,6 @@ struct Model {
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
     ModelNode* rootNode;
-    glm::vec3 center;
-    glm::vec3 halfExtents;
 };
 
 struct Camera : Component {
@@ -134,6 +133,7 @@ struct Player : Component {
     bool isGrounded = false;
     BoxCollider* collider;
     CameraController* cameraController;
+    RigidBody* rigidbody;
     float moveSpeed = 10.0f;
     float groundCheckDistance = 0.2f;
     Player(Entity* entity);
@@ -145,9 +145,28 @@ struct MeshRenderer : Component {
 };
 
 struct BoxCollider : Component {
+    bool isActive = true;
     glm::vec3 center;
     glm::vec3 extent;
+    glm::vec3 axes[3];
     BoxCollider(Entity* entity);
+};
+
+struct RigidBody : Component {
+    glm::vec3 linearVelocity;
+    glm::vec3 angularVelocity;
+    float linearDrag;
+    float angularDrag;
+    float mass = 1.0f;
+    float friction = 10.0f;
+    BoxCollider* collider;
+    RigidBody(Entity* entity);
+};
+
+struct SpotLight : Component {
+    float range;
+    float radius;
+    SpotLight(Entity* entity);
 };
 
 struct Entity {

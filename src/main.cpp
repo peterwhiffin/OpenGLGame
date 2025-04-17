@@ -20,8 +20,8 @@ GLFWwindow* createContext();
 void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position);
-void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position, bool addCollider);
+void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
 void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
@@ -29,6 +29,11 @@ void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
 bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut);
+void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders);
+void updateCamera(Player* player);
+bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut);
+float ProjectOBB(const BoxCollider& box, const glm::vec3& axis);
+
 Entity* m4;
 struct DirectionalLight {
     glm::vec3 position;
@@ -50,17 +55,17 @@ int counter = 0;
 unsigned int nextEntityID = 1000000;
 Entity* nodeClicked = nullptr;
 bool enableDemoWindow = false;
-bool enableDirLight = false;
-float dirLightBrightness = 1.0f;
-float ambientBrightness = 0.21f;
+bool enableDirLight = true;
+float dirLightBrightness = 2.1f;
+float ambientBrightness = 1.21f;
 DirectionalLight sun;
 unsigned int pickingShader;
 bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
 glm::vec3 gunPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-// Entity* m4Entity;
+Entity* gunEntity;
 Entity* levelEntity;
-float gravity = -9.81f;
+float gravity = -18.81f;
 float yVelocity = 0.0f;
 float terminalVelocity = 56.0f;
 int main() {
@@ -103,7 +108,9 @@ int main() {
     std::vector<MeshRenderer*> renderers;
     std::vector<Entity*> entities;
     std::vector<Texture> allTextures;
-    std::vector<BoxCollider*> colliders;
+    std::vector<BoxCollider*> dynamicColliders;
+    std::vector<BoxCollider*> allColliders;
+    std::vector<RigidBody*> rigidbodies;
 
     Texture white;
     Texture black;
@@ -119,9 +126,62 @@ int main() {
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
 
     // createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
-    // m4Entity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, &colliders, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f));
-    levelEntity = createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, &colliders, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    gunEntity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, &allColliders, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f), false);
+    levelEntity = createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, &allColliders, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), true);
+    BoxCollider* gunCollider = new BoxCollider(gunEntity);
+    gunCollider->center = getPosition(gunEntity->transform);
+    gunCollider->extent = glm::vec3(0.5f, 0.4f, 0.2f);
+    gunEntity->components.push_back(gunCollider);
+    // allColliders.push_back(gunCollider);
+    setPosition(gunEntity->transform, glm::vec3(2.0f, 5.0f, 2.0f));
+    gunCollider->center = getPosition(gunEntity->transform);
+    RigidBody* gunRB = new RigidBody(gunEntity);
+    gunEntity->components.push_back(gunRB);
+    gunRB->collider = gunCollider;
+    gunRB->linearVelocity = glm::vec3(0.0f);
+    gunRB->angularVelocity = glm::vec3(0.0f);
+    gunRB->linearDrag = 5.0f;
+    gunRB->angularDrag = 0.0f;
+    gunRB->mass = 5.0f;
+    gunRB->friction = 80.0f;
+    rigidbodies.push_back(gunRB);
 
+    /*     RigidBody* gunRB = new RigidBody(gunEntity);
+        gunRB->collider = (BoxCollider*)gunEntity->components[0];
+        gunRB->linearVelocity = glm::vec3(0.0f);
+
+        setPosition(gunEntity->transform, glm::vec3(2.0f, 5.0f, 2.0f)); */
+    // rigidbodies.push_back(gunRB);
+
+    /* for (int i = 0; i < levelEntity->children.size(); i++) {
+        if (levelEntity->children[i]->name == "Trashcan_Base") {
+            if (levelEntity->children[i]->name == "Trashcan_Base") {
+                setPosition(levelEntity->children[i]->transform, glm::vec3(5.0f, 5.0f, -4.0f));
+            }
+
+            BoxCollider* newCollider = new BoxCollider(levelEntity->children[i]);
+            RigidBody* newRB = new RigidBody(levelEntity->children[i]);
+            newRB->collider = (BoxCollider*)levelEntity->children[i]->components[1];
+            newRB->collider->isActive = false;
+            newRB->collider = newCollider;
+            newRB->collider->center = getPosition(levelEntity->children[i]->transform);
+            newRB->collider->extent = glm::vec3(0.5f, 1.0f, 0.5f);
+
+            levelEntity->children[i]->components.push_back(newRB);
+            levelEntity->children[i]->components.push_back(newCollider);
+            newRB->linearVelocity = glm::vec3(0.0f);
+            newRB->angularVelocity = glm::vec3(0.0f);
+            newRB->linearDrag = 5.0f;
+            newRB->angularDrag = 5.0f;
+            newRB->mass = 1.0f;
+            newRB->friction = 50.0f;
+            rigidbodies.push_back(newRB);
+        }
+
+        if (levelEntity->children[i]->name == "Trashcan_Lid") {
+            setPosition(levelEntity->children[i]->transform, glm::vec3(0.0f, 7.0f, 0.0f));
+        }
+    } */
     Entity* playerEntity = new Entity();
     Entity* cameraTarget = new Entity();
     Entity* cameraEntity = new Entity();
@@ -129,10 +189,18 @@ int main() {
     cameraTarget->name = "Camera Target";
     cameraEntity->name = "Camera";
     playerEntity->id = getEntityID();
-    playerEntity->name = "Player";
+    playerEntity->name = "player";
     Player* player = new Player(playerEntity);
     Camera camera(cameraEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
     BoxCollider* playerCollider = new BoxCollider(playerEntity);
+    RigidBody* playerRB = new RigidBody(playerEntity);
+    playerRB->linearVelocity = glm::vec3(0.0f);
+    playerRB->angularVelocity = glm::vec3(0.0f);
+    playerRB->collider = playerCollider;
+    playerRB->linearDrag = 0.0f;
+    playerRB->angularDrag = 0.0f;
+    player->rigidbody = playerRB;
+    rigidbodies.push_back(playerRB);
     playerCollider->center = getPosition(playerEntity->transform);
     playerCollider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
     player->collider = playerCollider;
@@ -151,6 +219,7 @@ int main() {
     setParent(cameraTarget->transform, playerEntity->transform);
     setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
+    player->rigidbody->collider->center = getPosition(*player->rigidbody->transform);
 
     unsigned int pickingFBO;
     unsigned int pickingRBO;
@@ -190,6 +259,8 @@ int main() {
     glm::vec3 gunOffset = glm::vec3(0.0f, -0.09f, -0.2f);
     glm::vec3 gunLocalRot = glm::vec3(0.0f, glm::radians(90.0f), 0.0f);
     // setPosition(m4Entity->transform, glm::vec3(0.0f, 2.0f, 0.0f));
+    currentFrame = static_cast<float>(glfwGetTime());
+    lastFrame = currentFrame;
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -201,6 +272,8 @@ int main() {
         ImGui::NewFrame();
         ImGui::Begin("The Window");
         ImGui::Text("This is a ImGui window");
+        ImGui::Text("Velocity X: (%.1f), Velocity Y: (%.1f), Velocity Z: (%.1f)", player->rigidbody->linearVelocity.x, player->rigidbody->linearVelocity.y, player->rigidbody->linearVelocity.z);
+        ImGui::Text("m4 angular X: (%.1f), m4 angular Y: (%.1f), m4 angular Z: (%.1f)", gunRB->angularVelocity.x, gunRB->angularVelocity.y, gunRB->angularVelocity.z);
         ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
         ImGui::InputFloat("jump height", &player->jumpHeight);
         ImGui::InputFloat("gravity", &gravity);
@@ -224,7 +297,9 @@ int main() {
 
         // setLocalPosition(m4Entity->transform, gunOffset);
         // setLocalRotation(m4Entity->transform, glm::quat(glm::radians(gunLocalRot)));
-        updateCamera(window, &input, player, colliders);
+        updatePlayer(window, &input, player, dynamicColliders);
+        updateRigidBodies(rigidbodies, allColliders);
+        updateCamera(player);
         setViewProjection(&camera);
         glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
         glViewport(0, 0, screenWidth, screenHeight);
@@ -360,7 +435,7 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position) {
+Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position, bool addCollider) {
     if (parentEntity == nullptr) {
         Entity* rootEntity = new Entity();
         rootEntity->name = model->name;
@@ -373,27 +448,27 @@ Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode,
     for (int i = 0; i < parentNode->children.size(); i++) {
         Entity* childEntity = new Entity();
 
-        counter++;
-        MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &parentNode->children[i]->mesh);
-        BoxCollider* collider = new BoxCollider(childEntity);
-        collider->center = meshRenderer->mesh->center;
-        collider->extent = meshRenderer->mesh->extent;
-        childEntity->components.push_back(collider);
-        childEntity->components.push_back(meshRenderer);
-
-        colliders->push_back(collider);
-        renderers->push_back(meshRenderer);
-        childEntity->id = getEntityID();
-        childEntity->name = parentNode->children[i]->name;
-
         setScale(childEntity->transform, scale);
         setPosition(childEntity->transform, position);
         setParent(childEntity->transform, parentEntity->transform);
 
-        collider->center = getPosition(childEntity->transform) + meshRenderer->mesh->center;
+        MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &parentNode->children[i]->mesh);
+        childEntity->components.push_back(meshRenderer);
+        renderers->push_back(meshRenderer);
+
+        if (addCollider) {
+            BoxCollider* collider = new BoxCollider(childEntity);
+            collider->center = getPosition(childEntity->transform) + meshRenderer->mesh->center;
+            collider->extent = meshRenderer->mesh->extent;
+            childEntity->components.push_back(collider);
+            colliders->push_back(collider);
+        }
+
+        childEntity->id = getEntityID();
+        childEntity->name = parentNode->children[i]->name;
 
         for (int j = 0; j < parentNode->children[i]->children.size(); j++) {
-            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, colliders, childEntity, scale, position);
+            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, colliders, childEntity, scale, position, addCollider);
         }
     }
 
@@ -406,7 +481,182 @@ unsigned int getEntityID() {
     return id;
 }
 
-void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
+void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders) {
+    glm::vec3 collisionResolution = glm::vec3(0.0f);
+
+    for (RigidBody* rigidbody : rigidbodies) {
+        rigidbody->linearVelocity.y += gravity * deltaTime;
+        glm::vec3 newPosition = getPosition(*rigidbody->transform) + rigidbody->linearVelocity * deltaTime;
+        glm::vec3 newRotation = glm::eulerAngles(getRotation(*rigidbody->transform)) + rigidbody->angularVelocity;
+        setRotation(*rigidbody->transform, glm::quat(newRotation));
+        setPosition(*rigidbody->transform, newPosition);
+        rigidbody->collider->center = getPosition(*rigidbody->transform);
+        rigidbody->collider->axes[0] = right(rigidbody->transform);
+        rigidbody->collider->axes[1] = up(rigidbody->transform);
+        rigidbody->collider->axes[2] = forward(rigidbody->transform);
+
+        for (RigidBody* rb : rigidbodies) {
+            if (rb == rigidbody) {
+                continue;
+            }
+
+            /*             if (rigidbody->entity->name != "player") {
+                            continue;
+                        }
+             */
+            rb->collider->axes[0] = right(rb->collider->transform);
+            rb->collider->axes[1] = up(rb->collider->transform);
+            rb->collider->axes[2] = forward(rb->collider->transform);
+
+            if (OBBvsOBB(*rigidbody->collider, *rb->collider, collisionResolution)) {
+                setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) - collisionResolution);
+                rigidbody->collider->center = getPosition(*rigidbody->transform);
+
+                glm::vec3 forceDirection = glm::normalize(getPosition(*rb->transform) - getPosition(*rigidbody->transform));
+                float force = glm::length(rigidbody->linearVelocity) * rigidbody->mass;
+
+                float massTotal = rb->mass + rigidbody->mass;
+                float rigidbodyShare = rb->mass / massTotal;
+                float rbShare = rigidbody->mass / massTotal;
+
+                rb->linearVelocity += forceDirection * (force * rbShare);
+                rigidbody->linearVelocity += -forceDirection * (force * rigidbodyShare);
+
+                float magnitude = glm::length(rigidbody->linearVelocity);
+                if (magnitude != 0.0f) {
+                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
+                    glm::vec3 normalVelocity = glm::normalize(rigidbody->linearVelocity);
+                    rigidbody->linearVelocity = normalVelocity * newMagnitude;
+                }
+                if (collisionResolution.y != 0.0f) {
+                    rigidbody->linearVelocity.y = 0.0f;
+
+                    // player->isGrounded = true;
+                }
+            }
+            /*             if (checkAABB(rigidbody->collider->center, rigidbody->collider->extent, collider->center, collider->extent, collisionResolution)) {
+                            setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) + collisionResolution);
+                            rigidbody->collider->center = getPosition(*rigidbody->transform);
+
+                            if (collisionResolution.y != 0.0f) {
+                                rigidbody->linearVelocity.y = 0.0f;
+                                // player->isGrounded = true;
+                            }
+                        } */
+        }
+
+        for (BoxCollider* collider : colliders) {
+            if (collider == rigidbody->collider || !collider->isActive) {
+                continue;
+            }
+
+            collider->axes[0] = right(collider->transform);
+            collider->axes[1] = up(collider->transform);
+            collider->axes[2] = forward(collider->transform);
+
+            if (OBBvsOBB(*rigidbody->collider, *collider, collisionResolution)) {
+                setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) - collisionResolution);
+                rigidbody->collider->center = getPosition(*rigidbody->transform);
+
+                float magnitude = glm::length(rigidbody->linearVelocity);
+
+                if (magnitude != 0.0f) {
+                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
+                    glm::vec3 normalVelocity = glm::normalize(rigidbody->linearVelocity);
+                    rigidbody->linearVelocity = normalVelocity * newMagnitude;
+                }
+                if (collisionResolution.y != 0.0f) {
+                    rigidbody->linearVelocity.y = 0.0f;
+                    // player->isGrounded = true;
+                }
+            }
+            /*             if (checkAABB(rigidbody->collider->center, rigidbody->collider->extent, collider->center, collider->extent, collisionResolution)) {
+                            setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) + collisionResolution);
+                            rigidbody->collider->center = getPosition(*rigidbody->transform);
+
+                            if (collisionResolution.y != 0.0f) {
+                                rigidbody->linearVelocity.y = 0.0f;
+                                // player->isGrounded = true;
+                            }
+                        } */
+        }
+
+        float linearMagnitude = glm::length(rigidbody->linearVelocity);
+        float angularMagnitude = glm::length(rigidbody->angularVelocity);
+
+        if (linearMagnitude != 0.0f) {
+            glm::vec3 normalVel = glm::normalize(rigidbody->linearVelocity);
+            linearMagnitude = glm::max(linearMagnitude - (rigidbody->linearDrag * deltaTime), 0.0f);
+            rigidbody->linearVelocity = normalVel * linearMagnitude;
+        }
+
+        if (angularMagnitude != 0.0f) {
+            glm::vec3 normalVel = glm::normalize(rigidbody->angularVelocity);
+            angularMagnitude = glm::max(angularMagnitude - rigidbody->angularDrag * deltaTime, 0.0f);
+            rigidbody->angularVelocity = normalVel * angularMagnitude;
+        }
+    }
+}
+
+float ProjectOBB(const BoxCollider& box, const glm::vec3& axis) {
+    return box.extent.x * std::abs(glm::dot(axis, box.axes[0])) +
+           box.extent.y * std::abs(glm::dot(axis, box.axes[1])) +
+           box.extent.z * std::abs(glm::dot(axis, box.axes[2]));
+}
+
+bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut) {
+    const float epsilon = 1e-6f;
+    float minOverlap = std::numeric_limits<float>::max();
+    glm::vec3 smallestAxis;
+
+    glm::vec3 axesToTest[15];
+    int axisCount = 0;
+
+    // Add A's local axes
+    for (int i = 0; i < 3; ++i) axesToTest[axisCount++] = a.axes[i];
+    // Add B's local axes
+    for (int i = 0; i < 3; ++i) axesToTest[axisCount++] = b.axes[i];
+    // Add cross products
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            glm::vec3 axis = glm::cross(a.axes[i], b.axes[j]);
+            if (glm::dot(axis, axis) > epsilon) {
+                axesToTest[axisCount++] = glm::normalize(axis);
+            }
+        }
+    }
+
+    glm::vec3 delta = b.center - a.center;
+
+    for (int i = 0; i < axisCount; ++i) {
+        const glm::vec3& axis = axesToTest[i];
+        float dist = std::abs(glm::dot(delta, axis));
+        float projA = ProjectOBB(a, axis);
+        float projB = ProjectOBB(b, axis);
+        float overlap = projA + projB - dist;
+
+        if (overlap < 0.0f) {
+            // Separating axis found
+            resolutionOut = glm::vec3(0.0f);
+            return false;
+        }
+
+        if (overlap < minOverlap) {
+            minOverlap = overlap;
+            smallestAxis = axis;
+
+            // Ensure resolution pushes A away from B
+            if (glm::dot(delta, axis) < 0.0f) {
+                smallestAxis = -axis;
+            }
+        }
+    }
+
+    resolutionOut = smallestAxis * minOverlap;
+    return true;
+}
+
+void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
     /*   if (!input->altFire) {
           glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -458,54 +708,24 @@ void updateCamera(GLFWwindow* window, InputActions* input, Player* player, std::
     moveDir += input->movement.y * forward(player->transform) + input->movement.x * right(player->transform);
     glm::vec3 finalMove = moveDir * player->moveSpeed;
 
+    finalMove.y = player->rigidbody->linearVelocity.y;
     if (player->isGrounded) {
         if (input->jump) {
-            yVelocity = player->jumpHeight;
+            finalMove.y = player->jumpHeight;
         }
     }
 
-    player->isGrounded = false;
+    player->isGrounded = true;
+    player->rigidbody->linearVelocity = finalMove;
+}
 
-    finalMove.y += yVelocity;
-    glm::vec3 oldPos = getPosition(*player->transform);
-    setPosition(*player->transform, player->transform->position + finalMove * deltaTime);
-
-    glm::vec3 collisionResolution = glm::vec3(0.0f);
-    player->collider->center = getPosition(*player->transform);
-    // player->collider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
-    for (BoxCollider* collider : colliders) {
-        if (collider == player->collider) {
-            continue;
-        }
-
-        if (checkAABB(player->collider->center, player->collider->extent, collider->center, collider->extent, collisionResolution)) {
-            // setPosition(*player->transform, oldPos + ((finalMove * deltaTime) - collisionResolution));
-            setPosition(*player->transform, getPosition(*player->transform) - collisionResolution);
-            player->collider->center = getPosition(*player->transform);
-            // player->collider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
-
-            // glm::vec3 newDir = oldPos + collisionResolution + moveDir - collisionResolution;
-            // setPosition(*player->transform, oldPos);
-            if (collisionResolution.y != 0.0f) {
-                player->isGrounded = true;
-            }
-            // yVelocity = 0.0f;
-        }
-    }
-
-    if (!player->isGrounded) {
-        yVelocity += gravity * deltaTime;
-        yVelocity = glm::min(yVelocity, terminalVelocity);
-    } else {
-        yVelocity = 0.0f;
-    }
-
-    setPosition(*player->cameraController->camera->transform, getPosition(*player->cameraController->cameraTarget));
-    setRotation(*player->cameraController->camera->transform, getRotation(*player->cameraController->cameraTarget));
+void updateCamera(Player* player) {
+    setPosition(*player->cameraController->camera->transform, glm::mix(getPosition(*player->cameraController->camera->transform), getPosition(*player->cameraController->cameraTarget), 0.9f));
+    setRotation(*player->cameraController->camera->transform, glm::slerp(getRotation(*player->cameraController->camera->transform), getRotation(*player->cameraController->cameraTarget), 0.9f));
 }
 
 bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut) {
-    glm::vec3 delta = centerB - centerA;
+    glm::vec3 delta = centerA - centerB;
     glm::vec3 overlap = extentA + extentB - glm::abs(delta);
 
     resolutionOut = glm::vec3(0.0f);

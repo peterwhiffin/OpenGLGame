@@ -18,7 +18,9 @@ BoxCollider::BoxCollider(Entity* entity) : Component(entity) {}
 Player::Player(Entity* entity) : Component(entity) {}
 Camera::Camera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane) : Component(entity), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
 CameraController::CameraController(Entity* entity, Camera* camera) : Component(entity), camera(camera) {}
+RigidBody::RigidBody(Entity* entity) : Component(entity) {}
 
+SpotLight::SpotLight(Entity* entity) : Component(entity) {}
 void updateTransformMatrices(Transform& transform) {
     transform.localToWorldMatrix = glm::translate(glm::mat4(1.0f), transform.position);
     transform.localToWorldMatrix *= glm::mat4_cast(transform.rotation);
