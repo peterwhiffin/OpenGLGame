@@ -34,7 +34,7 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
 void updateCamera(Player* player);
 bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut, glm::vec3& fullRes);
 float ProjectOBB(const BoxCollider& box, const glm::vec3& axis);
-
+glm::vec3 findLowestPointOnOBB(const BoxCollider& box);
 Entity* m4;
 struct DirectionalLight {
     glm::vec3 position;
@@ -166,7 +166,7 @@ int main() {
             rb->linearVelocity = glm::vec3(0.0f);
             rb->angularVelocity = glm::vec3(0.0f);
             rb->linearDrag = 5.0f;
-            rb->angularDrag = 0.5f;
+            rb->angularDrag = 1.1f;
             rb->mass = 10.0f;
             rb->friction = 25.0f;
             rigidbodies.push_back(rb);
@@ -489,8 +489,12 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
 
         if (!rigidbody->lockAngular) {
             /* glm::vec3 centerOfMassWorld = getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center;
-            glm::vec3 torqueFromGravity = glm::cross(centerOfMassWorld - getPosition(*rigidbody->transform), glm::vec3(0, -rigidbody->mass * 18.81f, 0));
+            glm::vec3 torqueFromGravity = glm::cross(centerOfMassWorld - getPosition(*rigidbody->transform), glm::vec3(0, rigidbody->mass * 18.81f, 0));
             rigidbody->angularVelocity += (torqueFromGravity / rigidbody->momentOfInertia) * deltaTime; */
+        }
+
+        if (glm::length(rigidbody->angularVelocity) < 0.01f) {
+            rigidbody->angularVelocity = glm::vec3(0.0f);
         }
         glm::vec3 newPosition = getPosition(*rigidbody->transform) + rigidbody->linearVelocity * deltaTime;
         float angle = glm::length(rigidbody->angularVelocity);
@@ -537,8 +541,8 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
                 float rigidbodySpeed = glm::length(rigidbody->linearVelocity);
 
                 if (collisionResolution.y != 0.0f) {
-                    // rigidbody->linearVelocity.y = 0.0f;
-                    // rb->linearVelocity.y = 0.0f;
+                    rigidbody->linearVelocity.y = -2.0f;
+                    rb->linearVelocity.y = -2.0f;
                 }
                 float velocityDiff = glm::abs(rbSpeed - rigidbodySpeed);
                 velocityDiff *= 0.8f;
@@ -593,12 +597,29 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
                     rigidbody->linearVelocity = glm::vec3(0.0f);
                 }
 
-                if (collisionResolution.y != 0.0f) {
-                    // rigidbody->linearVelocity.y = 0.0f;
+                magnitude = glm::length(rigidbody->angularVelocity);
+
+                if (magnitude > epsilon) {
+                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
+                    glm::vec3 normalVelocity = glm::normalize(rigidbody->angularVelocity);
+                    rigidbody->angularVelocity = normalVelocity * newMagnitude;
+                } else {
+                    rigidbody->angularVelocity = glm::vec3(0.0f);
                 }
+
+                if (collisionResolution.y != 0.0f) {
+                    rigidbody->linearVelocity.y = -2.0f;
+                }
+                glm::vec3 support = findLowestPointOnOBB(*rigidbody->collider);
+                glm::vec3 com = getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center;
+
+                glm::vec3 r = support - com;
+                glm::vec3 gravityForce = glm::vec3(0.0f, -rigidbody->mass * gravity, 0.0f);
                 glm::vec3 forceDirection = -rigidbody->linearVelocity;
-                glm::vec3 torque = glm::cross(contactPoint - getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center, forceDirection);
+                glm::vec3 torque = glm::cross(contactPoint - (getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center), forceDirection);
+                torque += glm::cross(r, gravityForce);
                 rigidbody->angularVelocity += (torque / rigidbody->momentOfInertia) * deltaTime;
+                rigidbody->linearVelocity += forceDirection * 0.9f;
             }
         }
 
@@ -629,6 +650,32 @@ float ProjectOBB(const BoxCollider& box, const glm::vec3& axis) {
            box.extent.z * std::abs(glm::dot(axis, box.axes[2]));
 }
 
+glm::vec3 findLowestPointOnOBB(const BoxCollider& box) {
+    glm::vec3 position = getPosition(*box.transform);
+    glm::quat rotation = getRotation(*box.transform);
+    glm::vec3 center = position + rotation * box.center;
+
+    glm::vec3 halfSize = box.extent;
+
+    glm::vec3 lowestPoint = center;
+    float minY = std::numeric_limits<float>::max();
+
+    for (int x = -1; x <= 1; x += 2) {
+        for (int y = -1; y <= 1; y += 2) {
+            for (int z = -1; z <= 1; z += 2) {
+                glm::vec3 localCorner = glm::vec3(x, y, z) * halfSize;
+                glm::vec3 worldCorner = center + rotation * localCorner;
+
+                if (worldCorner.y < minY) {
+                    minY = worldCorner.y;
+                    lowestPoint = worldCorner;
+                }
+            }
+        }
+    }
+
+    return lowestPoint;
+}
 bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut, glm::vec3& fullRes) {
     const float epsilon = 1e-6f;
     float minOverlap = std::numeric_limits<float>::max();
