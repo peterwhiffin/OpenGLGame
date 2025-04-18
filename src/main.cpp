@@ -29,13 +29,11 @@ void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
-bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut);
+bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolutionOut);
 void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders);
 void updateCamera(Player* player);
-bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut, glm::vec3& fullRes);
-float ProjectOBB(const BoxCollider& box, const glm::vec3& axis);
-glm::vec3 findLowestPointOnOBB(const BoxCollider& box);
-Entity* m4;
+void applyDamping(RigidBody& rigidbody, float damping);
+
 struct DirectionalLight {
     glm::vec3 position;
     glm::vec3 lookDirection;
@@ -46,6 +44,7 @@ struct DirectionalLight {
     glm::vec3 diffuse;
     glm::vec3 specular;
 };
+
 int screenWidth = 800;
 int screenHeight = 600;
 float currentFrame = 0.0f;
@@ -63,13 +62,14 @@ DirectionalLight sun;
 unsigned int pickingShader;
 bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
-glm::vec3 gunPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-Entity* gunEntity;
 Entity* levelEntity;
+Entity* trashCanEntity;
 RigidBody* trashcanRB;
 float gravity = -18.81f;
 float yVelocity = 0.0f;
 float terminalVelocity = 56.0f;
+bool canSpawn = true;
+const float epsilon = 1e-6f;
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
@@ -123,61 +123,23 @@ int main() {
     allTextures.push_back(white);
     allTextures.push_back(black);
 
-    // Model* sponzaModel = loadModel("../resources/models/sponza/sponza.obj", &allTextures, defaultShader);
-    Model* m4Model = loadModel("../resources/models/M4/ddm4 v7.obj", &allTextures, defaultShader);
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
-
-    // createEntityFromModel(sponzaModel, sponzaModel->rootNode, &entities, &renderers, nullptr, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(0.0f));
-    gunEntity = createEntityFromModel(m4Model, nullptr, m4Model->rootNode, &entities, &renderers, &allColliders, nullptr, glm::vec3(0.1f), glm::vec3(0.0f, 0.0f, 0.0f), false);
     levelEntity = createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, &allColliders, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), true);
-    BoxCollider* gunCollider = new BoxCollider(gunEntity);
-    gunCollider->center = glm::vec3(0.0f);
-    gunCollider->extent = glm::vec3(0.5f, 0.4f, 0.2f);
-    gunEntity->components.push_back(gunCollider);
-    // allColliders.push_back(gunCollider);
-    setPosition(gunEntity->transform, glm::vec3(2.0f, 5.0f, 2.0f));
-    // gunCollider->center = getPosition(gunEntity->transform);
-    RigidBody* gunRB = new RigidBody(gunEntity);
-    gunEntity->components.push_back(gunRB);
-    gunRB->collider = gunCollider;
-    // allColliders.push_back(gunCollider);
-    gunRB->collider->isActive = false;
-    gunRB->linearVelocity = glm::vec3(0.0f);
-    gunRB->angularVelocity = glm::vec3(0.0f);
-    gunRB->linearDrag = 5.0f;
-    gunRB->angularDrag = 0.5f;
-    gunRB->mass = 5.0f;
-    gunRB->friction = 80.0f;
-    float w = gunRB->collider->extent.x * 2.0f;
-    float h = gunRB->collider->extent.y * 2.0f;
-    float d = gunRB->collider->extent.z * 2.0f;
-    gunRB->momentOfInertia.x = (1.0f / 12.0f) * gunRB->mass * (h * h + d * d);
-    gunRB->momentOfInertia.y = (1.0f / 12.0f) * gunRB->mass * (w * w + d * d);
-    gunRB->momentOfInertia.z = (1.0f / 12.0f) * gunRB->mass * (w * w + h * h);
-    rigidbodies.push_back(gunRB);
 
     for (int i = 0; i < levelEntity->children.size(); i++) {
         if (levelEntity->children[i]->name == "Trashcan_Base") {
             setPosition(levelEntity->children[i]->transform, glm::vec3(1.0f, 6.0f, 0.0f));
+            trashCanEntity = levelEntity->children[i];
             BoxCollider* col = (BoxCollider*)levelEntity->children[i]->components[1];
             RigidBody* rb = new RigidBody(levelEntity->children[i]);
             trashcanRB = rb;
             rb->collider = col;
             rb->linearVelocity = glm::vec3(0.0f);
-            rb->angularVelocity = glm::vec3(0.0f);
             rb->linearDrag = 5.0f;
-            rb->angularDrag = 1.1f;
             rb->mass = 10.0f;
             rb->friction = 25.0f;
             rigidbodies.push_back(rb);
             rb->collider->isActive = false;
-            float w = rb->collider->extent.x * 2.0f;
-            float h = rb->collider->extent.y * 2.0f;
-            float d = rb->collider->extent.z * 2.0f;
-            rb->momentOfInertia.x = (1.0f / 12.0f) * rb->mass * (h * h + d * d);
-            rb->momentOfInertia.y = (1.0f / 12.0f) * rb->mass * (w * w + d * d);
-            rb->momentOfInertia.z = (1.0f / 12.0f) * rb->mass * (w * w + h * h);
-            // col->center += glm::vec3(1.0f, 6.0f, 0.0f);
         }
     }
 
@@ -194,12 +156,9 @@ int main() {
     BoxCollider* playerCollider = new BoxCollider(playerEntity);
     RigidBody* playerRB = new RigidBody(playerEntity);
     playerRB->linearVelocity = glm::vec3(0.0f);
-    playerRB->angularVelocity = glm::vec3(0.0f);
     playerRB->collider = playerCollider;
     playerRB->linearDrag = 0.0f;
-    playerRB->angularDrag = 0.0f;
     playerRB->mass = 20.0f;
-    playerRB->lockAngular = true;
     player->rigidbody = playerRB;
     rigidbodies.push_back(playerRB);
     playerCollider->center = glm::vec3(0.0f);
@@ -216,11 +175,9 @@ int main() {
     player->cameraController = &cameraController;
     playerEntity->components.push_back(&cameraController);
     playerEntity->components.push_back(player);
-    // setParent(m4Entity->transform, playerEntity->transform);
     setParent(cameraTarget->transform, playerEntity->transform);
     setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
-    // player->rigidbody->collider->center = getPosition(*player->rigidbody->transform);
 
     unsigned int pickingFBO;
     unsigned int pickingRBO;
@@ -265,15 +222,38 @@ int main() {
         lastFrame = currentFrame;
 
         updateInput(window, &input);
+
+        if (input.spawn && canSpawn) {
+            canSpawn = false;
+            MeshRenderer* trashMesh = (MeshRenderer*)trashCanEntity->components[0];
+            BoxCollider* trashCol = (BoxCollider*)trashCanEntity->components[1];
+
+            Entity* newTrashcan = new Entity();
+            MeshRenderer* newMesh = new MeshRenderer(newTrashcan, trashMesh->mesh);
+            BoxCollider* newCol = new BoxCollider(newTrashcan);
+            RigidBody* newRB = new RigidBody(newTrashcan);
+            newCol->center = trashCol->center;
+            newCol->extent = trashCol->extent;
+            newCol->isActive = false;
+            newRB->collider = newCol;
+            newRB->linearVelocity = forward(camera.transform) * 20.0f;
+            newRB->friction = 25.0f;
+            newRB->mass = 10.0f;
+            newRB->linearDrag = 3.0f;
+            renderers.push_back(newMesh);
+            rigidbodies.push_back(newRB);
+
+            setPosition(newTrashcan->transform, getPosition(*camera.transform) + forward(camera.transform));
+        }
+
+        if (!input.spawn) {
+            canSpawn = true;
+        }
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        ImGui::Begin("The Window");
-        ImGui::Text("This is a ImGui window");
-        ImGui::Text("Velocity X: (%.1f), Velocity Y: (%.1f), Velocity Z: (%.1f)", player->rigidbody->linearVelocity.x, player->rigidbody->linearVelocity.y, player->rigidbody->linearVelocity.z);
-        ImGui::Text("trash Velocity X: (%.1f), trash Velocity Y: (%.1f), trash Velocity Z: (%.1f)", trashcanRB->linearVelocity.x, trashcanRB->linearVelocity.y, trashcanRB->linearVelocity.z);
-
-        ImGui::Text("m4 angular X: (%.1f), m4 angular Y: (%.1f), m4 angular Z: (%.1f)", gunRB->angularVelocity.x, gunRB->angularVelocity.y, gunRB->angularVelocity.z);
+        ImGui::Begin("ImGui");
         ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
         ImGui::InputFloat("jump height", &player->jumpHeight);
         ImGui::InputFloat("gravity", &gravity);
@@ -480,260 +460,73 @@ unsigned int getEntityID() {
 }
 
 void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders) {
-    const float epsilon = 1e-6f;
-    glm::vec3 collisionResolution = glm::vec3(0.0f);
-    glm::vec3 fullRes = glm::vec3(0.0f);
-
     for (RigidBody* rigidbody : rigidbodies) {
         rigidbody->linearVelocity.y += gravity * deltaTime;
-
-        if (!rigidbody->lockAngular) {
-            /* glm::vec3 centerOfMassWorld = getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center;
-            glm::vec3 torqueFromGravity = glm::cross(centerOfMassWorld - getPosition(*rigidbody->transform), glm::vec3(0, rigidbody->mass * 18.81f, 0));
-            rigidbody->angularVelocity += (torqueFromGravity / rigidbody->momentOfInertia) * deltaTime; */
-        }
-
-        if (glm::length(rigidbody->angularVelocity) < 0.01f) {
-            rigidbody->angularVelocity = glm::vec3(0.0f);
-        }
+        rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
         glm::vec3 newPosition = getPosition(*rigidbody->transform) + rigidbody->linearVelocity * deltaTime;
-        float angle = glm::length(rigidbody->angularVelocity);
-        if (!rigidbody->lockAngular && angle > epsilon) {
-            glm::vec3 axis = glm::normalize(rigidbody->angularVelocity);
-            glm::quat deltaRot = glm::angleAxis(angle * deltaTime, axis);
-            glm::quat currentRot = rigidbody->transform->rotation;
-            glm::quat newRot = glm::normalize(deltaRot * currentRot);
-
-            // glm::vec3 newRotation = glm::eulerAngles(getRotation(*rigidbody->transform)) + rigidbody->angularVelocity;
-
-            // setLocalRotation(*rigidbody->transform, newRot);
-
-            setRotation(*rigidbody->transform, newRot);
-        }
         setPosition(*rigidbody->transform, newPosition);
-        // rigidbody->collider->center = getPosition(*rigidbody->transform);
-        rigidbody->collider->axes[0] = right(rigidbody->transform);
-        rigidbody->collider->axes[1] = up(rigidbody->transform);
-        rigidbody->collider->axes[2] = forward(rigidbody->transform);
     }
 
+    glm::vec3 collisionResolution = glm::vec3(0.0f);
+    float totalDamping = 0.0f;
+
     for (int i = 0; i < rigidbodies.size(); i++) {
-        RigidBody* rigidbody = rigidbodies[i];
+        RigidBody* rigidbodyA = rigidbodies[i];
+        totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < rigidbodies.size(); j++) {
-            RigidBody* rb = rigidbodies[j];
+            RigidBody* rigidbodyB = rigidbodies[j];
 
-            /*     rb->collider->axes[0] = right(rb->collider->transform);
-                rb->collider->axes[1] = up(rb->collider->transform);
-                rb->collider->axes[2] = forward(rb->collider->transform);
-     */
-            if (OBBvsOBB(*rigidbody->collider, *rb->collider, collisionResolution, fullRes)) {
-                setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) - (collisionResolution / 2.0f));
-                setPosition(*rb->transform, getPosition(*rb->transform) + (collisionResolution / 2.0f));
+            if (checkAABB(*rigidbodyA->collider, *rigidbodyB->collider, collisionResolution)) {
+                setPosition(*rigidbodyA->transform, getPosition(*rigidbodyA->transform) + (collisionResolution / 2.0f));
+                setPosition(*rigidbodyB->transform, getPosition(*rigidbodyB->transform) - (collisionResolution / 2.0f));
 
-                glm::vec3 contactPoint = rb->collider->center + collisionResolution;
-                contactPoint = fullRes;
-
-                glm::vec3 forceDirection = glm::normalize(rigidbody->linearVelocity - rb->linearVelocity);
-                glm::vec3 normalized = forceDirection;
-                normalized.y = 0.0f;
-                float totalMass = rb->mass + rigidbody->mass;
-                float rbSpeed = glm::length(rb->linearVelocity);
-                float rigidbodySpeed = glm::length(rigidbody->linearVelocity);
+                glm::vec3 flatForce = glm::normalize(rigidbodyA->linearVelocity - rigidbodyB->linearVelocity);
+                flatForce.y = 0.0f;
 
                 if (collisionResolution.y != 0.0f) {
-                    rigidbody->linearVelocity.y = -2.0f;
-                    rb->linearVelocity.y = -2.0f;
-                }
-                float velocityDiff = glm::abs(rbSpeed - rigidbodySpeed);
-                velocityDiff *= 0.8f;
-                float rbMassPart = rigidbody->mass / totalMass;
-                float rigidbodyMassPart = rb->mass / totalMass;
-
-                glm::vec3 force = normalized * rbMassPart * velocityDiff;
-                glm::vec3 force2 = normalized * rigidbodyMassPart * velocityDiff;
-                glm::vec3 torque = glm::cross(contactPoint - rigidbody->collider->center, force);
-                glm::vec3 torque2 = glm::cross(contactPoint - rb->collider->center, force2);
-
-                rb->angularVelocity += (torque2 / rb->momentOfInertia) * deltaTime;
-                rb->linearVelocity += force;
-                rigidbody->linearVelocity -= force2;
-                rigidbody->angularVelocity += (torque / rigidbody->momentOfInertia) * deltaTime;
-
-                float magnitude = glm::length(rigidbody->linearVelocity);
-
-                if (magnitude > epsilon) {
-                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
-                    glm::vec3 normalVelocity = glm::normalize(rigidbody->linearVelocity);
-                    rigidbody->linearVelocity = normalVelocity * newMagnitude;
+                    rigidbodyA->linearVelocity.y = -2.0f;
+                    rigidbodyB->linearVelocity.y = -2.0f;
+                    flatForce *= 0.1f;
                 } else {
-                    rigidbody->linearVelocity = glm::vec3(0.0f);
+                    // totalDamping += rigidbodyA->friction;
                 }
+                float velocityDiff = glm::abs(rigidbodyB->linearMagnitude - rigidbodyA->linearMagnitude) * 0.8f;
+                float rigidBodyAForce = 1.0f - rigidbodyA->mass / (rigidbodyA->mass + rigidbodyB->mass);
+                float rigidbodyBForce = 1.0f - rigidBodyAForce;
+                rigidbodyA->linearVelocity -= flatForce * rigidBodyAForce * velocityDiff;
+                rigidbodyB->linearVelocity += flatForce * rigidbodyBForce * velocityDiff;
             }
         }
 
         for (BoxCollider* collider : colliders) {
-            if (collider == rigidbody->collider || !collider->isActive) {
+            if (collider == rigidbodyA->collider || !collider->isActive) {
                 continue;
             }
 
-            collider->axes[0] = right(collider->transform);
-            collider->axes[1] = up(collider->transform);
-            collider->axes[2] = forward(collider->transform);
-            // collider->center = collider->transform->position;
-
-            if (OBBvsOBB(*rigidbody->collider, *collider, collisionResolution, fullRes)) {
-                setPosition(*rigidbody->transform, getPosition(*rigidbody->transform) - collisionResolution);
-                // rigidbody->collider->center = getPosition(*rigidbody->transform);
-
-                glm::vec3 contactPoint = fullRes;
-
-                float magnitude = glm::length(rigidbody->linearVelocity);
-
-                if (magnitude > epsilon) {
-                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
-                    glm::vec3 normalVelocity = glm::normalize(rigidbody->linearVelocity);
-                    rigidbody->linearVelocity = normalVelocity * newMagnitude;
-                } else {
-                    rigidbody->linearVelocity = glm::vec3(0.0f);
-                }
-
-                magnitude = glm::length(rigidbody->angularVelocity);
-
-                if (magnitude > epsilon) {
-                    float newMagnitude = glm::max(magnitude - rigidbody->friction * deltaTime, 0.0f);
-                    glm::vec3 normalVelocity = glm::normalize(rigidbody->angularVelocity);
-                    rigidbody->angularVelocity = normalVelocity * newMagnitude;
-                } else {
-                    rigidbody->angularVelocity = glm::vec3(0.0f);
-                }
+            if (checkAABB(*rigidbodyA->collider, *collider, collisionResolution)) {
+                setPosition(*rigidbodyA->transform, getPosition(*rigidbodyA->transform) + collisionResolution);
 
                 if (collisionResolution.y != 0.0f) {
-                    rigidbody->linearVelocity.y = -2.0f;
-                }
-                glm::vec3 support = findLowestPointOnOBB(*rigidbody->collider);
-                glm::vec3 com = getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center;
-
-                glm::vec3 r = support - com;
-                glm::vec3 gravityForce = glm::vec3(0.0f, -rigidbody->mass * gravity, 0.0f);
-                glm::vec3 forceDirection = -rigidbody->linearVelocity;
-                glm::vec3 torque = glm::cross(contactPoint - (getPosition(*rigidbody->transform) + getRotation(*rigidbody->transform) * rigidbody->collider->center), forceDirection);
-                torque += glm::cross(r, gravityForce);
-                rigidbody->angularVelocity += (torque / rigidbody->momentOfInertia) * deltaTime;
-                rigidbody->linearVelocity += forceDirection * 0.9f;
-            }
-        }
-
-        float linearMagnitude = glm::length(rigidbody->linearVelocity);
-        float angularMagnitude = glm::length(rigidbody->angularVelocity);
-
-        if (linearMagnitude > epsilon) {
-            glm::vec3 normalVel = glm::normalize(rigidbody->linearVelocity);
-            linearMagnitude = glm::max(linearMagnitude - (rigidbody->linearDrag * deltaTime), 0.0f);
-            rigidbody->linearVelocity = normalVel * linearMagnitude;
-        } else {
-            rigidbody->linearVelocity = glm::vec3(0.0f);
-        }
-
-        if (angularMagnitude > epsilon) {
-            glm::vec3 normalVel = glm::normalize(rigidbody->angularVelocity);
-            angularMagnitude = glm::max(angularMagnitude - rigidbody->angularDrag * deltaTime, 0.0f);
-            rigidbody->angularVelocity = normalVel * angularMagnitude;
-        } else {
-            rigidbody->angularVelocity = glm::vec3(0.0f);
-        }
-    }
-}
-
-float ProjectOBB(const BoxCollider& box, const glm::vec3& axis) {
-    return box.extent.x * std::abs(glm::dot(axis, box.axes[0])) +
-           box.extent.y * std::abs(glm::dot(axis, box.axes[1])) +
-           box.extent.z * std::abs(glm::dot(axis, box.axes[2]));
-}
-
-glm::vec3 findLowestPointOnOBB(const BoxCollider& box) {
-    glm::vec3 position = getPosition(*box.transform);
-    glm::quat rotation = getRotation(*box.transform);
-    glm::vec3 center = position + rotation * box.center;
-
-    glm::vec3 halfSize = box.extent;
-
-    glm::vec3 lowestPoint = center;
-    float minY = std::numeric_limits<float>::max();
-
-    for (int x = -1; x <= 1; x += 2) {
-        for (int y = -1; y <= 1; y += 2) {
-            for (int z = -1; z <= 1; z += 2) {
-                glm::vec3 localCorner = glm::vec3(x, y, z) * halfSize;
-                glm::vec3 worldCorner = center + rotation * localCorner;
-
-                if (worldCorner.y < minY) {
-                    minY = worldCorner.y;
-                    lowestPoint = worldCorner;
+                    rigidbodyA->linearVelocity.y = -2.0f;
+                    totalDamping += rigidbodyA->friction;
                 }
             }
         }
-    }
 
-    return lowestPoint;
+        applyDamping(*rigidbodyA, totalDamping);
+    }
 }
-bool OBBvsOBB(const BoxCollider& a, const BoxCollider& b, glm::vec3& resolutionOut, glm::vec3& fullRes) {
-    const float epsilon = 1e-6f;
-    float minOverlap = std::numeric_limits<float>::max();
-    glm::vec3 smallestAxis;
 
-    glm::vec3 axesToTest[15];
-    int axisCount = 0;
+void applyDamping(RigidBody& rigidbody, float damping) {
+    rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
 
-    // Add A's local axes
-    for (int i = 0; i < 3; ++i) axesToTest[axisCount++] = a.axes[i];
-    // Add B's local axes
-    for (int i = 0; i < 3; ++i) axesToTest[axisCount++] = b.axes[i];
-    // Add cross products
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            glm::vec3 axis = glm::cross(a.axes[i], b.axes[j]);
-            if (glm::dot(axis, axis) > epsilon) {
-                axesToTest[axisCount++] = glm::normalize(axis);
-            }
-        }
+    if (rigidbody.linearMagnitude > epsilon) {
+        glm::vec3 normalVel = glm::normalize(rigidbody.linearVelocity);
+        rigidbody.linearMagnitude = glm::max(rigidbody.linearMagnitude - (damping * deltaTime), 0.0f);
+        rigidbody.linearVelocity = normalVel * rigidbody.linearMagnitude;
+    } else {
+        rigidbody.linearVelocity = glm::vec3(0.0f);
     }
-
-    glm::vec3 delta = (getPosition(*b.transform) + getRotation(*b.transform) * b.center) - (getPosition(*a.transform) + getRotation(*a.transform) * a.center);
-
-    fullRes = glm::vec3(0.0f);
-    for (int i = 0; i < axisCount; ++i) {
-        const glm::vec3& axis = axesToTest[i];
-        float dist = std::abs(glm::dot(delta, axis));
-        float projA = ProjectOBB(a, axis);
-        float projB = ProjectOBB(b, axis);
-        float overlap = projA + projB - dist;
-
-        if (overlap < 0.0f) {
-            // Separating axis found
-            resolutionOut = glm::vec3(0.0f);
-            fullRes = glm::vec3(0.0f);
-            return false;
-        }
-
-        if (overlap < minOverlap) {
-            minOverlap = overlap;
-            smallestAxis = axis;
-
-            // Ensure resolution pushes A away from B
-            if (glm::dot(delta, axis) < 0.0f) {
-                smallestAxis = -axis;
-                fullRes += -axis * overlap;
-            } else {
-                fullRes += axis * overlap;
-            }
-        }
-    }
-
-    glm::vec3 centerA = getPosition(*a.transform) + a.transform->rotation * a.center;
-    glm::vec3 centerB = getPosition(*b.transform) + b.transform->rotation * b.center;
-    fullRes = centerA + glm::dot(centerB - centerA, smallestAxis) * smallestAxis;
-    resolutionOut = smallestAxis * minOverlap;
-    return true;
 }
 
 void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
@@ -789,9 +582,11 @@ void updateCamera(Player* player) {
     setRotation(*player->cameraController->camera->transform, glm::slerp(getRotation(*player->cameraController->camera->transform), getRotation(*player->cameraController->cameraTarget), 0.9f));
 }
 
-bool checkAABB(const glm::vec3& centerA, const glm::vec3& extentA, const glm::vec3& centerB, const glm::vec3& extentB, glm::vec3& resolutionOut) {
+bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolutionOut) {
+    glm::vec3 centerA = getPosition(*colliderA.transform) + colliderA.center;
+    glm::vec3 centerB = getPosition(*colliderB.transform) + colliderB.center;
     glm::vec3 delta = centerA - centerB;
-    glm::vec3 overlap = extentA + extentB - glm::abs(delta);
+    glm::vec3 overlap = colliderA.extent + colliderB.extent - glm::abs(delta);
 
     resolutionOut = glm::vec3(0.0f);
 

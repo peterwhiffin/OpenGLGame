@@ -6,6 +6,7 @@
 
 struct InputActions {
     bool menu;
+    bool spawn;
     bool jump;
     bool fire;
     bool altFire;

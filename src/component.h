@@ -148,17 +148,13 @@ struct BoxCollider : Component {
     bool isActive = true;
     glm::vec3 center;
     glm::vec3 extent;
-    glm::vec3 axes[3];
     BoxCollider(Entity* entity);
 };
 
 struct RigidBody : Component {
     glm::vec3 linearVelocity;
-    glm::vec3 angularVelocity;
-    glm::vec3 momentOfInertia;
-    bool lockAngular = false;
+    float linearMagnitude;
     float linearDrag;
-    float angularDrag;
     float mass = 1.0f;
     float friction = 10.0f;
     BoxCollider* collider;
