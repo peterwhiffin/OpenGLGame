@@ -3,16 +3,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <glm/gtc/type_ptr.hpp>
-#include "component.h"
+#include "entity.h"
 #include "renderer.h"
 
 Entity::Entity() : transform(this) {
     parent = nullptr;
 }
-Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {
-}
-Transform::Transform(Entity* entity) : Component(entity) {
-}
+Component::Component(Entity* newEntity) : entity(newEntity), transform(&newEntity->transform) {}
+Transform::Transform(Entity* entity) : Component(entity) {}
 MeshRenderer::MeshRenderer(Entity* entity, Mesh* mesh) : Component(entity), mesh(mesh) {}
 BoxCollider::BoxCollider(Entity* entity) : Component(entity) {}
 Player::Player(Entity* entity) : Component(entity) {}

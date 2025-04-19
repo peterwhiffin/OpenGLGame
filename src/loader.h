@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "component.h"
+#include "entity.h"
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader);
 

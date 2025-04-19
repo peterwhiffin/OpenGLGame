@@ -1,5 +1,4 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#pragma once
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -7,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include "glm/ext/quaternion_float.hpp"
+#include "transform.h"
 
 struct Entity;
 struct Component;
@@ -128,14 +128,14 @@ struct Animation {
 };
 
 struct Animator : Component {
-    std::unordered_map<AnimationChannel*, Transform*> channelMap;
     std::vector<Animation*> animations;
     Animation* currentAnimation;
-
-    std::unordered_map<AnimationChannel*, int> currentKeyPosition;
-    std::unordered_map<AnimationChannel*, int> currentKeyRotation;
-    std::unordered_map<AnimationChannel*, int> currentKeyScale;
     float playbackTime = 0.0f;
+    std::unordered_map<AnimationChannel*, Transform*> channelMap;
+    std::unordered_map<AnimationChannel*, int> nextKeyPosition;
+    std::unordered_map<AnimationChannel*, int> nextKeyRotation;
+    std::unordered_map<AnimationChannel*, int> nextKeyScale;
+
     Animator(Entity* entity);
 };
 
@@ -219,5 +219,3 @@ struct Entity {
 
     Entity();
 };
-
-#endif
