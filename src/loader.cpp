@@ -41,8 +41,8 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
 
     Model* newModel = new Model();
     newModel->name = name;
-    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader);
     processAnimations(scene, newModel);
+    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader);
     return newModel;
 }
 
@@ -100,6 +100,14 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
     childNode->parent = parentNode;
     childNode->name = node->mName.C_Str();
     childNode->mesh = nullptr;
+
+    for (Animation* animation : model->animations) {
+        for (AnimationChannel channel : animation->channels) {
+            if (node->mName.C_Str() == channel.name) {
+                model->channelMap[childNode] = &channel;
+            }
+        }
+    }
 
     if (node->mNumMeshes != 0) {
         childNode->mesh = new Mesh();

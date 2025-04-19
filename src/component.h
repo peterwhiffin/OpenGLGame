@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <string>
-
+#include <unordered_map>
 #include "glm/ext/quaternion_float.hpp"
 
 struct Entity;
@@ -128,11 +128,14 @@ struct Animation {
 };
 
 struct Animator : Component {
+    std::unordered_map<AnimationChannel*, Transform*> channelMap;
     std::vector<Animation*> animations;
     Animation* currentAnimation;
-    int currentKeyPosition;
-    int currentKeyRotation;
-    int currentKeyScale;
+
+    std::unordered_map<AnimationChannel*, int> currentKeyPosition;
+    std::unordered_map<AnimationChannel*, int> currentKeyRotation;
+    std::unordered_map<AnimationChannel*, int> currentKeyScale;
+    float playbackTime = 0.0f;
     Animator(Entity* entity);
 };
 
@@ -141,6 +144,7 @@ struct Model {
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
     std::vector<Animation*> animations;
+    std::unordered_map<ModelNode*, AnimationChannel*> channelMap;
     ModelNode* rootNode;
 };
 

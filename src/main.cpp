@@ -21,7 +21,7 @@ GLFWwindow* createContext();
 void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-Entity* createEntityFromModel(ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider);
+Entity* createEntityFromModel(Model* model, ModelNode* node, Animator* animator, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, std::vector<Animator*>* animators, Entity* parentEntity, bool addCollider, bool addAnimator, bool first);
 void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
@@ -33,6 +33,7 @@ bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolu
 void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders);
 void updateCamera(Player* player);
 void applyDamping(RigidBody& rigidbody, float damping);
+void processAnimators(Animator& animator);
 
 struct DirectionalLight {
     glm::vec3 position;
@@ -115,6 +116,7 @@ int main() {
     std::vector<BoxCollider*> dynamicColliders;
     std::vector<BoxCollider*> allColliders;
     std::vector<RigidBody*> rigidbodies;
+    std::vector<Animator*> animators;
 
     Texture white;
     Texture black;
@@ -128,10 +130,10 @@ int main() {
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
 
-    levelEntity = createEntityFromModel(testRoom->rootNode, &renderers, &allColliders, nullptr, true);
+    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, true, false, true);
+    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, true, true, true);
     // Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
     // Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
-    wrenchEntity = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
 
     entities.push_back(levelEntity);
     // entities.push_back(wrenchEntity1);
@@ -291,6 +293,9 @@ int main() {
 
         updatePlayer(window, &input, player, dynamicColliders);
         updateRigidBodies(rigidbodies, allColliders);
+        for (Animator* animator : animators) {
+            processAnimators(*animator);
+        }
         updateCamera(player);
         setViewProjection(&camera);
         glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
@@ -348,6 +353,19 @@ bool searchEntities(Entity* entity, unsigned int id) {
 }
 
 void processAnimators(Animator& animator) {
+    animator.playbackTime += deltaTime;
+    for (AnimationChannel channel : animator.currentAnimation->channels) {
+        if (animator.playbackTime >= channel.positions[animator.currentKeyPosition[&channel]].time) {
+            animator.currentKeyPosition[&channel]++;
+            if (animator.currentKeyPosition[&channel] >= channel.positions.size()) {
+                animator.currentKeyPosition[&channel] = 0;
+            }
+        }
+
+        if (animator.channelMap.count(&channel) != 0) {
+            setLocalPosition(*animator.channelMap[&channel], channel.positions[animator.currentKeyPosition[&channel]].position);
+        }
+    }
 }
 
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
@@ -430,12 +448,20 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider, bool first = true) {
+Entity* createEntityFromModel(Model* model, ModelNode* node, Animator* animator, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, std::vector<Animator*>* animators, Entity* parentEntity, bool addCollider, bool addAnimator, bool first) {
     Entity* childEntity = new Entity();
     childEntity->name = node->name;
     setParent(*childEntity, parentEntity);
 
-    if (first) {
+    if (first && addAnimator) {
+        animator = new Animator(childEntity);
+        for (Animation* animation : model->animations) {
+            animator->animations.push_back(animation);
+        }
+
+        animator->currentAnimation = animator->animations[0];
+
+        animators->push_back(animator);
     }
 
     if (node->mesh != nullptr) {
@@ -451,12 +477,21 @@ Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRen
             colliders->push_back(collider);
         }
 
+        if (addAnimator) {
+            if (model->channelMap.count(node) != 0) {
+                animator->channelMap[model->channelMap[node]] = &childEntity->transform;
+                animator->currentKeyPosition[model->channelMap[node]] = 0;
+                animator->currentKeyRotation[model->channelMap[node]] = 0;
+                animator->currentKeyScale[model->channelMap[node]] = 0;
+            }
+        }
+
         childEntity->id = getEntityID();
         childEntity->name = node->name;
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(model, node->children[i], renderers, colliders, childEntity, addCollider, false);
+        createEntityFromModel(model, node->children[i], animator, renderers, colliders, animators, childEntity, addCollider, addAnimator, false);
     }
 
     return childEntity;
