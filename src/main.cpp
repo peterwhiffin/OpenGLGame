@@ -21,7 +21,7 @@ GLFWwindow* createContext();
 void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position, bool addCollider);
+Entity* createEntityFromModel(ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider);
 void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 unsigned int getEntityID();
@@ -64,6 +64,8 @@ bool isPicking = false;
 glm::dvec2 pickPosition = glm::dvec2(0, 0);
 Entity* levelEntity;
 Entity* trashCanEntity;
+Entity* wrenchEntity;
+glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 RigidBody* trashcanRB;
 float gravity = -18.81f;
 float yVelocity = 0.0f;
@@ -124,7 +126,28 @@ int main() {
     allTextures.push_back(black);
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
-    levelEntity = createEntityFromModel(testRoom, nullptr, testRoom->rootNode, &entities, &renderers, &allColliders, nullptr, glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), true);
+    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
+
+    levelEntity = createEntityFromModel(testRoom->rootNode, &renderers, &allColliders, nullptr, true);
+    Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+    Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+    wrenchEntity = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+
+    entities.push_back(levelEntity);
+    entities.push_back(wrenchEntity1);
+    entities.push_back(wrenchEntity2);
+    entities.push_back(wrenchEntity);
+
+    setPosition(wrenchEntity1->transform, glm::vec3(1.0f, 3.0f, 0.0f));
+    setPosition(wrenchEntity2->transform, glm::vec3(-1.0f, 3.0f, 2.0f));
+
+    for (int i = 0; i < wrench->rootNode->children.size(); i++) {
+        std::cout << wrench->rootNode->children[i]->name << std::endl;
+
+        for (int j = 0; j < wrench->rootNode->children[i]->children.size(); j++) {
+            std::cout << wrench->rootNode->children[i]->children[j]->name << std::endl;
+        }
+    }
 
     for (int i = 0; i < levelEntity->children.size(); i++) {
         if (levelEntity->children[i]->name == "Trashcan_Base") {
@@ -179,6 +202,9 @@ int main() {
     setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
 
+    setParent(wrenchEntity->transform, cameraTarget->transform);
+    setLocalRotation(wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
+    setLocalPosition(wrenchEntity->transform, wrenchOffset);
     unsigned int pickingFBO;
     unsigned int pickingRBO;
     unsigned int pickingTexture;
@@ -257,6 +283,9 @@ int main() {
         ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
         ImGui::InputFloat("jump height", &player->jumpHeight);
         ImGui::InputFloat("gravity", &gravity);
+        ImGui::InputFloat("offset X", &wrenchOffset.x);
+        ImGui::InputFloat("offset Y", &wrenchOffset.y);
+        ImGui::InputFloat("offset Z", &wrenchOffset.z);
         ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
         ImGui::Checkbox("Enable Directional Light", &enableDirLight);
         if (enableDirLight) {
@@ -413,24 +442,15 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode, std::vector<Entity*>* entities, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, glm::vec3 scale, glm::vec3 position, bool addCollider) {
-    if (parentEntity == nullptr) {
-        Entity* rootEntity = new Entity();
-        rootEntity->name = model->name;
-        rootEntity->id = getEntityID();
-        parentEntity = rootEntity;
-        entities->push_back(parentEntity);
-        root = rootEntity;
+Entity* createEntityFromModel(ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider) {
+    Entity* childEntity = new Entity();
+    childEntity->name = node->name;
+    if (parentEntity != nullptr) {
+        setParent(childEntity->transform, parentEntity->transform);
     }
 
-    for (int i = 0; i < parentNode->children.size(); i++) {
-        Entity* childEntity = new Entity();
-
-        setScale(childEntity->transform, scale);
-        setPosition(childEntity->transform, position);
-        setParent(childEntity->transform, parentEntity->transform);
-
-        MeshRenderer* meshRenderer = new MeshRenderer(childEntity, &parentNode->children[i]->mesh);
+    if (node->mesh != nullptr) {
+        MeshRenderer* meshRenderer = new MeshRenderer(childEntity, node->mesh);
         childEntity->components.push_back(meshRenderer);
         renderers->push_back(meshRenderer);
 
@@ -443,14 +463,14 @@ Entity* createEntityFromModel(Model* model, Entity* root, ModelNode* parentNode,
         }
 
         childEntity->id = getEntityID();
-        childEntity->name = parentNode->children[i]->name;
-
-        for (int j = 0; j < parentNode->children[i]->children.size(); j++) {
-            createEntityFromModel(model, root, parentNode->children[i]->children[j], entities, renderers, colliders, childEntity, scale, position, addCollider);
-        }
+        childEntity->name = node->name;
     }
 
-    return root;
+    for (int i = 0; i < node->children.size(); i++) {
+        childEntity->children.push_back(createEntityFromModel(node->children[i], renderers, colliders, childEntity, addCollider));
+    }
+
+    return childEntity;
 }
 
 unsigned int getEntityID() {
@@ -578,8 +598,8 @@ void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::
 }
 
 void updateCamera(Player* player) {
-    setPosition(*player->cameraController->camera->transform, glm::mix(getPosition(*player->cameraController->camera->transform), getPosition(*player->cameraController->cameraTarget), 0.9f));
-    setRotation(*player->cameraController->camera->transform, glm::slerp(getRotation(*player->cameraController->camera->transform), getRotation(*player->cameraController->cameraTarget), 0.9f));
+    setPosition(*player->cameraController->camera->transform, glm::mix(getPosition(*player->cameraController->camera->transform), getPosition(*player->cameraController->cameraTarget), 1.0f));
+    setRotation(*player->cameraController->camera->transform, glm::slerp(getRotation(*player->cameraController->camera->transform), getRotation(*player->cameraController->cameraTarget), 1.0f));
 }
 
 bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolutionOut) {

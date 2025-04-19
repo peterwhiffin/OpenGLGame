@@ -96,7 +96,7 @@ struct ModelNode {
     ModelNode* parent;
     glm::mat4 transform;
     std::vector<ModelNode*> children;
-    Mesh mesh;
+    Mesh* mesh;
 };
 
 struct Model {

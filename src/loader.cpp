@@ -16,7 +16,7 @@
 #include "glm/ext/quaternion_float.hpp"
 #include "shader.h"
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader);
+ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader);
 Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
 void createMeshBuffers(Mesh* mesh);
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader);
@@ -38,50 +38,47 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
     std::string name = scene->mRootNode->mName.C_Str();
     name = name.substr(0, name.find_last_of('.'));
     newModel->name = name;
-    ModelNode* rootNode = new ModelNode();
-    rootNode->parent = nullptr;
-    newModel->rootNode = rootNode;
-    processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, rootNode, &directory, allTextures, shader);
-    std::cout << "nodes processed: " << nodeCounter << std::endl;
+    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader);
     return newModel;
 }
 
-void processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
+ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
-    ModelNode* targetParent = parentNode;
+    ModelNode* childNode = new ModelNode();
+    childNode->transform = globalTransform;
+    childNode->parent = parentNode;
+    childNode->name = node->mName.C_Str();
+    childNode->mesh = nullptr;
 
     if (node->mNumMeshes != 0) {
-        ModelNode* childNode = new ModelNode();
-        childNode->parent = parentNode;
-        parentNode->children.push_back(childNode);
-        childNode->transform = globalTransform;
-
-        childNode->name = node->mName.C_Str();
-        childNode->mesh.min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
-        childNode->mesh.max = childNode->mesh.min;
+        childNode->mesh = new Mesh();
+        childNode->mesh->min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
+        childNode->mesh->max = childNode->mesh->min;
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            processSubMesh(mesh, scene, &childNode->mesh, globalTransform, directory, allTextures, shader);
+
+            processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader);
         }
 
-        childNode->mesh.center = (childNode->mesh.min + childNode->mesh.max) * 0.5f;
-        childNode->mesh.extent = (childNode->mesh.max - childNode->mesh.min) * 0.5f;
+        childNode->mesh->center = (childNode->mesh->min + childNode->mesh->max) * 0.5f;
+        childNode->mesh->extent = (childNode->mesh->max - childNode->mesh->min) * 0.5f;
 
-        model->meshes.push_back(&childNode->mesh);
+        model->meshes.push_back(childNode->mesh);
 
-        for (int i = 0; i < childNode->mesh.subMeshes.size(); i++) {
-            model->materials.push_back(&childNode->mesh.subMeshes[i]->material);
+        for (int i = 0; i < childNode->mesh->subMeshes.size(); i++) {
+            model->materials.push_back(&childNode->mesh->subMeshes[i]->material);
         }
 
-        createMeshBuffers(&childNode->mesh);
-        targetParent = childNode;
+        createMeshBuffers(childNode->mesh);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene, globalTransform, model, targetParent, directory, allTextures, shader);
+        childNode->children.push_back(processNode(node->mChildren[i], scene, globalTransform, model, childNode, directory, allTextures, shader));
     }
+
+    return childNode;
 }
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
     SubMesh* subMesh = new SubMesh();
