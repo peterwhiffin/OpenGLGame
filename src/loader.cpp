@@ -54,17 +54,17 @@ void processAnimations(const aiScene* scene, Model* model) {
         newAnimation->duration = aiAnim->mDuration / aiAnim->mTicksPerSecond;
 
         for (int j = 0; j < aiAnim->mNumChannels; j++) {
-            AnimationChannel channel;
-            channel.name = aiAnim->mChannels[j]->mNodeName.C_Str();
+            AnimationChannel* channel = new AnimationChannel();
+            channel->name = aiAnim->mChannels[j]->mNodeName.C_Str();
 
-            std::cout << channel.name << std::endl;
+            std::cout << channel->name << std::endl;
             for (int k = 0; k < aiAnim->mChannels[j]->mNumPositionKeys; k++) {
                 aiVector3D aiPosition(aiAnim->mChannels[j]->mPositionKeys[k].mValue);
                 glm::vec3 position(aiPosition.x, aiPosition.y, aiPosition.z);
                 KeyFramePosition keyFrame;
                 keyFrame.position = position;
                 keyFrame.time = aiAnim->mChannels[j]->mPositionKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel.positions.push_back(keyFrame);
+                channel->positions.push_back(keyFrame);
             }
 
             for (int k = 0; k < aiAnim->mChannels[j]->mNumRotationKeys; k++) {
@@ -73,7 +73,7 @@ void processAnimations(const aiScene* scene, Model* model) {
                 KeyFrameRotation keyFrame;
                 keyFrame.rotation = rotation;
                 keyFrame.time = aiAnim->mChannels[j]->mRotationKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel.rotations.push_back(keyFrame);
+                channel->rotations.push_back(keyFrame);
             }
 
             for (int k = 0; k < aiAnim->mChannels[j]->mNumScalingKeys; k++) {
@@ -82,7 +82,7 @@ void processAnimations(const aiScene* scene, Model* model) {
                 KeyFrameScale keyFrame;
                 keyFrame.scale = scale;
                 keyFrame.time = aiAnim->mChannels[j]->mScalingKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel.scales.push_back(keyFrame);
+                channel->scales.push_back(keyFrame);
             }
 
             newAnimation->channels.push_back(channel);
@@ -102,9 +102,9 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
     childNode->mesh = nullptr;
 
     for (Animation* animation : model->animations) {
-        for (AnimationChannel channel : animation->channels) {
-            if (node->mName.C_Str() == channel.name) {
-                model->channelMap[childNode] = &channel;
+        for (AnimationChannel* channel : animation->channels) {
+            if (node->mName.C_Str() == channel->name) {
+                model->channelMap[childNode] = channel;
             }
         }
     }

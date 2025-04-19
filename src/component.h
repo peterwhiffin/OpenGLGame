@@ -124,7 +124,7 @@ struct AnimationChannel {
 struct Animation {
     std::string name;
     float duration;
-    std::vector<AnimationChannel> channels;
+    std::vector<AnimationChannel*> channels;
 };
 
 struct Animator : Component {

@@ -9,6 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <typeinfo>
+#include <unordered_map>
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"
@@ -131,7 +132,7 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
 
     levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, true, false, true);
-    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, true, true, true);
+    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, false, true, true);
     // Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
     // Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
 
@@ -354,17 +355,28 @@ bool searchEntities(Entity* entity, unsigned int id) {
 
 void processAnimators(Animator& animator) {
     animator.playbackTime += deltaTime;
-    for (AnimationChannel channel : animator.currentAnimation->channels) {
-        if (animator.playbackTime >= channel.positions[animator.currentKeyPosition[&channel]].time) {
-            animator.currentKeyPosition[&channel]++;
-            if (animator.currentKeyPosition[&channel] >= channel.positions.size()) {
-                animator.currentKeyPosition[&channel] = 0;
+    for (AnimationChannel* channel : animator.currentAnimation->channels) {
+        if (animator.playbackTime >= channel->positions[animator.currentKeyPosition[channel]].time) {
+            animator.currentKeyPosition[channel]++;
+            if (animator.currentKeyPosition[channel] >= channel->positions.size()) {
+                animator.currentKeyPosition[channel] = 0;
+                animator.playbackTime = 0.0f;
             }
         }
 
-        if (animator.channelMap.count(&channel) != 0) {
-            setLocalPosition(*animator.channelMap[&channel], channel.positions[animator.currentKeyPosition[&channel]].position);
+        float currentTime = channel->positions[animator.currentKeyPosition[channel]].time;
+        float prevTime = 0.0f;
+        int prevIndex = animator.currentKeyPosition[channel] - 1;
+
+        if (prevIndex >= 0) {
+            prevTime = channel->positions[prevIndex].time;
         }
+
+        float totalDuration = currentTime - prevTime;
+        float timeElapsed = animator.playbackTime - prevTime;
+        float lerp = glm::min(timeElapsed / totalDuration, 1.0f);
+
+        setLocalPosition(*animator.channelMap[channel], glm::mix(animator.channelMap[channel]->position, wrenchOffset + channel->positions[animator.currentKeyPosition[channel]].position, lerp));
     }
 }
 
@@ -480,6 +492,8 @@ Entity* createEntityFromModel(Model* model, ModelNode* node, Animator* animator,
         if (addAnimator) {
             if (model->channelMap.count(node) != 0) {
                 animator->channelMap[model->channelMap[node]] = &childEntity->transform;
+
+                std::cout << "channel mapped: " << animator->channelMap[model->channelMap[node]]->entity->name << std::endl;
                 animator->currentKeyPosition[model->channelMap[node]] = 0;
                 animator->currentKeyRotation[model->channelMap[node]] = 0;
                 animator->currentKeyScale[model->channelMap[node]] = 0;
