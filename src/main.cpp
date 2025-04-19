@@ -129,25 +129,17 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
 
     levelEntity = createEntityFromModel(testRoom->rootNode, &renderers, &allColliders, nullptr, true);
-    Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
-    Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+    // Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+    // Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
     wrenchEntity = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
 
     entities.push_back(levelEntity);
-    entities.push_back(wrenchEntity1);
-    entities.push_back(wrenchEntity2);
+    // entities.push_back(wrenchEntity1);
+    // entities.push_back(wrenchEntity2);
     entities.push_back(wrenchEntity);
 
-    setPosition(wrenchEntity1->transform, glm::vec3(1.0f, 3.0f, 0.0f));
-    setPosition(wrenchEntity2->transform, glm::vec3(-1.0f, 3.0f, 2.0f));
-
-    for (int i = 0; i < wrench->rootNode->children.size(); i++) {
-        std::cout << wrench->rootNode->children[i]->name << std::endl;
-
-        for (int j = 0; j < wrench->rootNode->children[i]->children.size(); j++) {
-            std::cout << wrench->rootNode->children[i]->children[j]->name << std::endl;
-        }
-    }
+    // setPosition(wrenchEntity1->transform, glm::vec3(1.0f, 3.0f, 0.0f));
+    // setPosition(wrenchEntity2->transform, glm::vec3(-1.0f, 3.0f, 2.0f));
 
     for (int i = 0; i < levelEntity->children.size(); i++) {
         if (levelEntity->children[i]->name == "Trashcan_Base") {
@@ -198,11 +190,11 @@ int main() {
     player->cameraController = &cameraController;
     playerEntity->components.push_back(&cameraController);
     playerEntity->components.push_back(player);
-    setParent(cameraTarget->transform, playerEntity->transform);
+    setParent(*cameraTarget, playerEntity);
     setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
 
-    setParent(wrenchEntity->transform, cameraTarget->transform);
+    setParent(*wrenchEntity, cameraTarget);
     setLocalRotation(wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
     setLocalPosition(wrenchEntity->transform, wrenchOffset);
     unsigned int pickingFBO;
@@ -283,10 +275,6 @@ int main() {
         ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
         ImGui::InputFloat("jump height", &player->jumpHeight);
         ImGui::InputFloat("gravity", &gravity);
-        ImGui::InputFloat("offset X", &wrenchOffset.x);
-        ImGui::InputFloat("offset Y", &wrenchOffset.y);
-        ImGui::InputFloat("offset Z", &wrenchOffset.z);
-        ImGui::Checkbox("Enable Demo Window", &enableDemoWindow);
         ImGui::Checkbox("Enable Directional Light", &enableDirLight);
         if (enableDirLight) {
             ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
@@ -297,9 +285,6 @@ int main() {
             createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
         }
 
-        if (enableDemoWindow) {
-            ImGui::ShowDemoWindow();
-        }
         ImGui::End();
 
         sun.ambient = glm::vec3(ambientBrightness);
@@ -360,6 +345,9 @@ bool searchEntities(Entity* entity, unsigned int id) {
     }
 
     return false;
+}
+
+void processAnimators(Animator& animator) {
 }
 
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
@@ -442,11 +430,12 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     ImGui::PopID();
 }
 
-Entity* createEntityFromModel(ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider) {
+Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, Entity* parentEntity, bool addCollider, bool first = true) {
     Entity* childEntity = new Entity();
     childEntity->name = node->name;
-    if (parentEntity != nullptr) {
-        setParent(childEntity->transform, parentEntity->transform);
+    setParent(*childEntity, parentEntity);
+
+    if (first) {
     }
 
     if (node->mesh != nullptr) {
@@ -467,7 +456,7 @@ Entity* createEntityFromModel(ModelNode* node, std::vector<MeshRenderer*>* rende
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        childEntity->children.push_back(createEntityFromModel(node->children[i], renderers, colliders, childEntity, addCollider));
+        createEntityFromModel(model, node->children[i], renderers, colliders, childEntity, addCollider, false);
     }
 
     return childEntity;

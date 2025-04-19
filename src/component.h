@@ -34,7 +34,7 @@ void setLocalScale(Transform& transform, glm::vec3 localScale);
 void setPosition(Transform& transform, glm::vec3 position);
 void setRotation(Transform& transform, glm::quat rotation);
 void setScale(Transform& transform, glm::vec3 scale);
-void setParent(Transform& child, Transform& parent);
+void setParent(Entity& child, Entity* parent);
 void removeParent(Transform& transform);
 
 struct Vertex {
@@ -99,10 +99,48 @@ struct ModelNode {
     Mesh* mesh;
 };
 
+struct KeyFramePosition {
+    glm::vec3 position;
+    float time;
+};
+
+struct KeyFrameRotation {
+    glm::quat rotation;
+    float time;
+};
+
+struct KeyFrameScale {
+    glm::vec3 scale;
+    float time;
+};
+
+struct AnimationChannel {
+    std::string name;
+    std::vector<KeyFramePosition> positions;
+    std::vector<KeyFrameRotation> rotations;
+    std::vector<KeyFrameScale> scales;
+};
+
+struct Animation {
+    std::string name;
+    float duration;
+    std::vector<AnimationChannel> channels;
+};
+
+struct Animator : Component {
+    std::vector<Animation*> animations;
+    Animation* currentAnimation;
+    int currentKeyPosition;
+    int currentKeyRotation;
+    int currentKeyScale;
+    Animator(Entity* entity);
+};
+
 struct Model {
     std::string name;
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
+    std::vector<Animation*> animations;
     ModelNode* rootNode;
 };
 

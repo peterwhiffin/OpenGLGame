@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 #include <vector>
 #include <assimp/postprocess.h>
@@ -8,6 +9,7 @@
 #include <string>
 #include <glm/gtc/type_ptr.hpp>
 #include <unordered_map>
+#include <glm/gtx/string_cast.hpp>
 
 #include "utils/stb_image.h"
 #include "loader.h"
@@ -20,7 +22,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
 Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma);
 void createMeshBuffers(Mesh* mesh);
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader);
-int nodeCounter = 0;
+void processAnimations(const aiScene* scene, Model* model);
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader) {
     Assimp::Importer importer;
@@ -34,12 +36,60 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
     }
 
     directory = path.substr(0, path.find_last_of('/'));
-    Model* newModel = new Model();
     std::string name = scene->mRootNode->mName.C_Str();
     name = name.substr(0, name.find_last_of('.'));
+
+    Model* newModel = new Model();
     newModel->name = name;
     newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader);
+    processAnimations(scene, newModel);
     return newModel;
+}
+
+void processAnimations(const aiScene* scene, Model* model) {
+    for (int i = 0; i < scene->mNumAnimations; i++) {
+        aiAnimation* aiAnim = scene->mAnimations[i];
+        Animation* newAnimation = new Animation();
+        newAnimation->name = aiAnim->mName.C_Str();
+        newAnimation->duration = aiAnim->mDuration / aiAnim->mTicksPerSecond;
+
+        for (int j = 0; j < aiAnim->mNumChannels; j++) {
+            AnimationChannel channel;
+            channel.name = aiAnim->mChannels[j]->mNodeName.C_Str();
+
+            std::cout << channel.name << std::endl;
+            for (int k = 0; k < aiAnim->mChannels[j]->mNumPositionKeys; k++) {
+                aiVector3D aiPosition(aiAnim->mChannels[j]->mPositionKeys[k].mValue);
+                glm::vec3 position(aiPosition.x, aiPosition.y, aiPosition.z);
+                KeyFramePosition keyFrame;
+                keyFrame.position = position;
+                keyFrame.time = aiAnim->mChannels[j]->mPositionKeys[k].mTime / aiAnim->mTicksPerSecond;
+                channel.positions.push_back(keyFrame);
+            }
+
+            for (int k = 0; k < aiAnim->mChannels[j]->mNumRotationKeys; k++) {
+                aiQuaternion aiRotation(aiAnim->mChannels[j]->mRotationKeys[k].mValue);
+                glm::quat rotation(aiRotation.w, aiRotation.x, aiRotation.y, aiRotation.z);
+                KeyFrameRotation keyFrame;
+                keyFrame.rotation = rotation;
+                keyFrame.time = aiAnim->mChannels[j]->mRotationKeys[k].mTime / aiAnim->mTicksPerSecond;
+                channel.rotations.push_back(keyFrame);
+            }
+
+            for (int k = 0; k < aiAnim->mChannels[j]->mNumScalingKeys; k++) {
+                aiVector3D aiScale(aiAnim->mChannels[j]->mScalingKeys[k].mValue);
+                glm::vec3 scale(aiScale.x, aiScale.y, aiScale.z);
+                KeyFrameScale keyFrame;
+                keyFrame.scale = scale;
+                keyFrame.time = aiAnim->mChannels[j]->mScalingKeys[k].mTime / aiAnim->mTicksPerSecond;
+                channel.scales.push_back(keyFrame);
+            }
+
+            newAnimation->channels.push_back(channel);
+        }
+
+        model->animations.push_back(newAnimation);
+    }
 }
 
 ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
@@ -58,7 +108,6 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
             processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader);
         }
 
@@ -90,17 +139,12 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
-        glm::vec4 position(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
-        // vertex.position = glm::vec3(transform * position);
-        vertex.position = position;
+        vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
+        vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
+        vertex.texCoord = glm::vec2(0.0f, 0.0f);
+
         parentMesh->min = glm::min(parentMesh->min, vertex.position);
         parentMesh->max = glm::max(parentMesh->max, vertex.position);
-
-        glm::vec4 normal(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
-        // vertex.normal = glm::normalize(glm::vec3(transform * normal));
-        vertex.normal = glm::normalize(normal);
-
-        vertex.texCoord = glm::vec2(0.0f, 0.0f);
 
         if (mesh->mTextureCoords[0]) {
             vertex.texCoord.x = mesh->mTextureCoords[0][i].x;
@@ -123,20 +167,19 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     subMesh->indexCount = parentMesh->indices.size() - subMesh->indexOffset;
 
     aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    std::string name;
     Material newMaterial;
     newMaterial.shininess = 32.0f;
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Texture diffuseTexture;
-        Texture specularTexture;
-        newMaterial.shader = shader;
-        material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
+        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
+        Texture specularTexture = loadTexture(material, aiTextureType_SHININESS, directory, allTextures, false);
+
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
+        material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
+
+        newMaterial.shader = shader;
         newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
-        diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
-        specularTexture = loadTexture(material, aiTextureType_SHININESS, directory, allTextures, false);
         newMaterial.textures.push_back(diffuseTexture);
         newMaterial.textures.push_back(specularTexture);
         newMaterial.name = material->GetName().C_Str();
@@ -223,13 +266,11 @@ unsigned int loadTextureFromFile(const char* path, bool gamma) {
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        // glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     } else {

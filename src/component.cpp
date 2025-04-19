@@ -19,7 +19,7 @@ Player::Player(Entity* entity) : Component(entity) {}
 Camera::Camera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane) : Component(entity), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
 CameraController::CameraController(Entity* entity, Camera* camera) : Component(entity), camera(camera) {}
 RigidBody::RigidBody(Entity* entity) : Component(entity) {}
-
+Animator::Animator(Entity* entity) : Component(entity) {}
 SpotLight::SpotLight(Entity* entity) : Component(entity) {}
 void updateTransformMatrices(Transform& transform) {
     transform.localToWorldMatrix = glm::translate(glm::mat4(1.0f), transform.position);
@@ -132,18 +132,20 @@ glm::vec3 forward(Transform* transform) {
     return QuaternionByVector3(transform->rotation, glm::vec3(0.0f, 0.0f, -1.0f));
 }
 
-void setParent(Transform& child, Transform& parent) {
-    removeParent(child);
+void setParent(Entity& child, Entity* parent) {
+    removeParent(child.transform);
 
-    glm::mat4 parentWorldToLocalMatrix = glm::inverse(parent.localToWorldMatrix) * child.transform->localToWorldMatrix;
+    if (parent != nullptr) {
+        glm::mat4 parentWorldToLocalMatrix = glm::inverse(parent->transform.localToWorldMatrix) * child.transform.localToWorldMatrix;
 
-    child.position = positionFromMatrix(parentWorldToLocalMatrix);
-    child.rotation = quatFromMatrix(parentWorldToLocalMatrix);
-    child.scale = scaleFromMatrix(parentWorldToLocalMatrix);
+        child.transform.position = positionFromMatrix(parentWorldToLocalMatrix);
+        child.transform.rotation = quatFromMatrix(parentWorldToLocalMatrix);
+        child.transform.scale = scaleFromMatrix(parentWorldToLocalMatrix);
 
-    parent.entity->children.push_back(child.entity);
-    child.entity->parent = parent.entity;
-    updateTransformMatrices(parent);
+        parent->children.push_back(&child);
+        child.parent = parent;
+        updateTransformMatrices(parent->transform);
+    }
 }
 
 void removeParent(Transform& transform) {
