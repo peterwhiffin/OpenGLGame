@@ -15,37 +15,19 @@
 #include "utils/imgui_impl_opengl3.h"
 #include "input.h"
 #include "loader.h"
-#include "entity.h"
-#include "shader.h"
-
+#include "component.h"
+#include "camera.h"
+#include "physics.h"
+#include "animation.h"
+#include "player.h"
+#include "renderer.h"
+#include "transform.h"
 GLFWwindow* createContext();
-void setViewProjection(Camera* camera);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-Entity* createEntityFromModel(Model* model, ModelNode* node, Animator* animator, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, std::vector<Animator*>* animators, Entity* parentEntity, bool addCollider, bool addAnimator, bool first);
-void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders);
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
-unsigned int getEntityID();
-void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
-void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera);
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
-bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolutionOut);
-void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders);
-void updateCamera(Player* player);
-void applyDamping(RigidBody& rigidbody, float damping);
-void processAnimators(Animator& animator);
-
-struct DirectionalLight {
-    glm::vec3 position;
-    glm::vec3 lookDirection;
-    glm::vec3 color;
-    glm::vec3 brightness;
-
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-};
 
 int screenWidth = 800;
 int screenHeight = 600;
@@ -131,8 +113,8 @@ int main() {
     Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
 
-    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, true, false, true);
-    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, nullptr, &renderers, &allColliders, &animators, nullptr, false, true, true);
+    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, &renderers, nullptr, true, nextEntityID);
+    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, &renderers, nullptr, true, nextEntityID);
     // Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
     // Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
 
@@ -144,20 +126,21 @@ int main() {
     // setPosition(wrenchEntity1->transform, glm::vec3(1.0f, 3.0f, 0.0f));
     // setPosition(wrenchEntity2->transform, glm::vec3(-1.0f, 3.0f, 2.0f));
 
-    for (int i = 0; i < levelEntity->children.size(); i++) {
-        if (levelEntity->children[i]->name == "Trashcan_Base") {
-            setPosition(levelEntity->children[i]->transform, glm::vec3(1.0f, 6.0f, 0.0f));
-            trashCanEntity = levelEntity->children[i];
-            BoxCollider* col = (BoxCollider*)levelEntity->children[i]->components[1];
-            RigidBody* rb = new RigidBody(levelEntity->children[i]);
-            trashcanRB = rb;
-            rb->collider = col;
-            rb->linearVelocity = glm::vec3(0.0f);
-            rb->linearDrag = 5.0f;
-            rb->mass = 10.0f;
-            rb->friction = 25.0f;
-            rigidbodies.push_back(rb);
-            rb->collider->isActive = false;
+    for (int i = 0; i < levelEntity->transform.children.size(); i++) {
+        if (levelEntity->transform.children[i]->entity->name == "Trashcan_Base") {
+            setPosition(&levelEntity->transform, glm::vec3(0.0f));
+            setPosition(levelEntity->transform.children[i], glm::vec3(1.0f, 6.0f, 0.0f));
+            trashCanEntity = levelEntity->transform.children[i]->entity;
+            /*  BoxCollider* col = (BoxCollider*)levelEntity->children[i]->components[1];
+             RigidBody* rb = new RigidBody(levelEntity->children[i]);
+             trashcanRB = rb;
+             rb->collider = col;
+             rb->linearVelocity = glm::vec3(0.0f);
+             rb->linearDrag = 5.0f;
+             rb->mass = 10.0f;
+             rb->friction = 25.0f;
+             rigidbodies.push_back(rb);
+             rb->collider->isActive = false; */
         }
     }
 
@@ -167,12 +150,24 @@ int main() {
 
     cameraTarget->name = "Camera Target";
     cameraEntity->name = "Camera";
-    playerEntity->id = getEntityID();
+    playerEntity->id = getEntityID(nextEntityID);
     playerEntity->name = "player";
-    Player* player = new Player(playerEntity);
-    Camera camera(cameraEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
-    BoxCollider* playerCollider = new BoxCollider(playerEntity);
-    RigidBody* playerRB = new RigidBody(playerEntity);
+    Player* player = new Player();
+    player->entity = playerEntity;
+    // Camera camera(cameraEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
+    Camera camera;
+    camera.transform = &cameraEntity->transform;
+    camera.entity = cameraEntity;
+    camera.fov = glm::radians(68.0f);
+    camera.aspectRatio = (float)screenWidth / screenHeight;
+    camera.nearPlane = 0.01f;
+    camera.farPlane = 10000.0f;
+
+    BoxCollider* playerCollider = new BoxCollider();
+    RigidBody* playerRB = new RigidBody();
+    playerCollider->entity = playerEntity;
+    playerRB->entity = playerEntity;
+    playerRB->transform = &playerEntity->transform;
     playerRB->linearVelocity = glm::vec3(0.0f);
     playerRB->collider = playerCollider;
     playerRB->linearDrag = 0.0f;
@@ -184,22 +179,23 @@ int main() {
     player->collider = playerCollider;
     mainCamera = &camera;
 
-    CameraController cameraController(playerEntity, &camera);
+    CameraController cameraController;
+    cameraController.entity = playerEntity;
+    cameraController.camera = &camera;
     cameraController.cameraTarget = &cameraTarget->transform;
+    cameraController.transform = &playerEntity->transform;
 
     entities.push_back(cameraTarget);
     entities.push_back(playerEntity);
     entities.push_back(cameraEntity);
     player->cameraController = &cameraController;
-    playerEntity->components.push_back(&cameraController);
-    playerEntity->components.push_back(player);
-    setParent(*cameraTarget, playerEntity);
-    setPosition(playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
-    setLocalPosition(cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
+    setParent(&cameraTarget->transform, &playerEntity->transform);
+    setPosition(&playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
+    setLocalPosition(&cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
 
-    setParent(*wrenchEntity, cameraTarget);
-    setLocalRotation(wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
-    setLocalPosition(wrenchEntity->transform, wrenchOffset);
+    setParent(&wrenchEntity->transform, &cameraTarget->transform);
+    setLocalRotation(&wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
+    setLocalPosition(&wrenchEntity->transform, wrenchOffset);
     unsigned int pickingFBO;
     unsigned int pickingRBO;
     unsigned int pickingTexture;
@@ -244,33 +240,33 @@ int main() {
 
         updateInput(window, &input);
 
-        if (input.spawn && canSpawn) {
-            canSpawn = false;
-            MeshRenderer* trashMesh = (MeshRenderer*)trashCanEntity->components[0];
-            BoxCollider* trashCol = (BoxCollider*)trashCanEntity->components[1];
+        /*         if (input.spawn && canSpawn) {
+                    canSpawn = false;
+                    MeshRenderer* trashMesh = (MeshRenderer*)trashCanEntity->components[0];
+                    BoxCollider* trashCol = (BoxCollider*)trashCanEntity->components[1];
 
-            Entity* newTrashcan = new Entity();
-            MeshRenderer* newMesh = new MeshRenderer(newTrashcan, trashMesh->mesh);
-            BoxCollider* newCol = new BoxCollider(newTrashcan);
-            RigidBody* newRB = new RigidBody(newTrashcan);
-            newCol->center = trashCol->center;
-            newCol->extent = trashCol->extent;
-            newCol->isActive = false;
-            newRB->collider = newCol;
-            newRB->linearVelocity = forward(camera.transform) * 20.0f;
-            newRB->friction = 25.0f;
-            newRB->mass = 10.0f;
-            newRB->linearDrag = 3.0f;
-            renderers.push_back(newMesh);
-            rigidbodies.push_back(newRB);
+                    Entity* newTrashcan = new Entity();
+                    MeshRenderer* newMesh = new MeshRenderer(newTrashcan, trashMesh->mesh);
+                    BoxCollider* newCol = new BoxCollider(newTrashcan);
+                    RigidBody* newRB = new RigidBody(newTrashcan);
+                    newCol->center = trashCol->center;
+                    newCol->extent = trashCol->extent;
+                    newCol->isActive = false;
+                    newRB->collider = newCol;
+                    newRB->linearVelocity = forward(camera.transform) * 20.0f;
+                    newRB->friction = 25.0f;
+                    newRB->mass = 10.0f;
+                    newRB->linearDrag = 3.0f;
+                    renderers.push_back(newMesh);
+                    rigidbodies.push_back(newRB);
 
-            setPosition(newTrashcan->transform, getPosition(*camera.transform) + forward(camera.transform));
-        }
+                    setPosition(newTrashcan->transform, getPosition(*camera.transform) + forward(camera.transform));
+                }
 
-        if (!input.spawn) {
-            canSpawn = true;
-        }
-
+                if (!input.spawn) {
+                    canSpawn = true;
+                }
+         */
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -293,9 +289,9 @@ int main() {
         sun.ambient = glm::vec3(ambientBrightness);
 
         updatePlayer(window, &input, player, dynamicColliders);
-        updateRigidBodies(rigidbodies, allColliders);
+        updateRigidBodies(rigidbodies, allColliders, gravity, deltaTime);
         for (Animator* animator : animators) {
-            processAnimators(*animator);
+            processAnimators(*animator, deltaTime, wrenchOffset);
         }
         updateCamera(player);
         setViewProjection(&camera);
@@ -303,7 +299,7 @@ int main() {
         glViewport(0, 0, screenWidth, screenHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawPickingScene(renderers, camera);
+        drawPickingScene(renderers, camera, pickingShader);
 
         if (isPicking) {
             glReadPixels(pickPosition.x, screenHeight - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
@@ -326,7 +322,7 @@ int main() {
         glClearColor(0.34, 0.34, 0.8, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawScene(renderers, camera);
+        drawScene(renderers, camera, nodeClicked, enableDirLight, &sun);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -344,100 +340,13 @@ bool searchEntities(Entity* entity, unsigned int id) {
         return true;
     }
 
-    for (Entity* childEntity : entity->children) {
-        if (searchEntities(childEntity, id)) {
+    for (Transform* childEntity : entity->transform.children) {
+        if (searchEntities(childEntity->entity, id)) {
             return true;
         }
     }
 
     return false;
-}
-
-void processAnimators(Animator& animator) {
-    animator.playbackTime += deltaTime;
-    for (AnimationChannel* channel : animator.currentAnimation->channels) {
-        if (animator.playbackTime >= channel->positions[animator.nextKeyPosition[channel]].time) {
-            animator.nextKeyPosition[channel]++;
-            if (animator.nextKeyPosition[channel] >= channel->positions.size()) {
-                animator.nextKeyPosition[channel] = 0;
-                animator.playbackTime = 0.0f;
-            }
-        }
-
-        float currentTime = channel->positions[animator.nextKeyPosition[channel]].time;
-        float prevTime = 0.0f;
-        int prevIndex = animator.nextKeyPosition[channel] - 1;
-
-        if (prevIndex >= 0) {
-            prevTime = channel->positions[prevIndex].time;
-        }
-
-        float totalDuration = currentTime - prevTime;
-        float timeElapsed = animator.playbackTime - prevTime;
-        float lerp = glm::min(timeElapsed / totalDuration, 1.0f);
-
-        setLocalPosition(*animator.channelMap[channel], glm::mix(animator.channelMap[channel]->position, wrenchOffset + channel->positions[animator.nextKeyPosition[channel]].position, lerp));
-    }
-}
-
-void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
-    for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = renderer->transform->localToWorldMatrix;
-        glBindVertexArray(renderer->mesh->VAO);
-
-        for (SubMesh* subMesh : renderer->mesh->subMeshes) {
-            unsigned char r = renderer->entity->id & 0xFF;
-            unsigned char g = (renderer->entity->id >> 8) & 0xFF;
-            unsigned char b = (renderer->entity->id >> 16) & 0xFF;
-            glm::vec3 idColor = glm::vec3(r, g, b) / 255.0f;
-
-            glUseProgram(pickingShader);
-            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.viewMatrix));
-            glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
-            glUniform3fv(uniform_location::kBaseColor, 1, glm::value_ptr(idColor));
-
-            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
-        }
-
-        glBindVertexArray(0);
-    }
-}
-
-void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera) {
-    for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = renderer->transform->localToWorldMatrix;
-        glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
-
-        glBindVertexArray(renderer->mesh->VAO);
-
-        for (SubMesh* subMesh : renderer->mesh->subMeshes) {
-            unsigned int shader = subMesh->material.shader;
-            glm::vec4 baseColor = (renderer->entity == nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh->material.baseColor;
-
-            glUseProgram(shader);
-            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.viewMatrix));
-            glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
-            glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-            glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
-            // glUniform1f(uniform_location::kShininess, subMesh->material.shininess);
-            glUniform1f(uniform_location::kShininess, 512.0f);
-            glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(camera.transform->position));
-
-            glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), enableDirLight);
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse * dirLightBrightness));
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(sun.specular * dirLightBrightness));
-            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureDiffuseUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
-            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[1].id);
-            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
-        }
-
-        glBindVertexArray(0);
-    }
 }
 
 void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked) {
@@ -449,236 +358,15 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
     }
 
     if (node_open) {
-        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(entity->transform).x, getPosition(entity->transform).y, getPosition(entity->transform).z);
+        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(&entity->transform).x, getPosition(&entity->transform).y, getPosition(&entity->transform).z);
 
-        for (Entity* child : entity->children) {
-            createImGuiEntityTree(child, node_flags, node_clicked);
+        for (Transform* child : entity->transform.children) {
+            createImGuiEntityTree(child->entity, node_flags, node_clicked);
         }
         ImGui::TreePop();
     }
 
     ImGui::PopID();
-}
-
-Entity* createEntityFromModel(Model* model, ModelNode* node, Animator* animator, std::vector<MeshRenderer*>* renderers, std::vector<BoxCollider*>* colliders, std::vector<Animator*>* animators, Entity* parentEntity, bool addCollider, bool addAnimator, bool first) {
-    Entity* childEntity = new Entity();
-    childEntity->name = node->name;
-    setParent(*childEntity, parentEntity);
-
-    if (first && addAnimator) {
-        animator = new Animator(childEntity);
-        for (Animation* animation : model->animations) {
-            animator->animations.push_back(animation);
-        }
-
-        animator->currentAnimation = animator->animations[0];
-
-        animators->push_back(animator);
-    }
-
-    if (node->mesh != nullptr) {
-        MeshRenderer* meshRenderer = new MeshRenderer(childEntity, node->mesh);
-        childEntity->components.push_back(meshRenderer);
-        renderers->push_back(meshRenderer);
-
-        if (addCollider) {
-            BoxCollider* collider = new BoxCollider(childEntity);
-            collider->center = meshRenderer->mesh->center;
-            collider->extent = meshRenderer->mesh->extent;
-            childEntity->components.push_back(collider);
-            colliders->push_back(collider);
-        }
-
-        if (addAnimator) {
-            if (model->channelMap.count(node) != 0) {
-                animator->channelMap[model->channelMap[node]] = &childEntity->transform;
-
-                std::cout << "channel mapped: " << animator->channelMap[model->channelMap[node]]->entity->name << std::endl;
-                animator->nextKeyPosition[model->channelMap[node]] = 0;
-                animator->nextKeyRotation[model->channelMap[node]] = 0;
-                animator->nextKeyScale[model->channelMap[node]] = 0;
-            }
-        }
-
-        childEntity->id = getEntityID();
-        childEntity->name = node->name;
-    }
-
-    for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(model, node->children[i], animator, renderers, colliders, animators, childEntity, addCollider, addAnimator, false);
-    }
-
-    return childEntity;
-}
-
-unsigned int getEntityID() {
-    unsigned int id = nextEntityID;
-    nextEntityID++;
-    return id;
-}
-
-void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders) {
-    for (RigidBody* rigidbody : rigidbodies) {
-        rigidbody->linearVelocity.y += gravity * deltaTime;
-        rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
-        glm::vec3 newPosition = getPosition(*rigidbody->transform) + rigidbody->linearVelocity * deltaTime;
-        setPosition(*rigidbody->transform, newPosition);
-    }
-
-    glm::vec3 collisionResolution = glm::vec3(0.0f);
-    float totalDamping = 0.0f;
-
-    for (int i = 0; i < rigidbodies.size(); i++) {
-        RigidBody* rigidbodyA = rigidbodies[i];
-        totalDamping = rigidbodyA->linearDrag;
-        for (int j = i + 1; j < rigidbodies.size(); j++) {
-            RigidBody* rigidbodyB = rigidbodies[j];
-
-            if (checkAABB(*rigidbodyA->collider, *rigidbodyB->collider, collisionResolution)) {
-                setPosition(*rigidbodyA->transform, getPosition(*rigidbodyA->transform) + (collisionResolution / 2.0f));
-                setPosition(*rigidbodyB->transform, getPosition(*rigidbodyB->transform) - (collisionResolution / 2.0f));
-
-                glm::vec3 flatForce = glm::normalize(rigidbodyA->linearVelocity - rigidbodyB->linearVelocity);
-                flatForce.y = 0.0f;
-
-                if (collisionResolution.y != 0.0f) {
-                    rigidbodyA->linearVelocity.y = -2.0f;
-                    rigidbodyB->linearVelocity.y = -2.0f;
-                    flatForce *= 0.1f;
-                } else {
-                    // totalDamping += rigidbodyA->friction;
-                }
-                float velocityDiff = glm::abs(rigidbodyB->linearMagnitude - rigidbodyA->linearMagnitude) * 0.8f;
-                float rigidBodyAForce = 1.0f - rigidbodyA->mass / (rigidbodyA->mass + rigidbodyB->mass);
-                float rigidbodyBForce = 1.0f - rigidBodyAForce;
-                rigidbodyA->linearVelocity -= flatForce * rigidBodyAForce * velocityDiff;
-                rigidbodyB->linearVelocity += flatForce * rigidbodyBForce * velocityDiff;
-            }
-        }
-
-        for (BoxCollider* collider : colliders) {
-            if (collider == rigidbodyA->collider || !collider->isActive) {
-                continue;
-            }
-
-            if (checkAABB(*rigidbodyA->collider, *collider, collisionResolution)) {
-                setPosition(*rigidbodyA->transform, getPosition(*rigidbodyA->transform) + collisionResolution);
-
-                if (collisionResolution.y != 0.0f) {
-                    rigidbodyA->linearVelocity.y = -2.0f;
-                    totalDamping += rigidbodyA->friction;
-                }
-            }
-        }
-
-        applyDamping(*rigidbodyA, totalDamping);
-    }
-}
-
-void applyDamping(RigidBody& rigidbody, float damping) {
-    rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
-
-    if (rigidbody.linearMagnitude > epsilon) {
-        glm::vec3 normalVel = glm::normalize(rigidbody.linearVelocity);
-        rigidbody.linearMagnitude = glm::max(rigidbody.linearMagnitude - (damping * deltaTime), 0.0f);
-        rigidbody.linearVelocity = normalVel * rigidbody.linearMagnitude;
-    } else {
-        rigidbody.linearVelocity = glm::vec3(0.0f);
-    }
-}
-
-void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-    float xOffset = input->lookX * player->cameraController->sensitivity;
-    float yOffset = input->lookY * player->cameraController->sensitivity;
-    float pitch = player->cameraController->pitch;
-    float yaw = player->cameraController->yaw;
-
-    yaw -= xOffset;
-    pitch -= yOffset;
-
-    if (pitch > 89.0f) {
-        pitch = 89.0f;
-    }
-
-    if (pitch < -89.0f) {
-        pitch = -89.0f;
-    }
-
-    player->cameraController->pitch = pitch;
-    player->cameraController->yaw = yaw;
-
-    float upTest = 0.0f;
-    if (input->jump) {
-        upTest = 1.0f;
-    }
-
-    glm::vec3 cameraTargetRotation = glm::vec3(glm::radians(player->cameraController->pitch), 0.0f, 0.0f);
-    glm::vec3 playerRotation = glm::vec3(0.0f, glm::radians(player->cameraController->yaw), 0.0f);
-
-    setLocalRotation(*player->cameraController->cameraTarget, glm::quat(cameraTargetRotation));
-    setRotation(*player->transform, glm::quat(playerRotation));
-
-    glm::vec3 moveDir = glm::vec3(0.0f);
-    moveDir += input->movement.y * forward(player->transform) + input->movement.x * right(player->transform);
-    glm::vec3 finalMove = moveDir * player->moveSpeed;
-
-    finalMove.y = player->rigidbody->linearVelocity.y;
-    if (player->isGrounded) {
-        if (input->jump) {
-            finalMove.y = player->jumpHeight;
-        }
-    }
-
-    player->isGrounded = true;
-    player->rigidbody->linearVelocity = finalMove;
-}
-
-void updateCamera(Player* player) {
-    setPosition(*player->cameraController->camera->transform, glm::mix(getPosition(*player->cameraController->camera->transform), getPosition(*player->cameraController->cameraTarget), 1.0f));
-    setRotation(*player->cameraController->camera->transform, glm::slerp(getRotation(*player->cameraController->camera->transform), getRotation(*player->cameraController->cameraTarget), 1.0f));
-}
-
-bool checkAABB(BoxCollider& colliderA, BoxCollider& colliderB, glm::vec3& resolutionOut) {
-    glm::vec3 centerA = getPosition(*colliderA.transform) + colliderA.center;
-    glm::vec3 centerB = getPosition(*colliderB.transform) + colliderB.center;
-    glm::vec3 delta = centerA - centerB;
-    glm::vec3 overlap = colliderA.extent + colliderB.extent - glm::abs(delta);
-
-    resolutionOut = glm::vec3(0.0f);
-
-    if (overlap.x <= 0.0f || overlap.y <= 0.0f || overlap.z <= 0.0f) {
-        return false;
-    }
-
-    float minOverlap = overlap.x;
-    float push = delta.x < 0 ? -1.0f : 1.0f;
-    glm::vec3 pushDir = glm::vec3(push, 0.0f, 0.0f);
-
-    if (overlap.y < minOverlap) {
-        minOverlap = overlap.y;
-        push = delta.y < 0 ? -1.0f : 1.0f;
-        pushDir = glm::vec3(0.0f, push, 0.0f);
-    }
-
-    if (overlap.z < minOverlap) {
-        minOverlap = overlap.z;
-        push = delta.z < 0 ? -1.0f : 1.0f;
-        pushDir = glm::vec3(0.0f, 0.0f, push);
-    }
-
-    resolutionOut = pushDir * minOverlap;
-    return true;
-}
-
-void checkGround() {
-}
-
-void setViewProjection(Camera* camera) {
-    glm::vec3 position = getPosition(*camera->transform);
-    camera->viewMatrix = glm::lookAt(position, position + forward(camera->transform), up(camera->transform));
-    camera->projectionMatrix = glm::perspective(camera->fov, camera->aspectRatio, camera->nearPlane, camera->farPlane);
 }
 
 GLFWwindow* createContext() {

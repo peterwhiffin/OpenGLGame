@@ -1,13 +1,9 @@
-#ifndef LOADER_H
-#define LOADER_H
-
+#pragma once
 #include <vector>
 #include <string>
 
-#include "entity.h"
+#include "component.h"
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader);
 
 unsigned int loadTextureFromFile(const char* path, bool gamma);
-
-#endif
