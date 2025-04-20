@@ -1,4 +1,6 @@
 #pragma once
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -7,7 +9,6 @@
 #include <unordered_map>
 #include <glm/gtc/type_ptr.hpp>
 #include "glm/ext/quaternion_float.hpp"
-
 struct Entity;
 struct Mesh;
 struct Transform;
@@ -16,6 +17,7 @@ struct ModelNode;
 struct AnimationChannel;
 struct Model;
 struct MeshRenderer;
+struct BoxCollider;
 
 unsigned int getEntityID(unsigned int& nextEntityID);
 Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, bool first, unsigned int nextEntityID);
@@ -24,10 +26,10 @@ struct Transform {
     Entity* entity;
     Transform* parent;
     std::vector<Transform*> children;
-    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::mat4 localToWorldMatrix = glm::mat4(1.0f);
+    glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::mat4 worldTransform = glm::mat4(1.0f);
 };
 
 struct Entity {

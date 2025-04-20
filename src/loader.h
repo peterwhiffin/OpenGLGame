@@ -1,7 +1,4 @@
 #pragma once
-#include <vector>
-#include <string>
-
 #include "component.h"
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader);

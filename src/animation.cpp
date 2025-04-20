@@ -1,4 +1,3 @@
-#include <glm/glm.hpp>
 #include "animation.h"
 #include "transform.h"
 
@@ -25,6 +24,6 @@ void processAnimators(Animator& animator, float deltaTime, glm::vec3 wrenchOffse
         float timeElapsed = animator.playbackTime - prevTime;
         float lerp = glm::min(timeElapsed / totalDuration, 1.0f);
 
-        setLocalPosition(animator.channelMap[channel], glm::mix(animator.channelMap[channel]->position, wrenchOffset + channel->positions[animator.nextKeyPosition[channel]].position, lerp));
+        setLocalPosition(animator.channelMap[channel], glm::mix(getLocalPosition(animator.channelMap[channel]), wrenchOffset + channel->positions[animator.nextKeyPosition[channel]].position, lerp));
     }
 }

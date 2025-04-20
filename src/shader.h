@@ -1,4 +1,8 @@
 #pragma once
+#include "component.h"
+
+unsigned int loadShader(const char *vertexPath, const char *fragmentPath);
+
 namespace vertex_attribute_location {
 constexpr unsigned int kVertexPosition = 0;
 constexpr unsigned int kVertexNormal = 1;
@@ -26,5 +30,3 @@ constexpr unsigned int kTextureNoiseUnit = 3;
 
 constexpr unsigned int kDirectionalLight = 100;
 }  // namespace uniform_location
-
-unsigned int loadShader(const char *vertexPath, const char *fragmentPath);

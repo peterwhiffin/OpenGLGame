@@ -1,6 +1,4 @@
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glad/glad.h>
-#include <glfw/glfw3.h>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -22,6 +20,8 @@
 #include "player.h"
 #include "renderer.h"
 #include "transform.h"
+#include "shader.h"
+
 GLFWwindow* createContext();
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);

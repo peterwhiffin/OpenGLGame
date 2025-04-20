@@ -1,11 +1,35 @@
-#include <glad/glad.h>
 #include <fstream>
 #include <sstream>
-#include <string>
 #include <iostream>
+#include "shader.h"
 
-void checkShaderCompilation(unsigned int shader, const char *path);
-void checkProgramLink(unsigned int program, const char *vertexPath, const char *fragmentPath);
+void checkShaderCompilation(unsigned int shader, const char *path) {
+    int success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (!success) {
+        char infoLog[1024];
+        glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+        std::cerr << "ERROR::SHADER_COMPILATION_ERROR in: " << path << "\n"
+                  << infoLog
+                  << "\n -- --------------------------------------------------- -- "
+                  << std::endl;
+    }
+}
+
+void checkProgramLink(unsigned int program, const char *vertexPath, const char *fragmentPath) {
+    int success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if (!success) {
+        char infoLog[1024];
+        glGetProgramInfoLog(program, 1024, NULL, infoLog);
+        std::cerr << "ERROR::SHADER_PROGRAM_LINK_ERROR between: " << vertexPath << " <<>> " << fragmentPath << "\n"
+                  << infoLog
+                  << "\n -- --------------------------------------------------- -- "
+                  << std::endl;
+    }
+}
 
 unsigned int loadShader(const char *vertexPath, const char *fragmentPath) {
     std::ifstream vertexFileStream;
@@ -63,32 +87,4 @@ unsigned int loadShader(const char *vertexPath, const char *fragmentPath) {
     glDeleteShader(fragmentShader);
 
     return shaderProgram;
-}
-
-void checkShaderCompilation(unsigned int shader, const char *path) {
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
-    if (!success) {
-        char infoLog[1024];
-        glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-        std::cerr << "ERROR::SHADER_COMPILATION_ERROR in: " << path << "\n"
-                  << infoLog
-                  << "\n -- --------------------------------------------------- -- "
-                  << std::endl;
-    }
-}
-
-void checkProgramLink(unsigned int program, const char *vertexPath, const char *fragmentPath) {
-    int success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if (!success) {
-        char infoLog[1024];
-        glGetProgramInfoLog(program, 1024, NULL, infoLog);
-        std::cerr << "ERROR::SHADER_PROGRAM_LINK_ERROR between: " << vertexPath << " <<>> " << fragmentPath << "\n"
-                  << infoLog
-                  << "\n -- --------------------------------------------------- -- "
-                  << std::endl;
-    }
 }

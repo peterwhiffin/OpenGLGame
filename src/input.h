@@ -1,8 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
-
-#include <glfw/glfw3.h>
-#include <glm/glm.hpp>
+#pragma once
+#include "component.h"
 
 struct InputActions {
     bool menu;
@@ -17,5 +14,3 @@ struct InputActions {
 };
 
 void updateInput(GLFWwindow* window, InputActions* actions);
-
-#endif

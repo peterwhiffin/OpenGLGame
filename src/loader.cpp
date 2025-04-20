@@ -1,15 +1,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glad/glad.h>
-#include <vector>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
-#include <glm/glm.hpp>
 #include <iostream>
-#include <string>
-#include <glm/gtc/type_ptr.hpp>
-#include <unordered_map>
-#include <glm/gtx/string_cast.hpp>
 
 #include "utils/stb_image.h"
 #include "loader.h"

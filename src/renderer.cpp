@@ -1,11 +1,9 @@
-#include "renderer.h"
 #include "transform.h"
-#include <glad/glad.h>
-#include <glfw/glfw3.h>
+#include "shader.h"
 
 void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera, unsigned int pickingShader) {
     for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = renderer->transform->localToWorldMatrix;
+        glm::mat4 model = renderer->transform->worldTransform;
         glBindVertexArray(renderer->mesh->VAO);
 
         for (SubMesh* subMesh : renderer->mesh->subMeshes) {
@@ -29,7 +27,7 @@ void drawPickingScene(std::vector<MeshRenderer*>& renderers, Camera& camera, uns
 
 void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera, Entity* nodeClicked, bool enableDirLight, DirectionalLight* sun) {
     for (MeshRenderer* renderer : renderers) {
-        glm::mat4 model = renderer->transform->localToWorldMatrix;
+        glm::mat4 model = renderer->transform->worldTransform;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
         glBindVertexArray(renderer->mesh->VAO);
@@ -46,7 +44,7 @@ void drawScene(std::vector<MeshRenderer*>& renderers, Camera& camera, Entity* no
             glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
             // glUniform1f(uniform_location::kShininess, subMesh->material.shininess);
             glUniform1f(uniform_location::kShininess, 512.0f);
-            glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(camera.transform->position));
+            glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(camera.transform)));
 
             glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), enableDirLight);
             glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(sun->ambient));

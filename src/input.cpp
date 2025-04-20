@@ -1,4 +1,4 @@
-#include <glfw/glfw3.h>
+#include "component.h"
 #include "input.h"
 
 double oldX = 0;
