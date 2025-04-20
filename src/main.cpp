@@ -96,7 +96,6 @@ int main() {
     std::vector<MeshRenderer*> renderers;
     std::vector<Entity*> entities;
     std::vector<Texture> allTextures;
-    std::vector<BoxCollider*> dynamicColliders;
     std::vector<BoxCollider*> allColliders;
     std::vector<RigidBody*> rigidbodies;
     std::vector<Animator*> animators;
@@ -110,8 +109,9 @@ int main() {
     allTextures.push_back(white);
     allTextures.push_back(black);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.obj", &allTextures, defaultShader);
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &allTextures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
+    Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &allTextures, defaultShader);
 
     levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, &renderers, nullptr, true, nextEntityID);
     wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, &renderers, nullptr, true, nextEntityID);
@@ -196,35 +196,8 @@ int main() {
     setParent(&wrenchEntity->transform, &cameraTarget->transform);
     setLocalRotation(&wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
     setLocalPosition(&wrenchEntity->transform, wrenchOffset);
-    unsigned int pickingFBO;
-    unsigned int pickingRBO;
-    unsigned int pickingTexture;
-
-    glGenFramebuffers(1, &pickingFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
-
-    glGenTextures(1, &pickingTexture);
-    glBindTexture(GL_TEXTURE_2D, pickingTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pickingTexture, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glGenRenderbuffers(1, &pickingRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, pickingRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, pickingRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    unsigned int pickingFBO, pickingRBO, pickingTexture;
+    createPickingFBO(&pickingFBO, &pickingRBO, &pickingTexture, glm::ivec2(screenWidth, screenHeight));
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -288,7 +261,7 @@ int main() {
 
         sun.ambient = glm::vec3(ambientBrightness);
 
-        updatePlayer(window, &input, player, dynamicColliders);
+        updatePlayer(window, &input, player);
         updateRigidBodies(rigidbodies, allColliders, gravity, deltaTime);
         for (Animator* animator : animators) {
             processAnimators(*animator, deltaTime, wrenchOffset);

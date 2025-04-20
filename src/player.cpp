@@ -1,7 +1,7 @@
 #include "player.h"
 #include "transform.h"
 
-void updatePlayer(GLFWwindow* window, InputActions* input, Player* player, std::vector<BoxCollider*>& colliders) {
+void updatePlayer(GLFWwindow* window, InputActions* input, Player* player) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     float xOffset = input->lookX * player->cameraController->sensitivity;

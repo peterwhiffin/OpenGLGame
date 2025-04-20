@@ -1,14 +1,15 @@
 #pragma once
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
-#include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/ext/quaternion_float.hpp>
+#include <unordered_map>
 #include <vector>
 #include <string>
-#include <unordered_map>
-#include <glm/gtc/type_ptr.hpp>
-#include "glm/ext/quaternion_float.hpp"
+#include <iostream>
+
 struct Entity;
 struct Mesh;
 struct Transform;
@@ -36,6 +37,10 @@ struct Entity {
     unsigned int id;
     std::string name;
     Transform transform;
+};
+
+struct Scene {
+    std::vector<Entity> entities;
 };
 
 struct Vertex {

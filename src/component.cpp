@@ -7,7 +7,7 @@ unsigned int getEntityID(unsigned int& nextEntityID) {
     return id;
 }
 
-Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, bool first, unsigned int nextEntityID) {
+Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, bool first, bool addColliders, unsigned int nextEntityID) {
     Entity* childEntity = new Entity();
     childEntity->name = node->name;
     childEntity->transform.entity = childEntity;
@@ -35,6 +35,9 @@ Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRen
         meshRenderer->mesh = node->mesh;
         meshRenderer->transform = &childEntity->transform;
         renderers->push_back(meshRenderer);
+
+        if (addColliders) {
+        }
 
         /*       if (addCollider) {
                   BoxCollider* collider = new BoxCollider(childEntity);
@@ -64,4 +67,15 @@ Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRen
     }
 
     return childEntity;
+}
+
+BoxCollider* addBoxCollider(Entity* entity, glm::vec3 center, glm::vec3 halfExtents, std::vector<BoxCollider*>* colliders) {
+    BoxCollider* boxCollider = new BoxCollider();
+    boxCollider->entity = entity;
+    boxCollider->transform = &entity->transform;
+    boxCollider->center = center;
+    boxCollider->extent = halfExtents;
+    boxCollider->isActive = true;
+    colliders->push_back(boxCollider);
+    return boxCollider;
 }
