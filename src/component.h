@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <typeinfo>
 
 struct Entity;
 struct Mesh;
@@ -19,9 +20,27 @@ struct AnimationChannel;
 struct Model;
 struct MeshRenderer;
 struct BoxCollider;
+struct Animator;
+struct RigidBody;
+struct Camera;
+struct CameraController;
+struct Player;
 
-unsigned int getEntityID(unsigned int& nextEntityID);
-Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, bool first, unsigned int nextEntityID);
+namespace component {
+constexpr unsigned int kTransform = 0;
+constexpr unsigned int kMeshRenderer = 1;
+constexpr unsigned int kBoxCollider = 2;
+constexpr unsigned int kRigidBody = 3;
+constexpr unsigned int kAnimator = 4;
+}  // namespace component
+
+unsigned int getEntityID(unsigned int* nextEntityID);
+Entity* getNewEntity(unsigned int* nextEntityID);
+Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, std::vector<BoxCollider*>* colliders, bool first, bool addColliders, unsigned int* nextEntityID);
+Animator* addAnimator(Entity* entity, Model* model, std::vector<Animator*>* animators);
+BoxCollider* addBoxCollider(Entity* entity, glm::vec3 center, glm::vec3 halfExtents, std::vector<BoxCollider*>* colliders);
+RigidBody* addRigidBody(Entity* entity, float mass, float linearDrag, float friction, std::vector<RigidBody*>* rigidbodies);
+Camera* addCamera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane, std::vector<Camera*>* cameras);
 
 struct Transform {
     Entity* entity;
@@ -37,6 +56,7 @@ struct Entity {
     unsigned int id;
     std::string name;
     Transform transform;
+    std::unordered_map<unsigned int, void*> components;
 };
 
 struct Scene {

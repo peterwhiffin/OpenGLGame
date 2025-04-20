@@ -14,10 +14,16 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
 
     for (int i = 0; i < rigidbodies.size(); i++) {
         RigidBody* rigidbodyA = rigidbodies[i];
+        if (!rigidbodyA->collider->isActive) {
+            continue;
+        }
+
         totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < rigidbodies.size(); j++) {
             RigidBody* rigidbodyB = rigidbodies[j];
-
+            if (!rigidbodyB->collider->isActive) {
+                continue;
+            }
             if (checkAABB(*rigidbodyA->collider, *rigidbodyB->collider, collisionResolution)) {
                 setPosition(rigidbodyA->transform, getPosition(rigidbodyA->transform) + (collisionResolution / 2.0f));
                 setPosition(rigidbodyB->transform, getPosition(rigidbodyB->transform) - (collisionResolution / 2.0f));

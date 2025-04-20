@@ -29,33 +29,33 @@ void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity
 void exitProgram(int code);
 bool searchEntities(Entity* entity, unsigned int id);
 
-int screenWidth = 800;
-int screenHeight = 600;
-float currentFrame = 0.0f;
-float lastFrame = 0.0f;
-float deltaTime = 0.0f;
-Camera* mainCamera;
-int counter = 0;
-unsigned int nextEntityID = 1000000;
-Entity* nodeClicked = nullptr;
-bool enableDemoWindow = false;
-bool enableDirLight = true;
-float dirLightBrightness = 2.1f;
-float ambientBrightness = 1.21f;
-DirectionalLight sun;
-unsigned int pickingShader;
-bool isPicking = false;
-glm::dvec2 pickPosition = glm::dvec2(0, 0);
 Entity* levelEntity;
 Entity* trashCanEntity;
 Entity* wrenchEntity;
+Entity* nodeClicked = nullptr;
+Player* player;
+DirectionalLight sun;
+
+glm::dvec2 pickPosition = glm::dvec2(0, 0);
 glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
-RigidBody* trashcanRB;
+
+float currentFrame = 0.0f;
+float lastFrame = 0.0f;
+float deltaTime = 0.0f;
 float gravity = -18.81f;
-float yVelocity = 0.0f;
-float terminalVelocity = 56.0f;
+float dirLightBrightness = 2.1f;
+float ambientBrightness = 1.21f;
+
+unsigned int nextEntityID = 1;
+unsigned int pickingShader;
+
+int screenWidth = 800;
+int screenHeight = 600;
+
+bool enableDirLight = true;
+bool isPicking = false;
 bool canSpawn = true;
-const float epsilon = 1e-6f;
+
 int main() {
     GLFWwindow* window = createContext();
     InputActions input = InputActions();
@@ -99,6 +99,7 @@ int main() {
     std::vector<BoxCollider*> allColliders;
     std::vector<RigidBody*> rigidbodies;
     std::vector<Animator*> animators;
+    std::vector<Camera*> cameras;
 
     Texture white;
     Texture black;
@@ -113,92 +114,28 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
     Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &allTextures, defaultShader);
 
-    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, &renderers, nullptr, true, nextEntityID);
-    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, &renderers, nullptr, true, nextEntityID);
-    // Entity* wrenchEntity1 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
-    // Entity* wrenchEntity2 = createEntityFromModel(wrench->rootNode, &renderers, &allColliders, nullptr, false);
+    trashCanEntity = createEntityFromModel(trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
+    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
+    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, &renderers, nullptr, &allColliders, true, false, &nextEntityID);
 
     entities.push_back(levelEntity);
-    // entities.push_back(wrenchEntity1);
-    // entities.push_back(wrenchEntity2);
     entities.push_back(wrenchEntity);
+    entities.push_back(trashCanEntity);
 
-    // setPosition(wrenchEntity1->transform, glm::vec3(1.0f, 3.0f, 0.0f));
-    // setPosition(wrenchEntity2->transform, glm::vec3(-1.0f, 3.0f, 2.0f));
+    addAnimator(wrenchEntity, wrench, &animators);
+    addRigidBody(trashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
 
-    for (int i = 0; i < levelEntity->transform.children.size(); i++) {
-        if (levelEntity->transform.children[i]->entity->name == "Trashcan_Base") {
-            setPosition(&levelEntity->transform, glm::vec3(0.0f));
-            setPosition(levelEntity->transform.children[i], glm::vec3(1.0f, 6.0f, 0.0f));
-            trashCanEntity = levelEntity->transform.children[i]->entity;
-            /*  BoxCollider* col = (BoxCollider*)levelEntity->children[i]->components[1];
-             RigidBody* rb = new RigidBody(levelEntity->children[i]);
-             trashcanRB = rb;
-             rb->collider = col;
-             rb->linearVelocity = glm::vec3(0.0f);
-             rb->linearDrag = 5.0f;
-             rb->mass = 10.0f;
-             rb->friction = 25.0f;
-             rigidbodies.push_back(rb);
-             rb->collider->isActive = false; */
-        }
-    }
+    setPosition(&trashCanEntity->transform, glm::vec3(1.0f, 3.0f, 2.0f));
+    BoxCollider* collider = (BoxCollider*)trashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
+    collider->isActive = false;
 
-    Entity* playerEntity = new Entity();
-    Entity* cameraTarget = new Entity();
-    Entity* cameraEntity = new Entity();
-
-    cameraTarget->name = "Camera Target";
-    cameraEntity->name = "Camera";
-    playerEntity->id = getEntityID(nextEntityID);
-    playerEntity->name = "player";
-    Player* player = new Player();
-    player->entity = playerEntity;
-    // Camera camera(cameraEntity, glm::radians(68.0f), (float)screenWidth / screenHeight, 0.01, 10000);
-    Camera camera;
-    camera.transform = &cameraEntity->transform;
-    camera.entity = cameraEntity;
-    camera.fov = glm::radians(68.0f);
-    camera.aspectRatio = (float)screenWidth / screenHeight;
-    camera.nearPlane = 0.01f;
-    camera.farPlane = 10000.0f;
-
-    BoxCollider* playerCollider = new BoxCollider();
-    RigidBody* playerRB = new RigidBody();
-    playerCollider->entity = playerEntity;
-    playerRB->entity = playerEntity;
-    playerRB->transform = &playerEntity->transform;
-    playerRB->linearVelocity = glm::vec3(0.0f);
-    playerRB->collider = playerCollider;
-    playerRB->linearDrag = 0.0f;
-    playerRB->mass = 20.0f;
-    player->rigidbody = playerRB;
-    rigidbodies.push_back(playerRB);
-    playerCollider->center = glm::vec3(0.0f);
-    playerCollider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
-    player->collider = playerCollider;
-    mainCamera = &camera;
-
-    CameraController cameraController;
-    cameraController.entity = playerEntity;
-    cameraController.camera = &camera;
-    cameraController.cameraTarget = &cameraTarget->transform;
-    cameraController.transform = &playerEntity->transform;
-
-    entities.push_back(cameraTarget);
-    entities.push_back(playerEntity);
-    entities.push_back(cameraEntity);
-    player->cameraController = &cameraController;
-    setParent(&cameraTarget->transform, &playerEntity->transform);
-    setPosition(&playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
-    setLocalPosition(&cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
-
-    setParent(&wrenchEntity->transform, &cameraTarget->transform);
+    player = createPlayer(&nextEntityID, (float)screenWidth / screenHeight, &entities, &allColliders, &rigidbodies, &cameras);
+    setParent(&wrenchEntity->transform, player->cameraController->cameraTarget);
     setLocalRotation(&wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
     setLocalPosition(&wrenchEntity->transform, wrenchOffset);
     unsigned int pickingFBO, pickingRBO, pickingTexture;
     createPickingFBO(&pickingFBO, &pickingRBO, &pickingTexture, glm::ivec2(screenWidth, screenHeight));
-
+    setFlags();
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                    ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -213,33 +150,24 @@ int main() {
 
         updateInput(window, &input);
 
-        /*         if (input.spawn && canSpawn) {
-                    canSpawn = false;
-                    MeshRenderer* trashMesh = (MeshRenderer*)trashCanEntity->components[0];
-                    BoxCollider* trashCol = (BoxCollider*)trashCanEntity->components[1];
+        if (input.spawn && canSpawn) {
+            canSpawn = false;
+            Entity* newTrashCanEntity = createEntityFromModel(trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
+            entities.push_back(newTrashCanEntity);
+            RigidBody* rb = addRigidBody(newTrashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
+            collider = (BoxCollider*)newTrashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
+            collider->isActive = false;
+            setPosition(&newTrashCanEntity->transform, getPosition(player->cameraController->camera->transform) + forward(player->cameraController->camera->transform));
+            rb->linearVelocity = forward(player->cameraController->camera->transform) * 25.0f;
+            rb->mass = 10.0f;
+            rb->friction = 25.0f;
+            rb->linearDrag = 3.0f;
+        }
 
-                    Entity* newTrashcan = new Entity();
-                    MeshRenderer* newMesh = new MeshRenderer(newTrashcan, trashMesh->mesh);
-                    BoxCollider* newCol = new BoxCollider(newTrashcan);
-                    RigidBody* newRB = new RigidBody(newTrashcan);
-                    newCol->center = trashCol->center;
-                    newCol->extent = trashCol->extent;
-                    newCol->isActive = false;
-                    newRB->collider = newCol;
-                    newRB->linearVelocity = forward(camera.transform) * 20.0f;
-                    newRB->friction = 25.0f;
-                    newRB->mass = 10.0f;
-                    newRB->linearDrag = 3.0f;
-                    renderers.push_back(newMesh);
-                    rigidbodies.push_back(newRB);
+        if (!input.spawn) {
+            canSpawn = true;
+        }
 
-                    setPosition(newTrashcan->transform, getPosition(*camera.transform) + forward(camera.transform));
-                }
-
-                if (!input.spawn) {
-                    canSpawn = true;
-                }
-         */
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -260,6 +188,7 @@ int main() {
         ImGui::End();
 
         sun.ambient = glm::vec3(ambientBrightness);
+        sun.brightness = glm::vec3(dirLightBrightness);
 
         updatePlayer(window, &input, player);
         updateRigidBodies(rigidbodies, allColliders, gravity, deltaTime);
@@ -267,12 +196,12 @@ int main() {
             processAnimators(*animator, deltaTime, wrenchOffset);
         }
         updateCamera(player);
-        setViewProjection(&camera);
+        setViewProjection(cameras[0]);
         glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
         glViewport(0, 0, screenWidth, screenHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawPickingScene(renderers, camera, pickingShader);
+        drawPickingScene(renderers, *cameras[0], pickingShader);
 
         if (isPicking) {
             glReadPixels(pickPosition.x, screenHeight - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
@@ -295,7 +224,7 @@ int main() {
         glClearColor(0.34, 0.34, 0.8, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawScene(renderers, camera, nodeClicked, enableDirLight, &sun);
+        drawScene(renderers, *cameras[0], nodeClicked, enableDirLight, &sun);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -370,7 +299,7 @@ void onScreenChanged(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     screenWidth = width;
     screenHeight = height;
-    mainCamera->aspectRatio = (float)screenWidth / screenHeight;
+    player->cameraController->camera->aspectRatio = (float)screenWidth / screenHeight;
 }
 
 void initializeIMGUI(GLFWwindow* window) {
