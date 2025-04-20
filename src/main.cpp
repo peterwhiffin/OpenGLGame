@@ -1,13 +1,3 @@
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/ext/quaternion_float.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
-#include <vector>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <typeinfo>
-#include <unordered_map>
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"

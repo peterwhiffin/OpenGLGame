@@ -174,7 +174,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
-        Texture specularTexture = loadTexture(material, aiTextureType_SHININESS, directory, allTextures, false);
+        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, false);
 
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
         material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
