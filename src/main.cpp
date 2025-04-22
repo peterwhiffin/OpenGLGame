@@ -13,31 +13,25 @@
 #include "shader.h"
 #include "debug.h"
 
-GLFWwindow* createContext(WindowData* windowData);
+GLFWwindow* createContext(Scene* scene);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
 void exitProgram(int code);
 
 int main() {
     Scene* scene = new Scene();
-    WindowData windowData;
-    windowData.width = 800;
-    windowData.height = 600;
+    scene->windowData.width = 800;
+    scene->windowData.height = 600;
+    scene->gravity = -18.81f;
 
-    Entity* levelEntity;
-    Entity* trashCanEntity;
-    Entity* wrenchEntity;
-    Entity* nodeClicked = nullptr;
+    uint32_t nodeClicked = INVALID_ID;
     Player* player;
-    DirectionalLight sun;
 
     glm::dvec2 pickPosition = glm::dvec2(0, 0);
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 
     float currentFrame = 0.0f;
     float lastFrame = 0.0f;
-    float deltaTime = 0.0f;
-    float gravity = -18.81f;
     float dirLightBrightness = 2.1f;
     float ambientBrightness = 1.21f;
 
@@ -48,7 +42,7 @@ int main() {
     bool isPicking = false;
     bool canSpawn = true;
 
-    GLFWwindow* window = createContext(&windowData);
+    GLFWwindow* window = createContext(scene);
     InputActions input = InputActions();
 
     unsigned int whiteTexture;
@@ -71,17 +65,17 @@ int main() {
     glUniform1i(uniform_location::kTextureShadowMap, uniform_location::kTextureShadowMapUnit);
     glUniform1i(uniform_location::kTextureNoise, uniform_location::kTextureNoiseUnit);
 
-    sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
-    sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
-    sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    sun.ambient = glm::vec3(0.21f);
-    sun.diffuse = glm::vec3(0.94f);
-    sun.specular = glm::vec3(0.18f);
+    scene->sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
+    scene->sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+    scene->sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
+    scene->sun.ambient = glm::vec3(0.21f);
+    scene->sun.diffuse = glm::vec3(0.94f);
+    scene->sun.specular = glm::vec3(0.18f);
 
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(sun.position));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(sun.ambient));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(sun.specular));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
+    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
 
     Texture white;
     Texture black;
@@ -89,30 +83,35 @@ int main() {
     black.id = blackTexture;
     white.path = "white";
     black.path = "black";
-    allTextures.push_back(white);
-    allTextures.push_back(black);
+    scene->textures.push_back(white);
+    scene->textures.push_back(black);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &allTextures, defaultShader);
-    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
-    Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &allTextures, defaultShader);
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);
+    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
+    Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
 
-    trashCanEntity = createEntityFromModel(&entities, trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
-    levelEntity = createEntityFromModel(&entities, testRoom, testRoom->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
-    wrenchEntity = createEntityFromModel(&entities, wrench, wrench->rootNode, &renderers, nullptr, &allColliders, true, false, &nextEntityID);
+    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan, trashcan->rootNode, INVALID_ID, true, true)->id;
+    uint32_t levelEntity = createEntityFromModel(scene, testRoom, testRoom->rootNode, INVALID_ID, true, true)->id;
+    uint32_t wrenchEntity = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, true, true)->id;
 
-    addAnimator(wrenchEntity, wrench, &animators);
-    addRigidBody(trashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
+    // addAnimator(scene, wrenchEntity->id, wrench);
 
-    setPosition(&trashCanEntity->transform, glm::vec3(1.0f, 3.0f, 2.0f));
-    BoxCollider* collider = (BoxCollider*)trashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
+    RigidBody* rb = addRigidbody(scene, trashCanEntity);
+    rb->mass = 10.0f;
+    rb->linearDrag = 3.0f;
+    rb->friction = 5.0f;
+
+    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
+    size_t index = scene->colliderIndices[trashCanEntity];
+    BoxCollider* collider = &scene->boxColliders[index];
     collider->isActive = false;
 
-    player = createPlayer(&nextEntityID, (float)windowData.width / windowData.height, &entities, &allColliders, &rigidbodies, &cameras);
-    setParent(&wrenchEntity->transform, player->cameraController->cameraTarget);
-    setLocalRotation(&wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
-    setLocalPosition(&wrenchEntity->transform, wrenchOffset);
+    player = createPlayer(scene);
+    setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
+    setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
+    setLocalPosition(scene, wrenchEntity, wrenchOffset);
     unsigned int pickingFBO, pickingRBO, pickingTexture;
-    createPickingFBO(&pickingFBO, &pickingRBO, &pickingTexture, &windowData);
+    createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
     setFlags();
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -124,12 +123,12 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
+        scene->deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         updateInput(window, &input);
 
-        if (input.spawn && canSpawn) {
+        /* if (input.spawn && canSpawn) {
             canSpawn = false;
             Entity* newTrashCanEntity = createEntityFromModel(&entities, trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
             RigidBody* rb = addRigidBody(newTrashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
@@ -137,26 +136,26 @@ int main() {
             collider = (BoxCollider*)newTrashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
             collider->isActive = false;
             setPosition(&newTrashCanEntity->transform, getPosition(player->cameraController->camera->transform) + forward(player->cameraController->camera->transform));
-        }
+        } */
 
         if (!input.spawn) {
             canSpawn = true;
         }
 
-        buildImGui(entities, nodeFlags, nodeClicked, player, &sun, &gravity, &enableDirLight);
-        updatePlayer(window, &input, player);
-        updateRigidBodies(rigidbodies, allColliders, gravity, deltaTime);
-        processAnimators(animators, deltaTime, wrenchOffset);
-        updateCamera(player);
-        setViewProjection(&cameras[0]);
-        drawPickingScene(renderers, cameras[0], pickingFBO, pickingShader, &windowData);
+        // buildImGui(entities, nodeFlags, nodeClicked, player, &sun, &gravity, &enableDirLight);
+        updatePlayer(scene, window, &input, player);
+        updateRigidBodies(scene);
+        // processAnimators(scene, wrenchOffset);
+        updateCamera(scene, player);
+        setViewProjection(scene);
+        drawPickingScene(scene, pickingFBO, pickingShader);
         if (isPicking) {
-            checkPicker(pickPosition, &windowData, entities, nodeClicked);
+            // checkPicker(pickPosition, &windowData, entities, nodeClicked);
         }
 
-        drawScene(renderers, cameras[0], nodeClicked, enableDirLight, &sun, &windowData);
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        drawScene(scene, nodeClicked);
+        // ImGui::Render();
+        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -166,13 +165,13 @@ int main() {
     return 0;
 }
 
-GLFWwindow* createContext(WindowData* windowData) {
+GLFWwindow* createContext(Scene* scene) {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSwapInterval(0);
-    GLFWwindow* window = glfwCreateWindow(windowData->width, windowData->height, "Pete's Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(scene->windowData.width, scene->windowData.height, "Pete's Game", NULL, NULL);
 
     if (window == NULL) {
         std::cout << "Failed to create window" << std::endl;
@@ -187,18 +186,18 @@ GLFWwindow* createContext(WindowData* windowData) {
     }
 
     glfwSetFramebufferSizeCallback(window, onScreenChanged);
-    glfwSetWindowUserPointer(window, windowData);
+    glfwSetWindowUserPointer(window, scene);
     return window;
 }
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
-    WindowData* windowData = (WindowData*)glfwGetWindowUserPointer(window);
+    Scene* scene = (Scene*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
-    windowData->width = width;
-    windowData->height = height;
+    scene->windowData.width = width;
+    scene->windowData.height = height;
 
-    for (int i = 0; i < windowData->cameras->size(); i++) {
-        windowData->cameras->at(i)->aspectRatio = (float)width / height;
+    for (int i = 0; i < scene->cameras.size(); i++) {
+        scene->cameras[i]->aspectRatio = (float)width / height;
     }
 }
 
@@ -213,9 +212,9 @@ void initializeIMGUI(GLFWwindow* window) {
 }
 
 void exitProgram(int code) {
-    ImGui_ImplOpenGL3_Shutdown();
+    /* ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    ImGui::DestroyContext(); */
     glfwTerminate();
     exit(code);
 }

@@ -25,8 +25,11 @@ struct RigidBody;
 struct Camera;
 struct CameraController;
 struct Player;
+struct WindowData;
+struct DirectionalLight;
+struct Scene;
 
-constexpr uint32_t INVALID_INDEX = 0xFFFFFFFF;
+constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 
 namespace component {
 constexpr unsigned int kTransform = 0;
@@ -36,17 +39,19 @@ constexpr unsigned int kRigidBody = 3;
 constexpr unsigned int kAnimator = 4;
 }  // namespace component
 
-unsigned int getEntityID(unsigned int* nextEntityID);
-Entity* getNewEntity(std::vector<Entity>* entities, unsigned int* nextEntityID);
-Entity* createEntityFromModel(std::vector<Entity>* entities, Model* model, ModelNode* node, std::vector<MeshRenderer>* renderers, Entity* parentEntity, std::vector<BoxCollider>* colliders, bool first, bool addColliders, unsigned int* nextEntityID);
-Animator* addAnimator(Entity* entity, Model* model, std::vector<Animator>* animators);
-BoxCollider* addBoxCollider(Entity* entity, glm::vec3 center, glm::vec3 halfExtents, std::vector<BoxCollider>* colliders);
-RigidBody* addRigidBody(Entity* entity, float mass, float linearDrag, float friction, std::vector<RigidBody>* rigidbodies);
-Camera* addCamera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane, std::vector<Camera>* cameras);
+uint32_t getEntityID(Scene* scene);
+Transform* addTransform(Scene* scene, uint32_t entityID);
+Entity* getNewEntity(Scene* scene, std::string name);
+MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
+BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
+RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
+Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
+Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool first, bool addColliders);
+Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 
 struct Transform {
     uint32_t entityID;
-    uint32_t parentEntityID = INVALID_INDEX;
+    uint32_t parentEntityID = INVALID_ID;
     std::vector<uint32_t> childEntityIds;
     glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
@@ -57,25 +62,12 @@ struct Transform {
 struct Entity {
     uint32_t id;
     std::string name;
+    bool isActive;
 };
 
-struct Scene {
-    uint32_t nextEntityID = 1;
-    std::vector<Texture> textures;
-    std::vector<Transform> transforms;
-    std::vector<MeshRenderer> renderers;
-    std::vector<Entity> entities;
-    std::vector<BoxCollider> boxColliders;
-    std::vector<RigidBody> rigidbodies;
-    std::vector<Animator> animators;
-    std::vector<Camera*> cameras;
-
-    std::unordered_map<uint32_t, size_t> entityIndices;
-    std::unordered_map<uint32_t, size_t> transformIndices;
-    std::unordered_map<uint32_t, size_t> rendererIndices;
-    std::unordered_map<uint32_t, size_t> colliderIndices;
-    std::unordered_map<uint32_t, size_t> rigidbodyIndices;
-    std::unordered_map<uint32_t, size_t> animatorIndices;
+struct WindowData {
+    unsigned int width;
+    unsigned int height;
 };
 
 struct Vertex {
@@ -191,8 +183,8 @@ struct Camera {
 
 struct CameraController {
     uint32_t entityID;
+    uint32_t cameraTargetEntityID;
     Camera* camera;
-    Transform* cameraTargetEntityID;
     float pitch = 0;
     float yaw = 0;
     float sensitivity = .3;
@@ -243,10 +235,32 @@ struct DirectionalLight {
 
     float ambientBrightness;
     float diffuseBrightness;
+
+    bool isEnabled;
 };
 
-struct WindowData {
-    unsigned int width;
-    unsigned int height;
-    Scene* scene;
+struct Scene {
+    WindowData windowData;
+    uint32_t nextEntityID = 1;
+
+    DirectionalLight sun;
+
+    std::vector<Texture> textures;
+    std::vector<Transform> transforms;
+    std::vector<MeshRenderer> renderers;
+    std::vector<Entity> entities;
+    std::vector<BoxCollider> boxColliders;
+    std::vector<RigidBody> rigidbodies;
+    std::vector<Animator> animators;
+    std::vector<Camera*> cameras;
+
+    std::unordered_map<uint32_t, size_t> entityIndices;
+    std::unordered_map<uint32_t, size_t> transformIndices;
+    std::unordered_map<uint32_t, size_t> rendererIndices;
+    std::unordered_map<uint32_t, size_t> colliderIndices;
+    std::unordered_map<uint32_t, size_t> rigidbodyIndices;
+    std::unordered_map<uint32_t, size_t> animatorIndices;
+
+    float gravity;
+    float deltaTime;
 };

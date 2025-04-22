@@ -2,7 +2,8 @@
 #include "transform.h"
 
 uint32_t getEntityID(Scene* scene) {
-    return scene->nextEntityID++;
+    scene->nextEntityID += 1;
+    return scene->nextEntityID;
 }
 
 Transform* addTransform(Scene* scene, uint32_t entityID) {
@@ -51,6 +52,29 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     return &scene->rigidbodies[index];
 }
 
+void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
+    size_t entityIndex = scene->entityIndices[entityID];
+    Entity* entity = &scene->entities[entityIndex];
+
+    size_t transformIndex = scene->transformIndices[entityID];
+    Transform* transform = &scene->transforms[transformIndex];
+
+    for (Animation* animation : animator->animations) {
+        for (AnimationChannel* channel : animation->channels) {
+            if (entity->name == channel->name) {
+                animator->channelMap[channel] = entity->id;
+                animator->nextKeyPosition[channel] = 0;
+                animator->nextKeyRotation[channel] = 0;
+                animator->nextKeyScale[channel] = 0;
+            }
+        }
+    }
+
+    for (int i = 0; i < transform->childEntityIds.size(); i++) {
+        mapAnimationChannels(scene, animator, transform->childEntityIds[i]);
+    }
+}
+
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     Animator animator;
     animator.entityID = entityID;
@@ -72,10 +96,8 @@ Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint3
     Entity* childEntity = getNewEntity(scene, node->name);
     childEntity->name = node->name;
 
-    if (parentEntityID != INVALID_INDEX) {
-        size_t childIndex = scene->transformIndices[childEntity->id];
-        size_t parentIndex = scene->transformIndices[parentEntityID];
-        setParent(&scene->transforms[childIndex], &scene->transforms[parentIndex]);
+    if (parentEntityID != INVALID_ID) {
+        setParent(scene, childEntity->id, parentEntityID);
     }
 
     if (node->mesh != nullptr) {
@@ -86,6 +108,7 @@ Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint3
             BoxCollider* boxCollider = addBoxCollider(scene, childEntity->id);
             boxCollider->center = node->mesh->center;
             boxCollider->extent = node->mesh->extent;
+            boxCollider->isActive = true;
         }
     }
 
@@ -96,34 +119,11 @@ Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint3
     return childEntity;
 }
 
-void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
-    size_t entityIndex = scene->entityIndices[entityID];
-    Entity* entity = &scene->entities[entityIndex];
-
-    size_t transformIndex = scene->transformIndices[entity->id];
-    Transform* transform = &scene->transforms[transformIndex];
-
-    for (Animation* animation : animator->animations) {
-        for (AnimationChannel* channel : animation->channels) {
-            if (entity->name == channel->name) {
-                animator->channelMap[channel] = entity->id;
-                animator->nextKeyPosition[channel] = 0;
-                animator->nextKeyRotation[channel] = 0;
-                animator->nextKeyScale[channel] = 0;
-            }
-        }
-    }
-
-    for (int i = 0; i < transform->childEntityIds.size(); i++) {
-        mapAnimationChannels(scene, animator, transform->childEntityIds[i]);
-    }
-}
-
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane) {
     Camera* camera = new Camera();
     scene->cameras.push_back(camera);
     camera->entityID = entityID;
-    camera->fov = fov;
+    camera->fov = glm::radians(fov);
     camera->aspectRatio = aspectRatio;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;

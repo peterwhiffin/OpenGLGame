@@ -1,4 +1,4 @@
-#include "debug.h"
+/* #include "debug.h"
 #include "transform.h"
 
 bool searchEntities(Entity* entity, unsigned int id, Entity* nodeClicked) {
@@ -68,4 +68,4 @@ void buildImGui(std::vector<Entity>& entities, ImGuiTreeNodeFlags node_flags, En
     }
 
     ImGui::End();
-}
+} */
