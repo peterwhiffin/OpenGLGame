@@ -46,7 +46,7 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
-Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool first, bool addColliders);
+uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 
 struct Transform {
@@ -241,7 +241,7 @@ struct DirectionalLight {
 
 struct Scene {
     WindowData windowData;
-    uint32_t nextEntityID = 1;
+    uint32_t nextEntityID = 0;
 
     DirectionalLight sun;
 

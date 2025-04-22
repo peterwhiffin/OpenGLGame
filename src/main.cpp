@@ -71,6 +71,9 @@ int main() {
     scene->sun.ambient = glm::vec3(0.21f);
     scene->sun.diffuse = glm::vec3(0.94f);
     scene->sun.specular = glm::vec3(0.18f);
+    scene->sun.ambientBrightness = 1.7f;
+    scene->sun.diffuseBrightness = 2.0f;
+    scene->sun.isEnabled = true;
 
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
@@ -90,11 +93,11 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
     Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
 
-    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan, trashcan->rootNode, INVALID_ID, true, true)->id;
-    uint32_t levelEntity = createEntityFromModel(scene, testRoom, testRoom->rootNode, INVALID_ID, true, true)->id;
-    uint32_t wrenchEntity = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, true, true)->id;
+    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan, trashcan->rootNode, INVALID_ID, true);
+    uint32_t levelEntity = createEntityFromModel(scene, testRoom, testRoom->rootNode, INVALID_ID, true);
+    uint32_t wrenchEntity = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
 
-    // addAnimator(scene, wrenchEntity->id, wrench);
+    addAnimator(scene, wrenchEntity, wrench);
 
     RigidBody* rb = addRigidbody(scene, trashCanEntity);
     rb->mass = 10.0f;
@@ -145,7 +148,7 @@ int main() {
         // buildImGui(entities, nodeFlags, nodeClicked, player, &sun, &gravity, &enableDirLight);
         updatePlayer(scene, window, &input, player);
         updateRigidBodies(scene);
-        // processAnimators(scene, wrenchOffset);
+        processAnimators(scene, wrenchOffset);
         updateCamera(scene, player);
         setViewProjection(scene);
         drawPickingScene(scene, pickingFBO, pickingShader);
@@ -170,6 +173,7 @@ GLFWwindow* createContext(Scene* scene) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     glfwSwapInterval(0);
     GLFWwindow* window = glfwCreateWindow(scene->windowData.width, scene->windowData.height, "Pete's Game", NULL, NULL);
 

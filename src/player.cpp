@@ -68,7 +68,7 @@ Player* createPlayer(Scene* scene) {
 
     collider->center = glm::vec3(0.0f);
     collider->extent = glm::vec3(0.25f, 0.9f, 0.25f);
-    collider->isActive = true;
+    collider->isActive = false;
     rb->mass = 20.0f;
     rb->linearDrag = 0.0f;
     rb->friction = 0.0f;

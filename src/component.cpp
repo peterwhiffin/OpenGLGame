@@ -21,6 +21,7 @@ Entity* getNewEntity(Scene* scene, std::string name) {
     entity.name = name;
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
+    scene->entityIndices[entity.id] = index;
     addTransform(scene, entity.id);
     return &scene->entities[index];
 }
@@ -84,28 +85,35 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     Animator* animatorPtr = &scene->animators[index];
 
     for (Animation* animation : model->animations) {
-        animator.animations.push_back(animation);
+        animatorPtr->animations.push_back(animation);
     }
 
     mapAnimationChannels(scene, animatorPtr, entityID);
 
+    if (animatorPtr->animations[0] == nullptr) {
+        std::cout << "null pointy" << std::endl;
+    }
+
+    animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
 }
 
-Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool first, bool addColliders) {
-    Entity* childEntity = getNewEntity(scene, node->name);
-    childEntity->name = node->name;
+uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
+    uint32_t childEntity = getNewEntity(scene, node->name)->id;
+    size_t index = scene->entityIndices[childEntity];
+    Entity* entity = &scene->entities[index];
+    entity->name = node->name;
 
     if (parentEntityID != INVALID_ID) {
-        setParent(scene, childEntity->id, parentEntityID);
+        setParent(scene, childEntity, parentEntityID);
     }
 
     if (node->mesh != nullptr) {
-        MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity->id);
+        MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);
         meshRenderer->mesh = node->mesh;
 
         if (addColliders) {
-            BoxCollider* boxCollider = addBoxCollider(scene, childEntity->id);
+            BoxCollider* boxCollider = addBoxCollider(scene, childEntity);
             boxCollider->center = node->mesh->center;
             boxCollider->extent = node->mesh->extent;
             boxCollider->isActive = true;
@@ -113,7 +121,7 @@ Entity* createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint3
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(scene, model, node->children[i], childEntity->id, false, addColliders);
+        createEntityFromModel(scene, model, node->children[i], childEntity, addColliders);
     }
 
     return childEntity;

@@ -4,11 +4,12 @@
 void updateRigidBodies(Scene* scene) {
     float deltaTime = scene->deltaTime;
 
-    for (RigidBody rigidbody : scene->rigidbodies) {
-        rigidbody.linearVelocity.y += scene->gravity * deltaTime;
-        rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
-        glm::vec3 newPosition = getPosition(scene, rigidbody.entityID) + rigidbody.linearVelocity * deltaTime;
-        setPosition(scene, rigidbody.entityID, newPosition);
+    for (int i = 0; i < scene->rigidbodies.size(); i++) {
+        RigidBody* rigidbody = &scene->rigidbodies[i];
+        rigidbody->linearVelocity.y += scene->gravity * deltaTime;
+        rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
+        glm::vec3 newPosition = getPosition(scene, rigidbody->entityID) + rigidbody->linearVelocity * deltaTime;
+        setPosition(scene, rigidbody->entityID, newPosition);
     }
 
     glm::vec3 collisionResolution = glm::vec3(0.0f);
@@ -19,9 +20,9 @@ void updateRigidBodies(Scene* scene) {
 
         size_t colliderAIndex = scene->colliderIndices[rigidbodyA->entityID];
         BoxCollider* colliderA = &scene->boxColliders[colliderAIndex];
-        if (!colliderA->isActive) {
+        /* if (!colliderA->isActive) {
             continue;
-        }
+        } */
 
         totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
@@ -30,18 +31,11 @@ void updateRigidBodies(Scene* scene) {
             size_t colliderBIndex = scene->colliderIndices[rigidbodyB->entityID];
             BoxCollider* colliderB = &scene->boxColliders[colliderBIndex];
 
-            if (!colliderB->isActive) {
+            /* if (!colliderB->isActive) {
                 continue;
-            }
+            } */
 
             if (checkAABB(scene, *colliderA, *colliderB, collisionResolution)) {
-                size_t entityIndex = scene->entityIndices[rigidbodyA->entityID];
-                Entity* entityA = &scene->entities[entityIndex];
-
-                size_t entityIndexB = scene->entityIndices[rigidbodyB->entityID];
-                Entity* entityB = &scene->entities[entityIndexB];
-
-                std::cout << "collision between: " << entityA->name << " and " << entityB->name << std::endl;
                 setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution / 2.0f));
                 setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution / 2.0f));
 
@@ -53,7 +47,7 @@ void updateRigidBodies(Scene* scene) {
                     rigidbodyB->linearVelocity.y = -2.0f;
                     flatForce *= 0.1f;
                 } else {
-                    // totalDamping += rigidbodyA->friction;
+                    totalDamping += rigidbodyA->friction;
                 }
                 float velocityDiff = glm::abs(rigidbodyB->linearMagnitude - rigidbodyA->linearMagnitude) * 0.8f;
                 float rigidBodyAForce = 1.0f - rigidbodyA->mass / (rigidbodyA->mass + rigidbodyB->mass);
@@ -69,15 +63,7 @@ void updateRigidBodies(Scene* scene) {
             }
 
             if (checkAABB(scene, *colliderA, collider, collisionResolution)) {
-                size_t entityIndex = scene->entityIndices[colliderA->entityID];
-                Entity* entityA = &scene->entities[entityIndex];
-
-                size_t entityIndexB = scene->entityIndices[collider.entityID];
-                Entity* entityB = &scene->entities[entityIndexB];
-
-                std::cout << "collision between: " << entityA->name << " and " << entityB->name << std::endl;
-
-                setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + collisionResolution);
+                setPosition(scene, colliderA->entityID, getPosition(scene, colliderA->entityID) + collisionResolution);
 
                 if (collisionResolution.y != 0.0f) {
                     rigidbodyA->linearVelocity.y = -2.0f;
