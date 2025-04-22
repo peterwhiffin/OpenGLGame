@@ -26,6 +26,10 @@ void createImGuiEntityTree(Scene* scene, Entity* entity, ImGuiTreeNodeFlags node
         size_t index = scene->transformIndices[entity->id];
         Transform* transform = &scene->transforms[index];
         ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(scene, entity->id).x, getPosition(scene, entity->id).y, getPosition(scene, entity->id).z);
+        auto it = scene->rendererIndices.find(entity->id);
+        if (it != scene->rendererIndices.end()) {
+            ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
+        }
 
         for (uint32_t childEntityID : transform->childEntityIds) {
             size_t index = scene->entityIndices[childEntityID];

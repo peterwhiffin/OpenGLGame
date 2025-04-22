@@ -97,6 +97,11 @@ int main() {
     uint32_t trashCanEntity = createEntityFromModel(scene, trashcan, trashcan->rootNode, INVALID_ID, true);
     uint32_t levelEntity = createEntityFromModel(scene, testRoom, testRoom->rootNode, INVALID_ID, true);
     uint32_t wrenchEntity = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
+    uint32_t wrenchEntity2 = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
+    uint32_t wrenchEntity3 = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
+
+    setPosition(scene, wrenchEntity2, glm::vec3(1.0f, 3.0f, 2.0f));
+    setPosition(scene, wrenchEntity3, glm::vec3(5.0f, 4.0f, 4.0f));
 
     addAnimator(scene, wrenchEntity, wrench);
 
