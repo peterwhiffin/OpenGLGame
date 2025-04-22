@@ -43,6 +43,7 @@ int main() {
     bool canSpawn = true;
 
     GLFWwindow* window = createContext(scene);
+    initializeIMGUI(window);
     InputActions input = InputActions();
 
     unsigned int whiteTexture;
@@ -58,7 +59,7 @@ int main() {
 
     unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
-    // unsigned int pickingShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+
     glUseProgram(defaultShader);
     glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
     glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
@@ -145,7 +146,7 @@ int main() {
             canSpawn = true;
         }
 
-        // buildImGui(entities, nodeFlags, nodeClicked, player, &sun, &gravity, &enableDirLight);
+        buildImGui(scene, nodeFlags, nodeClicked, player);
         updatePlayer(scene, window, &input, player);
         updateRigidBodies(scene);
         processAnimators(scene, wrenchOffset);
@@ -153,12 +154,12 @@ int main() {
         setViewProjection(scene);
         drawPickingScene(scene, pickingFBO, pickingShader);
         if (isPicking) {
-            // checkPicker(pickPosition, &windowData, entities, nodeClicked);
+            checkPicker(scene, pickPosition, nodeClicked);
         }
 
         drawScene(scene, nodeClicked);
-        // ImGui::Render();
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -216,9 +217,9 @@ void initializeIMGUI(GLFWwindow* window) {
 }
 
 void exitProgram(int code) {
-    /* ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext(); */
+    ImGui::DestroyContext();
     glfwTerminate();
     exit(code);
 }

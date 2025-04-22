@@ -90,10 +90,6 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
 
     mapAnimationChannels(scene, animatorPtr, entityID);
 
-    if (animatorPtr->animations[0] == nullptr) {
-        std::cout << "null pointy" << std::endl;
-    }
-
     animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
 }
@@ -103,10 +99,7 @@ uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint
     size_t index = scene->entityIndices[childEntity];
     Entity* entity = &scene->entities[index];
     entity->name = node->name;
-
-    if (parentEntityID != INVALID_ID) {
-        setParent(scene, childEntity, parentEntityID);
-    }
+    setParent(scene, childEntity, parentEntityID);
 
     if (node->mesh != nullptr) {
         MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);
