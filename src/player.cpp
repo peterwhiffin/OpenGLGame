@@ -49,10 +49,10 @@ void updatePlayer(GLFWwindow* window, InputActions* input, Player* player) {
     player->rigidbody->linearVelocity = finalMove;
 }
 
-Player* createPlayer(unsigned int* nextEntityID, float aspectRatio, std::vector<Entity*>* entities, std::vector<BoxCollider*>* colliders, std::vector<RigidBody*>* rigidbodies, std::vector<Camera*>* cameras) {
-    Entity* playerEntity = getNewEntity(nextEntityID);
-    Entity* cameraTarget = getNewEntity(nextEntityID);
-    Entity* cameraEntity = getNewEntity(nextEntityID);
+Player* createPlayer(unsigned int* nextEntityID, float aspectRatio, std::vector<Entity>* entities, std::vector<BoxCollider>* colliders, std::vector<RigidBody>* rigidbodies, std::vector<Camera>* cameras) {
+    Entity* playerEntity = getNewEntity(entities, nextEntityID);
+    Entity* cameraTarget = getNewEntity(entities, nextEntityID);
+    Entity* cameraEntity = getNewEntity(entities, nextEntityID);
     Player* player = new Player();
     Camera* camera = addCamera(cameraEntity, glm::radians(68.0f), aspectRatio, 0.01f, 800.0f, cameras);
 
@@ -72,10 +72,6 @@ Player* createPlayer(unsigned int* nextEntityID, float aspectRatio, std::vector<
     setParent(&cameraTarget->transform, &playerEntity->transform);
     setPosition(&playerEntity->transform, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(&cameraTarget->transform, glm::vec3(0.0f, 0.7f, 0.0f));
-
-    entities->push_back(playerEntity);
-    entities->push_back(cameraTarget);
-    entities->push_back(cameraEntity);
 
     return player;
 }

@@ -152,7 +152,7 @@ void setLocalScale(Transform* transform, glm::vec3 localScale) {
     updateTransformMatrices(transform);
 }
 
-void removeParent(Transform* transform) {
+void removeParent(Scene* scene, uint32_t index) {
     if (transform->parent == nullptr) {
         return;
     }
@@ -169,18 +169,20 @@ void removeParent(Transform* transform) {
     updateTransformMatrices(transform);
 }
 
-void setParent(Transform* child, Transform* parent) {
-    removeParent(child);
+void setParent(Scene* scene, uint32_t childTransformIndex, uint32_t parentTransformIndex) {
+    removeParent(scene, childTransformIndex);
 
-    if (parent != nullptr) {
+    if (parentTransformIndex != INVALID_INDEX) {
+        Transform* child = &scene->transforms[childTransformIndex];
+        Transform* parent = &scene->transforms[parentTransformIndex];
         glm::mat4 parentWorldToLocalMatrix = glm::inverse(parent->worldTransform) * child->worldTransform;
 
         child->localPosition = positionFromMatrix(parentWorldToLocalMatrix);
         child->localRotation = quatFromMatrix(parentWorldToLocalMatrix);
         child->localScale = scaleFromMatrix(parentWorldToLocalMatrix);
 
-        parent->children.push_back(child);
-        child->parent = parent;
+        parent->childEntityIds.push_back(child->entityID);
+        child->parentEntityID = parent->entityID;
         updateTransformMatrices(parent);
     }
 }

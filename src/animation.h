@@ -1,4 +1,4 @@
 #pragma once
 #include "component.h"
 
-void processAnimators(Animator& animator, float deltaTime, glm::vec3 wrenchOffset);
+void processAnimators(std::vector<Animator>& animators, float deltaTime, glm::vec3 wrenchOffset);

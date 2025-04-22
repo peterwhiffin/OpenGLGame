@@ -11,45 +11,45 @@
 #include "renderer.h"
 #include "transform.h"
 #include "shader.h"
+#include "debug.h"
 
-GLFWwindow* createContext();
+GLFWwindow* createContext(WindowData* windowData);
 void onScreenChanged(GLFWwindow* window, int width, int height);
 void initializeIMGUI(GLFWwindow* window);
-void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked);
 void exitProgram(int code);
-bool searchEntities(Entity* entity, unsigned int id);
-
-Entity* levelEntity;
-Entity* trashCanEntity;
-Entity* wrenchEntity;
-Entity* nodeClicked = nullptr;
-Player* player;
-DirectionalLight sun;
-
-glm::dvec2 pickPosition = glm::dvec2(0, 0);
-glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
-
-float currentFrame = 0.0f;
-float lastFrame = 0.0f;
-float deltaTime = 0.0f;
-float gravity = -18.81f;
-float dirLightBrightness = 2.1f;
-float ambientBrightness = 1.21f;
-
-unsigned int nextEntityID = 1;
-unsigned int pickingShader;
-
-int screenWidth = 800;
-int screenHeight = 600;
-
-bool enableDirLight = true;
-bool isPicking = false;
-bool canSpawn = true;
 
 int main() {
-    GLFWwindow* window = createContext();
+    Scene* scene = new Scene();
+    WindowData windowData;
+    windowData.width = 800;
+    windowData.height = 600;
+
+    Entity* levelEntity;
+    Entity* trashCanEntity;
+    Entity* wrenchEntity;
+    Entity* nodeClicked = nullptr;
+    Player* player;
+    DirectionalLight sun;
+
+    glm::dvec2 pickPosition = glm::dvec2(0, 0);
+    glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
+
+    float currentFrame = 0.0f;
+    float lastFrame = 0.0f;
+    float deltaTime = 0.0f;
+    float gravity = -18.81f;
+    float dirLightBrightness = 2.1f;
+    float ambientBrightness = 1.21f;
+
+    unsigned int nextEntityID = 1;
+    unsigned int pickingShader;
+
+    bool enableDirLight = true;
+    bool isPicking = false;
+    bool canSpawn = true;
+
+    GLFWwindow* window = createContext(&windowData);
     InputActions input = InputActions();
-    initializeIMGUI(window);
 
     unsigned int whiteTexture;
     unsigned int blackTexture;
@@ -83,14 +83,6 @@ int main() {
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(sun.diffuse));
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(sun.specular));
 
-    std::vector<MeshRenderer*> renderers;
-    std::vector<Entity*> entities;
-    std::vector<Texture> allTextures;
-    std::vector<BoxCollider*> allColliders;
-    std::vector<RigidBody*> rigidbodies;
-    std::vector<Animator*> animators;
-    std::vector<Camera*> cameras;
-
     Texture white;
     Texture black;
     white.id = whiteTexture;
@@ -104,13 +96,9 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &allTextures, defaultShader);
     Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &allTextures, defaultShader);
 
-    trashCanEntity = createEntityFromModel(trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
-    levelEntity = createEntityFromModel(testRoom, testRoom->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
-    wrenchEntity = createEntityFromModel(wrench, wrench->rootNode, &renderers, nullptr, &allColliders, true, false, &nextEntityID);
-
-    entities.push_back(levelEntity);
-    entities.push_back(wrenchEntity);
-    entities.push_back(trashCanEntity);
+    trashCanEntity = createEntityFromModel(&entities, trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
+    levelEntity = createEntityFromModel(&entities, testRoom, testRoom->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
+    wrenchEntity = createEntityFromModel(&entities, wrench, wrench->rootNode, &renderers, nullptr, &allColliders, true, false, &nextEntityID);
 
     addAnimator(wrenchEntity, wrench, &animators);
     addRigidBody(trashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
@@ -119,12 +107,12 @@ int main() {
     BoxCollider* collider = (BoxCollider*)trashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
     collider->isActive = false;
 
-    player = createPlayer(&nextEntityID, (float)screenWidth / screenHeight, &entities, &allColliders, &rigidbodies, &cameras);
+    player = createPlayer(&nextEntityID, (float)windowData.width / windowData.height, &entities, &allColliders, &rigidbodies, &cameras);
     setParent(&wrenchEntity->transform, player->cameraController->cameraTarget);
     setLocalRotation(&wrenchEntity->transform, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
     setLocalPosition(&wrenchEntity->transform, wrenchOffset);
     unsigned int pickingFBO, pickingRBO, pickingTexture;
-    createPickingFBO(&pickingFBO, &pickingRBO, &pickingTexture, glm::ivec2(screenWidth, screenHeight));
+    createPickingFBO(&pickingFBO, &pickingRBO, &pickingTexture, &windowData);
     setFlags();
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -133,6 +121,7 @@ int main() {
     unsigned char pixel[3];
     currentFrame = static_cast<float>(glfwGetTime());
     lastFrame = currentFrame;
+
     while (!glfwWindowShouldClose(window)) {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -142,79 +131,30 @@ int main() {
 
         if (input.spawn && canSpawn) {
             canSpawn = false;
-            Entity* newTrashCanEntity = createEntityFromModel(trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
-            entities.push_back(newTrashCanEntity);
+            Entity* newTrashCanEntity = createEntityFromModel(&entities, trashcan, trashcan->rootNode, &renderers, nullptr, &allColliders, true, true, &nextEntityID);
             RigidBody* rb = addRigidBody(newTrashCanEntity, 10.0f, 5.0f, 25.0f, &rigidbodies);
+            rb->linearVelocity = forward(player->cameraController->camera->transform) * 25.0f;
             collider = (BoxCollider*)newTrashCanEntity->transform.children[0]->entity->components[component::kBoxCollider];
             collider->isActive = false;
             setPosition(&newTrashCanEntity->transform, getPosition(player->cameraController->camera->transform) + forward(player->cameraController->camera->transform));
-            rb->linearVelocity = forward(player->cameraController->camera->transform) * 25.0f;
-            rb->mass = 10.0f;
-            rb->friction = 25.0f;
-            rb->linearDrag = 3.0f;
         }
 
         if (!input.spawn) {
             canSpawn = true;
         }
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Begin("ImGui");
-        ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
-        ImGui::InputFloat("jump height", &player->jumpHeight);
-        ImGui::InputFloat("gravity", &gravity);
-        ImGui::Checkbox("Enable Directional Light", &enableDirLight);
-        if (enableDirLight) {
-            ImGui::SliderFloat("Directional Light Brightness", &dirLightBrightness, 0.0f, 10.0f);
-            ImGui::SliderFloat("Ambient Brightness", &ambientBrightness, 0.0f, 3.0f);
-        }
-        // ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
-        for (Entity* entity : entities) {
-            createImGuiEntityTree(entity, nodeFlags, &nodeClicked);
-        }
-
-        ImGui::End();
-
-        sun.ambient = glm::vec3(ambientBrightness);
-        sun.brightness = glm::vec3(dirLightBrightness);
-
+        buildImGui(entities, nodeFlags, nodeClicked, player, &sun, &gravity, &enableDirLight);
         updatePlayer(window, &input, player);
         updateRigidBodies(rigidbodies, allColliders, gravity, deltaTime);
-        for (Animator* animator : animators) {
-            processAnimators(*animator, deltaTime, wrenchOffset);
-        }
+        processAnimators(animators, deltaTime, wrenchOffset);
         updateCamera(player);
-        setViewProjection(cameras[0]);
-        glBindFramebuffer(GL_FRAMEBUFFER, pickingFBO);
-        glViewport(0, 0, screenWidth, screenHeight);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawPickingScene(renderers, *cameras[0], pickingShader);
-
+        setViewProjection(&cameras[0]);
+        drawPickingScene(renderers, cameras[0], pickingFBO, pickingShader, &windowData);
         if (isPicking) {
-            glReadPixels(pickPosition.x, screenHeight - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
-            unsigned int id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
-            bool foundEntity = false;
-            for (Entity* entity : entities) {
-                if (searchEntities(entity, id)) {
-                    foundEntity = true;
-                    break;
-                }
-            }
-
-            if (!foundEntity) {
-                nodeClicked = nullptr;
-            }
+            checkPicker(pickPosition, &windowData, entities, nodeClicked);
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, screenWidth, screenHeight);
-        glClearColor(0.34, 0.34, 0.8, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        drawScene(renderers, *cameras[0], nodeClicked, enableDirLight, &sun);
+        drawScene(renderers, cameras[0], nodeClicked, enableDirLight, &sun, &windowData);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -226,48 +166,13 @@ int main() {
     return 0;
 }
 
-bool searchEntities(Entity* entity, unsigned int id) {
-    if (entity->id == id) {
-        nodeClicked = entity;
-        return true;
-    }
-
-    for (Transform* childEntity : entity->transform.children) {
-        if (searchEntities(childEntity->entity, id)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void createImGuiEntityTree(Entity* entity, ImGuiTreeNodeFlags node_flags, Entity** node_clicked) {
-    ImGui::PushID(entity);
-    bool node_open = ImGui::TreeNodeEx(entity->name.c_str(), node_flags);
-
-    if (ImGui::IsItemClicked()) {
-        *node_clicked = entity;
-    }
-
-    if (node_open) {
-        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(&entity->transform).x, getPosition(&entity->transform).y, getPosition(&entity->transform).z);
-
-        for (Transform* child : entity->transform.children) {
-            createImGuiEntityTree(child->entity, node_flags, node_clicked);
-        }
-        ImGui::TreePop();
-    }
-
-    ImGui::PopID();
-}
-
-GLFWwindow* createContext() {
+GLFWwindow* createContext(WindowData* windowData) {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSwapInterval(0);
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Pete's Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowData->width, windowData->height, "Pete's Game", NULL, NULL);
 
     if (window == NULL) {
         std::cout << "Failed to create window" << std::endl;
@@ -282,14 +187,19 @@ GLFWwindow* createContext() {
     }
 
     glfwSetFramebufferSizeCallback(window, onScreenChanged);
+    glfwSetWindowUserPointer(window, windowData);
     return window;
 }
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
+    WindowData* windowData = (WindowData*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
-    screenWidth = width;
-    screenHeight = height;
-    player->cameraController->camera->aspectRatio = (float)screenWidth / screenHeight;
+    windowData->width = width;
+    windowData->height = height;
+
+    for (int i = 0; i < windowData->cameras->size(); i++) {
+        windowData->cameras->at(i)->aspectRatio = (float)width / height;
+    }
 }
 
 void initializeIMGUI(GLFWwindow* window) {

@@ -1,26 +1,26 @@
 #include "physics.h"
 #include "transform.h"
 
-void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxCollider*>& colliders, float gravity, float deltaTime) {
-    for (RigidBody* rigidbody : rigidbodies) {
-        rigidbody->linearVelocity.y += gravity * deltaTime;
-        rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
-        glm::vec3 newPosition = getPosition(rigidbody->transform) + rigidbody->linearVelocity * deltaTime;
-        setPosition(rigidbody->transform, newPosition);
+void updateRigidBodies(std::vector<RigidBody>& rigidbodies, std::vector<BoxCollider>& colliders, float gravity, float deltaTime) {
+    for (RigidBody rigidbody : rigidbodies) {
+        rigidbody.linearVelocity.y += gravity * deltaTime;
+        rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
+        glm::vec3 newPosition = getPosition(rigidbody.transform) + rigidbody.linearVelocity * deltaTime;
+        setPosition(rigidbody.transform, newPosition);
     }
 
     glm::vec3 collisionResolution = glm::vec3(0.0f);
     float totalDamping = 0.0f;
 
     for (int i = 0; i < rigidbodies.size(); i++) {
-        RigidBody* rigidbodyA = rigidbodies[i];
+        RigidBody* rigidbodyA = &rigidbodies[i];
         if (!rigidbodyA->collider->isActive) {
             continue;
         }
 
         totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < rigidbodies.size(); j++) {
-            RigidBody* rigidbodyB = rigidbodies[j];
+            RigidBody* rigidbodyB = &rigidbodies[j];
             if (!rigidbodyB->collider->isActive) {
                 continue;
             }
@@ -46,12 +46,12 @@ void updateRigidBodies(std::vector<RigidBody*>& rigidbodies, std::vector<BoxColl
             }
         }
 
-        for (BoxCollider* collider : colliders) {
-            if (collider == rigidbodyA->collider || !collider->isActive) {
+        for (BoxCollider collider : colliders) {
+            if (&collider == rigidbodyA->collider || !collider.isActive) {
                 continue;
             }
 
-            if (checkAABB(*rigidbodyA->collider, *collider, collisionResolution)) {
+            if (checkAABB(*rigidbodyA->collider, collider, collisionResolution)) {
                 setPosition(rigidbodyA->transform, getPosition(rigidbodyA->transform) + collisionResolution);
 
                 if (collisionResolution.y != 0.0f) {

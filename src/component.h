@@ -26,6 +26,8 @@ struct Camera;
 struct CameraController;
 struct Player;
 
+constexpr uint32_t INVALID_INDEX = 0xFFFFFFFF;
+
 namespace component {
 constexpr unsigned int kTransform = 0;
 constexpr unsigned int kMeshRenderer = 1;
@@ -35,17 +37,17 @@ constexpr unsigned int kAnimator = 4;
 }  // namespace component
 
 unsigned int getEntityID(unsigned int* nextEntityID);
-Entity* getNewEntity(unsigned int* nextEntityID);
-Entity* createEntityFromModel(Model* model, ModelNode* node, std::vector<MeshRenderer*>* renderers, Entity* parentEntity, std::vector<BoxCollider*>* colliders, bool first, bool addColliders, unsigned int* nextEntityID);
-Animator* addAnimator(Entity* entity, Model* model, std::vector<Animator*>* animators);
-BoxCollider* addBoxCollider(Entity* entity, glm::vec3 center, glm::vec3 halfExtents, std::vector<BoxCollider*>* colliders);
-RigidBody* addRigidBody(Entity* entity, float mass, float linearDrag, float friction, std::vector<RigidBody*>* rigidbodies);
-Camera* addCamera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane, std::vector<Camera*>* cameras);
+Entity* getNewEntity(std::vector<Entity>* entities, unsigned int* nextEntityID);
+Entity* createEntityFromModel(std::vector<Entity>* entities, Model* model, ModelNode* node, std::vector<MeshRenderer>* renderers, Entity* parentEntity, std::vector<BoxCollider>* colliders, bool first, bool addColliders, unsigned int* nextEntityID);
+Animator* addAnimator(Entity* entity, Model* model, std::vector<Animator>* animators);
+BoxCollider* addBoxCollider(Entity* entity, glm::vec3 center, glm::vec3 halfExtents, std::vector<BoxCollider>* colliders);
+RigidBody* addRigidBody(Entity* entity, float mass, float linearDrag, float friction, std::vector<RigidBody>* rigidbodies);
+Camera* addCamera(Entity* entity, float fov, float aspectRatio, float nearPlane, float farPlane, std::vector<Camera>* cameras);
 
 struct Transform {
-    Entity* entity;
-    Transform* parent;
-    std::vector<Transform*> children;
+    uint32_t entityID;
+    uint32_t parentEntityID = INVALID_INDEX;
+    std::vector<uint32_t> childEntityIds;
     glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -53,14 +55,27 @@ struct Transform {
 };
 
 struct Entity {
-    unsigned int id;
+    uint32_t id;
     std::string name;
-    Transform transform;
-    std::unordered_map<unsigned int, void*> components;
 };
 
 struct Scene {
+    uint32_t nextEntityID = 1;
+    std::vector<Texture> textures;
+    std::vector<Transform> transforms;
+    std::vector<MeshRenderer> renderers;
     std::vector<Entity> entities;
+    std::vector<BoxCollider> boxColliders;
+    std::vector<RigidBody> rigidbodies;
+    std::vector<Animator> animators;
+    std::vector<Camera*> cameras;
+
+    std::unordered_map<uint32_t, size_t> entityIndices;
+    std::unordered_map<uint32_t, size_t> transformIndices;
+    std::unordered_map<uint32_t, size_t> rendererIndices;
+    std::unordered_map<uint32_t, size_t> colliderIndices;
+    std::unordered_map<uint32_t, size_t> rigidbodyIndices;
+    std::unordered_map<uint32_t, size_t> animatorIndices;
 };
 
 struct Vertex {
@@ -121,8 +136,7 @@ struct Model {
 };
 
 struct MeshRenderer {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     Mesh* mesh;
 };
 
@@ -155,19 +169,18 @@ struct Animation {
 };
 
 struct Animator {
-    Entity* entity;
+    uint32_t entityID;
     std::vector<Animation*> animations;
     Animation* currentAnimation;
     float playbackTime = 0.0f;
-    std::unordered_map<AnimationChannel*, Transform*> channelMap;
+    std::unordered_map<AnimationChannel*, uint32_t> channelMap;
     std::unordered_map<AnimationChannel*, int> nextKeyPosition;
     std::unordered_map<AnimationChannel*, int> nextKeyRotation;
     std::unordered_map<AnimationChannel*, int> nextKeyScale;
 };
 
 struct Camera {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     float fov;
     float aspectRatio;
     float nearPlane;
@@ -177,10 +190,9 @@ struct Camera {
 };
 
 struct CameraController {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     Camera* camera;
-    Transform* cameraTarget;
+    Transform* cameraTargetEntityID;
     float pitch = 0;
     float yaw = 0;
     float sensitivity = .3;
@@ -188,45 +200,38 @@ struct CameraController {
 };
 
 struct BoxCollider {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     bool isActive = true;
     glm::vec3 center;
     glm::vec3 extent;
 };
 
 struct RigidBody {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     glm::vec3 linearVelocity;
     float linearMagnitude;
     float linearDrag;
     float mass = 1.0f;
     float friction = 10.0f;
-    BoxCollider* collider;
 };
 
 struct Player {
-    Entity* entity;
+    uint32_t entityID;
+    CameraController* cameraController;
     float jumpHeight = 10.0f;
     bool isGrounded = false;
-    BoxCollider* collider;
-    CameraController* cameraController;
-    RigidBody* rigidbody;
     float moveSpeed = 10.0f;
     float groundCheckDistance = 0.2f;
 };
 
 struct SpotLight {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     float range;
     float radius;
 };
 
 struct DirectionalLight {
-    Entity* entity;
-    Transform* transform;
+    uint32_t entityID;
     glm::vec3 position;
     glm::vec3 lookDirection;
     glm::vec3 color;
@@ -235,4 +240,13 @@ struct DirectionalLight {
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
+
+    float ambientBrightness;
+    float diffuseBrightness;
+};
+
+struct WindowData {
+    unsigned int width;
+    unsigned int height;
+    Scene* scene;
 };
