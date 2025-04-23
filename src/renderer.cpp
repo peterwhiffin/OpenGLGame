@@ -11,8 +11,7 @@ void drawPickingScene(Scene* scene, unsigned int pickingFBO, unsigned int pickin
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (MeshRenderer renderer : scene->meshRenderers) {
-        Transform* transform = nullptr;
-        getTransform(scene, renderer.entityID, &transform);
+        Transform* transform = getTransform(scene, renderer.entityID);
 
         glm::mat4 model = transform->worldTransform;
         glBindVertexArray(renderer.mesh->VAO);
@@ -46,8 +45,7 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
 
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
-        Transform* transform = nullptr;
-        getTransform(scene, renderer->entityID, &transform);
+        Transform* transform = getTransform(scene, renderer->entityID);
         if (renderer->mesh->name == "Trashcan Base") {
             // std::cout << "we breakin" << std::endl;
         }

@@ -48,12 +48,12 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 
-bool getEntity(Scene* scene, uint32_t entityID, Entity** entityOut);
-bool getTransform(Scene* scene, uint32_t entityID, Transform** transformOut);
-bool getMeshRenderer(Scene* scene, uint32_t entityID, MeshRenderer** meshRendererOut);
-bool getBoxCollider(Scene* scene, uint32_t entityID, BoxCollider** boxColliderOut);
-bool getRigidbody(Scene* scene, uint32_t entityID, RigidBody** rigidbodyOut);
-bool getAnimator(Scene* scene, uint32_t entityID, Animator** animatorOut);
+Entity* getEntity(Scene* scene, uint32_t entityID);
+Transform* getTransform(Scene* scene, uint32_t entityID);
+MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID);
+BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID);
+RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
+Animator* getAnimator(Scene* scene, uint32_t entityID);
 
 struct Transform {
     uint32_t entityID;
@@ -248,6 +248,11 @@ struct DirectionalLight {
 struct Scene {
     WindowData windowData;
     uint32_t nextEntityID = 1;
+
+    float FPS = 0.0f;
+    float fpsTimer = 0.0f;
+    float timeAccum = 0.0f;
+    int frameCount = 0;
 
     DirectionalLight sun;
 

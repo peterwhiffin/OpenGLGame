@@ -15,9 +15,9 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
 }
 
 void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, uint32_t node_clicked) {
-    Entity* entity = nullptr;
+    Entity* entity = getEntity(scene, entityID);
 
-    if (!getEntity(scene, entityID, &entity)) {
+    if (entity == nullptr) {
         return;
     }
 
@@ -32,14 +32,15 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
     }
 
     if (node_open) {
-        Transform* transform = nullptr;
-        getTransform(scene, entityID, &transform);
+        Transform* transform = getTransform(scene, entityID);
 
         ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getLocalPosition(scene, entity->id).x, getLocalPosition(scene, entity->id).y, getLocalPosition(scene, entity->id).z);
-        if (getEntity(scene, transform->parentEntityID, &entity)) {
+        entity = getEntity(scene, transform->parentEntityID);
+        if (entity != nullptr) {
             ImGui::Text("Parent: %s - %i", entity->name, entity->id);
-            // ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
         }
+        // ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
+
         for (uint32_t childEntityID : transform->childEntityIds) {
             createImGuiEntityTree(scene, childEntityID, node_flags, node_clicked);
         }
@@ -55,6 +56,18 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::Begin("ImGui");
+
+    if (scene->fpsTimer >= 1.0f) {
+        scene->FPS = scene->frameCount / scene->timeAccum;
+        scene->fpsTimer = 0.0f;
+        scene->timeAccum = 0.0f;
+        scene->frameCount = 0;
+    } else {
+        scene->fpsTimer += scene->deltaTime;
+        scene->timeAccum += scene->deltaTime;
+        scene->frameCount++;
+    }
+    ImGui::Text("FPS: %.0f", scene->FPS);
     ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
     ImGui::InputFloat("jump height", &player->jumpHeight);
     ImGui::InputFloat("gravity", &scene->gravity);

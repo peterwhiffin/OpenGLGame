@@ -4,12 +4,11 @@
 void updateRigidBodies(Scene* scene) {
     float deltaTime = scene->deltaTime;
 
-    for (int i = 0; i < scene->rigidbodies.size(); i++) {
-        RigidBody* rigidbody = &scene->rigidbodies[i];
-        rigidbody->linearVelocity.y += scene->gravity * deltaTime;
-        rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
-        glm::vec3 newPosition = getPosition(scene, rigidbody->entityID) + rigidbody->linearVelocity * deltaTime;
-        setPosition(scene, rigidbody->entityID, newPosition);
+    for (RigidBody& rigidbody : scene->rigidbodies) {
+        rigidbody.linearVelocity.y += scene->gravity * deltaTime;
+        rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
+        glm::vec3 newPosition = getPosition(scene, rigidbody.entityID) + rigidbody.linearVelocity * deltaTime;
+        setPosition(scene, rigidbody.entityID, newPosition);
     }
 
     glm::vec3 collisionResolution = glm::vec3(0.0f);
@@ -17,8 +16,7 @@ void updateRigidBodies(Scene* scene) {
 
     for (int i = 0; i < scene->rigidbodies.size(); i++) {
         RigidBody* rigidbodyA = &scene->rigidbodies[i];
-        BoxCollider* colliderA = nullptr;
-        getBoxCollider(scene, rigidbodyA->entityID, &colliderA);
+        BoxCollider* colliderA = getBoxCollider(scene, rigidbodyA->entityID);
         /* if (!colliderA->isActive) {
             continue;
         } */
@@ -26,8 +24,7 @@ void updateRigidBodies(Scene* scene) {
         totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
             RigidBody* rigidbodyB = &scene->rigidbodies[j];
-            BoxCollider* colliderB = nullptr;
-            getBoxCollider(scene, rigidbodyB->entityID, &colliderB);
+            BoxCollider* colliderB = getBoxCollider(scene, rigidbodyB->entityID);
             /* if (!colliderB->isActive) {
                 continue;
             } */

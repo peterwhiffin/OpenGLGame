@@ -2,68 +2,31 @@
 #include "transform.h"
 
 uint32_t getEntityID(Scene* scene) {
-    scene->nextEntityID += 1;
-    return scene->nextEntityID;
+    return scene->nextEntityID++;
 }
 
-bool getEntity(Scene* scene, uint32_t entityID, Entity** entityOut) {
-    auto it = scene->entityIndexMap.find(entityID);
-    if (it != scene->entityIndexMap.end()) {
-        *entityOut = &scene->entities[it->second];
-        return true;
-    }
-
-    return false;
+Entity* getEntity(Scene* scene, uint32_t entityID) {
+    return &scene->entities[scene->entityIndexMap[entityID]];
 }
 
-bool getTransform(Scene* scene, uint32_t entityID, Transform** transformOut) {
-    auto it = scene->transformIndexMap.find(entityID);
-    if (it != scene->transformIndexMap.end()) {
-        *transformOut = &scene->transforms[it->second];
-        return true;
-    }
-
-    return false;
+Transform* getTransform(Scene* scene, uint32_t entityID) {
+    return &scene->transforms[scene->transformIndexMap[entityID]];
 }
 
-bool getMeshRenderer(Scene* scene, uint32_t entityID, MeshRenderer** meshRendererOut) {
-    auto it = scene->meshRendererIndexMap.find(entityID);
-    if (it != scene->meshRendererIndexMap.end()) {
-        *meshRendererOut = &scene->meshRenderers[it->second];
-        return true;
-    }
-
-    return false;
+MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID) {
+    return &scene->meshRenderers[scene->meshRendererIndexMap[entityID]];
 }
 
-bool getBoxCollider(Scene* scene, uint32_t entityID, BoxCollider** boxColliderOut) {
-    auto it = scene->boxColliderIndexMap.find(entityID);
-    if (it != scene->boxColliderIndexMap.end()) {
-        *boxColliderOut = &scene->boxColliders[it->second];
-        return true;
-    }
-
-    return false;
+BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID) {
+    return &scene->boxColliders[scene->boxColliderIndexMap[entityID]];
 }
 
-bool getRigidbody(Scene* scene, uint32_t entityID, RigidBody** rigidbodyOut) {
-    auto it = scene->rigidbodyIndexMap.find(entityID);
-    if (it != scene->rigidbodyIndexMap.end()) {
-        *rigidbodyOut = &scene->rigidbodies[it->second];
-        return true;
-    }
-
-    return false;
+RigidBody* getRigidbody(Scene* scene, uint32_t entityID) {
+    return &scene->rigidbodies[scene->rigidbodyIndexMap[entityID]];
 }
 
-bool getAnimator(Scene* scene, uint32_t entityID, Animator** animatorOut) {
-    auto it = scene->animatorIndexMap.find(entityID);
-    if (it != scene->animatorIndexMap.end()) {
-        *animatorOut = &scene->animators[it->second];
-        return true;
-    }
-
-    return false;
+Animator* getAnimator(Scene* scene, uint32_t entityID) {
+    return &scene->animators[scene->animatorIndexMap[entityID]];
 }
 
 Transform* addTransform(Scene* scene, uint32_t entityID) {
@@ -156,8 +119,7 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
 
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
     uint32_t childEntity = getNewEntity(scene, node->name)->id;
-    Entity* entity = nullptr;
-    getEntity(scene, childEntity, &entity);
+    Entity* entity = getEntity(scene, childEntity);
     setParent(scene, childEntity, parentEntityID);
     entity->name = node->name;
 
