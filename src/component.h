@@ -111,7 +111,7 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
-    glm::vec3 brightness;
+    float brightness;
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
@@ -125,6 +125,7 @@ struct WindowData {
 struct Scene {
     WindowData windowData;
 
+    unsigned int defaultShader;
     float FPS = 0.0f;
     float timeAccum = 0.0f;
     float frameCount = 0;

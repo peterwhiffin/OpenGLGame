@@ -9,9 +9,10 @@ struct DirectionalLight {
 };
 
 struct PointLight {
-    int isEnabled = 0;
+    int isEnabled;
     vec3 position;
     
+    float brightness;
     float constant;
     float linear;
     float quadratic;
@@ -87,9 +88,9 @@ void main(){
         //finalColor = diffuseColor;
     }
     
-    for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 1; i++){
         if(pointLights[i].isEnabled != 1){
-            continue;
+            //continue;
         }
 
         finalColor += vec4(CalcPointLight(pointLights[i], norm, fragPos, viewDir).rgb, 1.0f);

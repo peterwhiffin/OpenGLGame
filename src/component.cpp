@@ -30,6 +30,10 @@ Animator* getAnimator(Scene* scene, uint32_t entityID) {
 }
 
 PointLight* getPointLight(Scene* scene, uint32_t entityID) {
+    if (scene->pointLightIndexMap.count(entityID) == 0) {
+        return nullptr;
+    }
+
     return &scene->pointLights[scene->pointLightIndexMap[entityID]];
 }
 

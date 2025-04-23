@@ -43,6 +43,18 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
     glClearColor(0.34, 0.34, 0.8, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    PointLight* pointLight = &scene->pointLights[0];
+    glUniform1i(glGetUniformLocation(scene->defaultShader, "dirLight.enabled"), scene->sun.isEnabled);
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient * scene->sun.ambientBrightness));
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse * scene->sun.diffuseBrightness));
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular * scene->sun.diffuseBrightness));
+
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
+    glUniform3fv(glGetUniformLocation(scene->defaultShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
+    glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
+    glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
+    glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
         glm::mat4 model = getTransform(scene, renderer->entityID)->worldTransform;
@@ -56,17 +68,10 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
 
             glUseProgram(shader);
             glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
-            glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
             glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
             glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
             glUniform1f(uniform_location::kShininess, 32.0f);
-            glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
 
-            glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), scene->sun.isEnabled);
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient * scene->sun.ambientBrightness));
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse * scene->sun.diffuseBrightness));
-            glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular * scene->sun.diffuseBrightness));
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureDiffuseUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);

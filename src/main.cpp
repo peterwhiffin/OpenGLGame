@@ -118,6 +118,7 @@ int main() {
     unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
+    scene->defaultShader = defaultShader;
     glUseProgram(defaultShader);
     glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
     glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
@@ -140,13 +141,13 @@ int main() {
     pointLight->isActive = 1;
 
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), 1, glm::value_ptr(pointLight->brightness));
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular));
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].constant"), pointLight->constant);
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].linear"), pointLight->linear);
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].quadratic"), pointLight->quadratic);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), pointLight->brightness);
     glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[0].isActive"), pointLight->isActive);
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);

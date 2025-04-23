@@ -32,7 +32,15 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
     if (node_open) {
         Transform* transform = getTransform(scene, entityID);
 
-        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getLocalPosition(scene, entity->id).x, getLocalPosition(scene, entity->id).y, getLocalPosition(scene, entity->id).z);
+        glm::vec3 position = transform->localPosition;
+        ImGui::SliderFloat3("Pos", glm::value_ptr(position), -100.0f, 100.0f);
+        setLocalPosition(scene, entityID, position);
+
+        PointLight* light = getPointLight(scene, entityID);
+        if (light != nullptr) {
+            ImGui::SliderFloat("brightness", &light->brightness, 0.0f, 10.0f);
+        }
+
         if (transform->parentEntityID != INVALID_ID) {
             entity = getEntity(scene, transform->parentEntityID);
             ImGui::Text("Parent: %s - %i", entity->name, entity->id);
