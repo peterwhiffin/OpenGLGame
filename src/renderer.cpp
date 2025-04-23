@@ -10,9 +10,9 @@ void drawPickingScene(Scene* scene, unsigned int pickingFBO, unsigned int pickin
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (MeshRenderer renderer : scene->renderers) {
-        size_t index = scene->rendererIndices[renderer.entityID];
-        Transform* transform = &scene->transforms[index];
+    for (MeshRenderer renderer : scene->meshRenderers) {
+        Transform* transform = nullptr;
+        getTransform(scene, renderer.entityID, &transform);
 
         glm::mat4 model = transform->worldTransform;
         glBindVertexArray(renderer.mesh->VAO);
@@ -44,18 +44,21 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
     glClearColor(0.34, 0.34, 0.8, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (MeshRenderer renderer : scene->renderers) {
-        size_t index = scene->rendererIndices[renderer.entityID];
-        Transform* transform = &scene->transforms[index];
-
+    for (int i = 0; i < scene->meshRenderers.size(); i++) {
+        MeshRenderer* renderer = &scene->meshRenderers[i];
+        Transform* transform = nullptr;
+        getTransform(scene, renderer->entityID, &transform);
+        if (renderer->mesh->name == "Trashcan Base") {
+            // std::cout << "we breakin" << std::endl;
+        }
         glm::mat4 model = transform->worldTransform;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
-        glBindVertexArray(renderer.mesh->VAO);
+        glBindVertexArray(renderer->mesh->VAO);
 
-        for (SubMesh* subMesh : renderer.mesh->subMeshes) {
+        for (SubMesh* subMesh : renderer->mesh->subMeshes) {
             unsigned int shader = subMesh->material.shader;
-            glm::vec4 baseColor = (renderer.entityID == nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh->material.baseColor;
+            glm::vec4 baseColor = (renderer->entityID == nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh->material.baseColor;
 
             glUseProgram(shader);
             glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));

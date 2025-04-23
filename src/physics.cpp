@@ -17,9 +17,8 @@ void updateRigidBodies(Scene* scene) {
 
     for (int i = 0; i < scene->rigidbodies.size(); i++) {
         RigidBody* rigidbodyA = &scene->rigidbodies[i];
-
-        size_t colliderAIndex = scene->colliderIndices[rigidbodyA->entityID];
-        BoxCollider* colliderA = &scene->boxColliders[colliderAIndex];
+        BoxCollider* colliderA = nullptr;
+        getBoxCollider(scene, rigidbodyA->entityID, &colliderA);
         /* if (!colliderA->isActive) {
             continue;
         } */
@@ -27,10 +26,8 @@ void updateRigidBodies(Scene* scene) {
         totalDamping = rigidbodyA->linearDrag;
         for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
             RigidBody* rigidbodyB = &scene->rigidbodies[j];
-
-            size_t colliderBIndex = scene->colliderIndices[rigidbodyB->entityID];
-            BoxCollider* colliderB = &scene->boxColliders[colliderBIndex];
-
+            BoxCollider* colliderB = nullptr;
+            getBoxCollider(scene, rigidbodyB->entityID, &colliderB);
             /* if (!colliderB->isActive) {
                 continue;
             } */

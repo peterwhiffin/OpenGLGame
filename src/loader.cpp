@@ -50,7 +50,6 @@ void processAnimations(const aiScene* scene, Model* model) {
             AnimationChannel* channel = new AnimationChannel();
             channel->name = aiAnim->mChannels[j]->mNodeName.C_Str();
 
-            std::cout << channel->name << std::endl;
             for (int k = 0; k < aiAnim->mChannels[j]->mNumPositionKeys; k++) {
                 aiVector3D aiPosition(aiAnim->mChannels[j]->mPositionKeys[k].mValue);
                 glm::vec3 position(aiPosition.x, aiPosition.y, aiPosition.z);
@@ -106,6 +105,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
         childNode->mesh = new Mesh();
         childNode->mesh->min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
         childNode->mesh->max = childNode->mesh->min;
+        childNode->mesh->name = node->mName.C_Str();
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];

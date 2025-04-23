@@ -38,8 +38,8 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     moveDir += input->movement.y * forward(scene, player->entityID) + input->movement.x * right(scene, player->entityID);
     glm::vec3 finalMove = moveDir * player->moveSpeed;
 
-    size_t index = scene->rigidbodyIndices[player->entityID];
-    RigidBody* rb = &scene->rigidbodies[index];
+    RigidBody* rb = nullptr;
+    getRigidbody(scene, player->entityID, &rb);
 
     finalMove.y = rb->linearVelocity.y;
 

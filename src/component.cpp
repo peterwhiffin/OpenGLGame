@@ -6,12 +6,72 @@ uint32_t getEntityID(Scene* scene) {
     return scene->nextEntityID;
 }
 
+bool getEntity(Scene* scene, uint32_t entityID, Entity** entityOut) {
+    auto it = scene->entityIndexMap.find(entityID);
+    if (it != scene->entityIndexMap.end()) {
+        *entityOut = &scene->entities[it->second];
+        return true;
+    }
+
+    return false;
+}
+
+bool getTransform(Scene* scene, uint32_t entityID, Transform** transformOut) {
+    auto it = scene->transformIndexMap.find(entityID);
+    if (it != scene->transformIndexMap.end()) {
+        *transformOut = &scene->transforms[it->second];
+        return true;
+    }
+
+    return false;
+}
+
+bool getMeshRenderer(Scene* scene, uint32_t entityID, MeshRenderer** meshRendererOut) {
+    auto it = scene->meshRendererIndexMap.find(entityID);
+    if (it != scene->meshRendererIndexMap.end()) {
+        *meshRendererOut = &scene->meshRenderers[it->second];
+        return true;
+    }
+
+    return false;
+}
+
+bool getBoxCollider(Scene* scene, uint32_t entityID, BoxCollider** boxColliderOut) {
+    auto it = scene->boxColliderIndexMap.find(entityID);
+    if (it != scene->boxColliderIndexMap.end()) {
+        *boxColliderOut = &scene->boxColliders[it->second];
+        return true;
+    }
+
+    return false;
+}
+
+bool getRigidbody(Scene* scene, uint32_t entityID, RigidBody** rigidbodyOut) {
+    auto it = scene->rigidbodyIndexMap.find(entityID);
+    if (it != scene->rigidbodyIndexMap.end()) {
+        *rigidbodyOut = &scene->rigidbodies[it->second];
+        return true;
+    }
+
+    return false;
+}
+
+bool getAnimator(Scene* scene, uint32_t entityID, Animator** animatorOut) {
+    auto it = scene->animatorIndexMap.find(entityID);
+    if (it != scene->animatorIndexMap.end()) {
+        *animatorOut = &scene->animators[it->second];
+        return true;
+    }
+
+    return false;
+}
+
 Transform* addTransform(Scene* scene, uint32_t entityID) {
     Transform transform;
     transform.entityID = entityID;
     size_t index = scene->transforms.size();
     scene->transforms.push_back(transform);
-    scene->transformIndices[entityID] = index;
+    scene->transformIndexMap[entityID] = index;
     return &scene->transforms[index];
 }
 
@@ -21,7 +81,7 @@ Entity* getNewEntity(Scene* scene, std::string name) {
     entity.name = name;
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
-    scene->entityIndices[entity.id] = index;
+    scene->entityIndexMap[entity.id] = index;
     addTransform(scene, entity.id);
     return &scene->entities[index];
 }
@@ -29,10 +89,10 @@ Entity* getNewEntity(Scene* scene, std::string name) {
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {
     MeshRenderer meshRenderer;
     meshRenderer.entityID = entityID;
-    size_t index = scene->renderers.size();
-    scene->renderers.push_back(meshRenderer);
-    scene->rendererIndices[entityID] = index;
-    return &scene->renderers[index];
+    size_t index = scene->meshRenderers.size();
+    scene->meshRenderers.push_back(meshRenderer);
+    scene->meshRendererIndexMap[entityID] = index;
+    return &scene->meshRenderers[index];
 }
 
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID) {
@@ -40,7 +100,7 @@ BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID) {
     boxCollider.entityID = entityID;
     size_t index = scene->boxColliders.size();
     scene->boxColliders.push_back(boxCollider);
-    scene->colliderIndices[entityID] = index;
+    scene->boxColliderIndexMap[entityID] = index;
     return &scene->boxColliders[index];
 }
 
@@ -49,15 +109,15 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     rigidbody.entityID = entityID;
     size_t index = scene->rigidbodies.size();
     scene->rigidbodies.push_back(rigidbody);
-    scene->rigidbodyIndices[entityID] = index;
+    scene->rigidbodyIndexMap[entityID] = index;
     return &scene->rigidbodies[index];
 }
 
 void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
-    size_t entityIndex = scene->entityIndices[entityID];
+    size_t entityIndex = scene->entityIndexMap[entityID];
     Entity* entity = &scene->entities[entityIndex];
 
-    size_t transformIndex = scene->transformIndices[entityID];
+    size_t transformIndex = scene->transformIndexMap[entityID];
     Transform* transform = &scene->transforms[transformIndex];
 
     for (Animation* animation : animator->animations) {
@@ -81,7 +141,7 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     animator.entityID = entityID;
     size_t index = scene->animators.size();
     scene->animators.push_back(animator);
-    scene->animatorIndices[entityID] = index;
+    scene->animatorIndexMap[entityID] = index;
     Animator* animatorPtr = &scene->animators[index];
 
     for (Animation* animation : model->animations) {
@@ -94,12 +154,12 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     return animatorPtr;
 }
 
-uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
     uint32_t childEntity = getNewEntity(scene, node->name)->id;
-    size_t index = scene->entityIndices[childEntity];
-    Entity* entity = &scene->entities[index];
-    entity->name = node->name;
+    Entity* entity = nullptr;
+    getEntity(scene, childEntity, &entity);
     setParent(scene, childEntity, parentEntityID);
+    entity->name = node->name;
 
     if (node->mesh != nullptr) {
         MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);
@@ -114,7 +174,7 @@ uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(scene, model, node->children[i], childEntity, addColliders);
+        createEntityFromModel(scene, node->children[i], childEntity, addColliders);
     }
 
     return childEntity;

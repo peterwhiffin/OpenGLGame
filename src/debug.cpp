@@ -1,6 +1,6 @@
 #include "debug.h"
 #include "transform.h"
-
+#include <sstream>
 void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
     unsigned char pixel[3];
     glReadPixels(pickPosition.x, scene->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
@@ -14,27 +14,34 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
     }
 }
 
-void createImGuiEntityTree(Scene* scene, Entity* entity, ImGuiTreeNodeFlags node_flags, uint32_t node_clicked) {
-    ImGui::PushID(entity);
-    bool node_open = ImGui::TreeNodeEx(entity->name.c_str(), node_flags);
+void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, uint32_t node_clicked) {
+    Entity* entity = nullptr;
+
+    if (!getEntity(scene, entityID, &entity)) {
+        return;
+    }
+
+    ImGui::PushID(entityID);
+    std::stringstream ss;
+    ss << entity->name << " - " << entity->id;
+    std::string title = ss.str();
+    bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
 
     if (ImGui::IsItemClicked()) {
         node_clicked = entity->id;
     }
 
     if (node_open) {
-        size_t index = scene->transformIndices[entity->id];
-        Transform* transform = &scene->transforms[index];
-        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getPosition(scene, entity->id).x, getPosition(scene, entity->id).y, getPosition(scene, entity->id).z);
-        auto it = scene->rendererIndices.find(entity->id);
-        if (it != scene->rendererIndices.end()) {
-            ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
-        }
+        Transform* transform = nullptr;
+        getTransform(scene, entityID, &transform);
 
+        ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getLocalPosition(scene, entity->id).x, getLocalPosition(scene, entity->id).y, getLocalPosition(scene, entity->id).z);
+        if (getEntity(scene, transform->parentEntityID, &entity)) {
+            ImGui::Text("Parent: %s - %i", entity->name, entity->id);
+            // ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
+        }
         for (uint32_t childEntityID : transform->childEntityIds) {
-            size_t index = scene->entityIndices[childEntityID];
-            Entity* entity = &scene->entities[index];
-            createImGuiEntityTree(scene, entity, node_flags, node_clicked);
+            createImGuiEntityTree(scene, childEntityID, node_flags, node_clicked);
         }
 
         ImGui::TreePop();
@@ -57,8 +64,10 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
         ImGui::SliderFloat("Ambient Brightness", &scene->sun.ambientBrightness, 0.0f, 3.0f);
     }
     // ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
-    for (int i = 0; i < scene->entities.size(); i++) {
-        createImGuiEntityTree(scene, &scene->entities[i], node_flags, nodeClicked);
+    for (int i = 0; i < scene->transforms.size(); i++) {
+        if (scene->transforms[i].parentEntityID == INVALID_ID) {
+            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags, nodeClicked);
+        }
     }
 
     ImGui::End();

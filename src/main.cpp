@@ -94,27 +94,26 @@ int main() {
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
     Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
 
-    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan, trashcan->rootNode, INVALID_ID, true);
-    uint32_t levelEntity = createEntityFromModel(scene, testRoom, testRoom->rootNode, INVALID_ID, true);
-    uint32_t wrenchEntity = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
-    uint32_t wrenchEntity2 = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
-    uint32_t wrenchEntity3 = createEntityFromModel(scene, wrench, wrench->rootNode, INVALID_ID, false);
-
-    setPosition(scene, wrenchEntity2, glm::vec3(1.0f, 3.0f, 2.0f));
-    setPosition(scene, wrenchEntity3, glm::vec3(5.0f, 4.0f, 4.0f));
+    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan->rootNode, INVALID_ID, false);
+    uint32_t wrenchEntity3 = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, true);
+    uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
+    uint32_t wrenchEntity2 = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
+    uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
+    setPosition(scene, wrenchEntity2, glm::vec3(5.0f, 4.0f, 4.0f));
+    setPosition(scene, wrenchEntity3, glm::vec3(1.0f, 3.0f, 2.0f));
 
     addAnimator(scene, wrenchEntity, wrench);
 
-    RigidBody* rb = addRigidbody(scene, trashCanEntity);
-    rb->mass = 10.0f;
-    rb->linearDrag = 3.0f;
-    rb->friction = 5.0f;
+    /*     RigidBody* rb = addRigidbody(scene, trashCanEntity);
+        rb->mass = 10.0f;
+        rb->linearDrag = 3.0f;
+        rb->friction = 5.0f; */
 
     setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
-    size_t index = scene->colliderIndices[trashCanEntity];
-    BoxCollider* collider = &scene->boxColliders[index];
-    collider->isActive = false;
-
+    /*     size_t index = scene->colliderIndices[trashCanEntity];
+        BoxCollider* collider = &scene->boxColliders[index];
+        collider->isActive = false;
+     */
     player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
     setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
@@ -157,10 +156,10 @@ int main() {
         processAnimators(scene, wrenchOffset);
         updateCamera(scene, player);
         setViewProjection(scene);
-        drawPickingScene(scene, pickingFBO, pickingShader);
-        if (isPicking) {
-            checkPicker(scene, pickPosition, nodeClicked);
-        }
+        /*    drawPickingScene(scene, pickingFBO, pickingShader);
+           if (isPicking) {
+               checkPicker(scene, pickPosition, nodeClicked);
+           } */
 
         drawScene(scene, nodeClicked);
         ImGui::Render();

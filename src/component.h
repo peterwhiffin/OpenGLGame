@@ -10,7 +10,6 @@
 #include <string>
 #include <iostream>
 #include <typeinfo>
-
 struct Entity;
 struct Mesh;
 struct Transform;
@@ -46,8 +45,15 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
-uint32_t createEntityFromModel(Scene* scene, Model* model, ModelNode* node, uint32_t parentEntityID, bool addColliders);
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
+
+bool getEntity(Scene* scene, uint32_t entityID, Entity** entityOut);
+bool getTransform(Scene* scene, uint32_t entityID, Transform** transformOut);
+bool getMeshRenderer(Scene* scene, uint32_t entityID, MeshRenderer** meshRendererOut);
+bool getBoxCollider(Scene* scene, uint32_t entityID, BoxCollider** boxColliderOut);
+bool getRigidbody(Scene* scene, uint32_t entityID, RigidBody** rigidbodyOut);
+bool getAnimator(Scene* scene, uint32_t entityID, Animator** animatorOut);
 
 struct Transform {
     uint32_t entityID;
@@ -241,25 +247,25 @@ struct DirectionalLight {
 
 struct Scene {
     WindowData windowData;
-    uint32_t nextEntityID = 0;
+    uint32_t nextEntityID = 1;
 
     DirectionalLight sun;
 
     std::vector<Texture> textures;
-    std::vector<Transform> transforms;
-    std::vector<MeshRenderer> renderers;
     std::vector<Entity> entities;
+    std::vector<Transform> transforms;
+    std::vector<MeshRenderer> meshRenderers;
     std::vector<BoxCollider> boxColliders;
     std::vector<RigidBody> rigidbodies;
     std::vector<Animator> animators;
     std::vector<Camera*> cameras;
 
-    std::unordered_map<uint32_t, size_t> entityIndices;
-    std::unordered_map<uint32_t, size_t> transformIndices;
-    std::unordered_map<uint32_t, size_t> rendererIndices;
-    std::unordered_map<uint32_t, size_t> colliderIndices;
-    std::unordered_map<uint32_t, size_t> rigidbodyIndices;
-    std::unordered_map<uint32_t, size_t> animatorIndices;
+    std::unordered_map<uint32_t, size_t> entityIndexMap;
+    std::unordered_map<uint32_t, size_t> transformIndexMap;
+    std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
+    std::unordered_map<uint32_t, size_t> boxColliderIndexMap;
+    std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
+    std::unordered_map<uint32_t, size_t> animatorIndexMap;
 
     float gravity;
     float deltaTime;
