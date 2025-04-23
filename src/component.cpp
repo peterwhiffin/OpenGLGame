@@ -29,6 +29,10 @@ Animator* getAnimator(Scene* scene, uint32_t entityID) {
     return &scene->animators[scene->animatorIndexMap[entityID]];
 }
 
+PointLight* getPointLight(Scene* scene, uint32_t entityID) {
+    return &scene->pointLights[scene->pointLightIndexMap[entityID]];
+}
+
 Transform* addTransform(Scene* scene, uint32_t entityID) {
     Transform transform;
     transform.entityID = entityID;
@@ -74,6 +78,15 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     scene->rigidbodies.push_back(rigidbody);
     scene->rigidbodyIndexMap[entityID] = index;
     return &scene->rigidbodies[index];
+}
+
+PointLight* addPointLight(Scene* scene, uint32_t entityID) {
+    PointLight pointLight;
+    pointLight.entityID = entityID;
+    size_t index = scene->pointLights.size();
+    scene->pointLights.push_back(pointLight);
+    scene->pointLightIndexMap[entityID] = index;
+    return &scene->pointLights[index];
 }
 
 void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {

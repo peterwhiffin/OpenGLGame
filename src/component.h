@@ -105,6 +105,18 @@ struct DirectionalLight {
     bool isEnabled;
 };
 
+struct PointLight {
+    uint32_t entityID;
+    unsigned int isActive;
+    float constant;
+    float linear;
+    float quadratic;
+    glm::vec3 brightness;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
 struct WindowData {
     unsigned int width;
     unsigned int height;
@@ -125,7 +137,7 @@ struct Scene {
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 
     DirectionalLight sun;
-
+    std::vector<PointLight> pointLights;
     std::vector<Texture> textures;
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
@@ -141,6 +153,7 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> boxColliderIndexMap;
     std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
+    std::unordered_map<uint32_t, size_t> pointLightIndexMap;
 };
 
 uint32_t getEntityID(Scene* scene);
@@ -152,6 +165,7 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
+PointLight* addPointLight(Scene* scene, uint32_t entityID);
 
 Entity* getEntity(Scene* scene, uint32_t entityID);
 Transform* getTransform(Scene* scene, uint32_t entityID);
@@ -159,3 +173,4 @@ MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
 Animator* getAnimator(Scene* scene, uint32_t entityID);
+PointLight* getPointLight(Scene* scene, uint32_t entityID);

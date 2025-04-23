@@ -66,9 +66,9 @@ void initializeIMGUI(GLFWwindow* window) {
 }
 
 void updateTime(Scene* scene) {
-    float current = scene->currentFrame = static_cast<float>(glfwGetTime());
-    scene->deltaTime = current - scene->lastFrame;
-    scene->lastFrame = current;
+    scene->currentFrame = static_cast<float>(glfwGetTime());
+    scene->deltaTime = scene->currentFrame - scene->lastFrame;
+    scene->lastFrame = scene->currentFrame;
 }
 
 int main() {
@@ -127,6 +127,27 @@ int main() {
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
     glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
+
+    Entity* pointLightEntity = getNewEntity(scene, "PointLight");
+    PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
+    setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
+    pointLight->ambient = glm::vec3(0.05f);
+    pointLight->diffuse = glm::vec3(0.8f);
+    pointLight->specular = glm::vec3(1.0f);
+    pointLight->constant = 1.0f;
+    pointLight->linear = 0.09f;
+    pointLight->quadratic = 0.032f;
+    pointLight->isActive = 1;
+
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), 1, glm::value_ptr(pointLight->brightness));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular));
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].constant"), pointLight->constant);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].linear"), pointLight->linear);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].quadratic"), pointLight->quadratic);
+    glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[0].isActive"), pointLight->isActive);
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
