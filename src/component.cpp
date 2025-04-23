@@ -117,6 +117,17 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     return animatorPtr;
 }
 
+Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane) {
+    Camera* camera = new Camera();
+    scene->cameras.push_back(camera);
+    camera->entityID = entityID;
+    camera->fov = glm::radians(fov);
+    camera->aspectRatio = aspectRatio;
+    camera->nearPlane = nearPlane;
+    camera->farPlane = farPlane;
+    return camera;
+}
+
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
     uint32_t childEntity = getNewEntity(scene, node->name)->id;
     Entity* entity = getEntity(scene, childEntity);
@@ -140,15 +151,4 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
     }
 
     return childEntity;
-}
-
-Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane) {
-    Camera* camera = new Camera();
-    scene->cameras.push_back(camera);
-    camera->entityID = entityID;
-    camera->fov = glm::radians(fov);
-    camera->aspectRatio = aspectRatio;
-    camera->nearPlane = nearPlane;
-    camera->farPlane = farPlane;
-    return camera;
 }

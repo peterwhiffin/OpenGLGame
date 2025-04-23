@@ -45,11 +45,7 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
 
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
-        Transform* transform = getTransform(scene, renderer->entityID);
-        if (renderer->mesh->name == "Trashcan Base") {
-            // std::cout << "we breakin" << std::endl;
-        }
-        glm::mat4 model = transform->worldTransform;
+        glm::mat4 model = getTransform(scene, renderer->entityID)->worldTransform;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
 
         glBindVertexArray(renderer->mesh->VAO);
@@ -64,8 +60,7 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
             glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
             glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
             glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
-            // glUniform1f(uniform_location::kShininess, subMesh->material.shininess);
-            glUniform1f(uniform_location::kShininess, 512.0f);
+            glUniform1f(uniform_location::kShininess, 32.0f);
             glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
 
             glUniform1i(glGetUniformLocation(shader, "dirLight.enabled"), scene->sun.isEnabled);

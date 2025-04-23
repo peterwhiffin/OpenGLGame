@@ -1,6 +1,8 @@
+#include <sstream>
 #include "debug.h"
 #include "transform.h"
-#include <sstream>
+#include "player.h"
+
 void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
     unsigned char pixel[3];
     glReadPixels(pickPosition.x, scene->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
@@ -17,10 +19,6 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
 void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, uint32_t node_clicked) {
     Entity* entity = getEntity(scene, entityID);
 
-    if (entity == nullptr) {
-        return;
-    }
-
     ImGui::PushID(entityID);
     std::stringstream ss;
     ss << entity->name << " - " << entity->id;
@@ -35,8 +33,8 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
         Transform* transform = getTransform(scene, entityID);
 
         ImGui::Text("X: (%.1f), Y: (%.1f), Z: (%.1f)", getLocalPosition(scene, entity->id).x, getLocalPosition(scene, entity->id).y, getLocalPosition(scene, entity->id).z);
-        entity = getEntity(scene, transform->parentEntityID);
-        if (entity != nullptr) {
+        if (transform->parentEntityID != INVALID_ID) {
+            entity = getEntity(scene, transform->parentEntityID);
             ImGui::Text("Parent: %s - %i", entity->name, entity->id);
         }
         // ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
@@ -57,16 +55,15 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     ImGui::NewFrame();
     ImGui::Begin("ImGui");
 
-    if (scene->fpsTimer >= 1.0f) {
+    if (scene->timeAccum >= 1.0f) {
         scene->FPS = scene->frameCount / scene->timeAccum;
-        scene->fpsTimer = 0.0f;
         scene->timeAccum = 0.0f;
         scene->frameCount = 0;
     } else {
-        scene->fpsTimer += scene->deltaTime;
         scene->timeAccum += scene->deltaTime;
         scene->frameCount++;
     }
+
     ImGui::Text("FPS: %.0f", scene->FPS);
     ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
     ImGui::InputFloat("jump height", &player->jumpHeight);
@@ -84,4 +81,10 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     }
 
     ImGui::End();
+}
+
+void drawDebug(Scene* scene, ImGuiTreeNodeFlags nodeFlags, uint32_t nodeClicked, Player* player) {
+    buildImGui(scene, nodeFlags, nodeClicked, player);
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

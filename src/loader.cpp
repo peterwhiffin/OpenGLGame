@@ -130,9 +130,9 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
 
     return childNode;
 }
+
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
     SubMesh* subMesh = new SubMesh();
-    subMesh->mesh = parentMesh;
     parentMesh->subMeshes.push_back(subMesh);
 
     size_t baseVertex = parentMesh->vertices.size();

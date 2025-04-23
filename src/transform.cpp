@@ -4,9 +4,9 @@ void updateTransformMatrices(Scene* scene, Transform* transform) {
     transform->worldTransform = glm::translate(glm::mat4(1.0f), transform->localPosition);
     transform->worldTransform *= glm::mat4_cast(transform->localRotation);
     transform->worldTransform = glm::scale(transform->worldTransform, transform->localScale);
-    Transform* parentTransform = getTransform(scene, transform->parentEntityID);
 
-    if (parentTransform != nullptr) {
+    if (transform->parentEntityID != INVALID_ID) {
+        Transform* parentTransform = getTransform(scene, transform->parentEntityID);
         transform->worldTransform = parentTransform->worldTransform * transform->worldTransform;
     }
 
@@ -202,7 +202,6 @@ void setParent(Scene* scene, uint32_t childEntityID, uint32_t parentEntityID) {
     removeParent(scene, childEntityID);
     Transform* child = getTransform(scene, childEntityID);
 
-    // updateTransformMatrices(scene, child);
     if (parentEntityID != INVALID_ID) {
         Transform* parent = getTransform(scene, parentEntityID);
         glm::mat4 parentWorldToLocalMatrix = glm::inverse(parent->worldTransform) * child->worldTransform;

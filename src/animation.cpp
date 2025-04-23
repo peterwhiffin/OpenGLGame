@@ -1,7 +1,7 @@
 #include "animation.h"
 #include "transform.h"
 
-void processAnimators(Scene* scene, glm::vec3 wrenchOffset) {
+void updateAnimators(Scene* scene) {
     for (int i = 0; i < scene->animators.size(); i++) {
         Animator* animator = &scene->animators[i];
         animator->playbackTime += scene->deltaTime;
@@ -26,7 +26,7 @@ void processAnimators(Scene* scene, glm::vec3 wrenchOffset) {
             float timeElapsed = animator->playbackTime - prevTime;
             float lerp = glm::min(timeElapsed / totalDuration, 1.0f);
 
-            setLocalPosition(scene, animator->channelMap[channel], glm::mix(getLocalPosition(scene, animator->channelMap[channel]), wrenchOffset + channel->positions[animator->nextKeyPosition[channel]].position, lerp));
+            setLocalPosition(scene, animator->channelMap[channel], glm::mix(getLocalPosition(scene, animator->channelMap[channel]), scene->wrenchOffset + channel->positions[animator->nextKeyPosition[channel]].position, lerp));
         }
     }
 }

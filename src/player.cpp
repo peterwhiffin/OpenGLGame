@@ -23,11 +23,6 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     player->cameraController->pitch = pitch;
     player->cameraController->yaw = yaw;
 
-    float upTest = 0.0f;
-    if (input->jump) {
-        upTest = 1.0f;
-    }
-
     glm::vec3 cameraTargetRotation = glm::vec3(glm::radians(player->cameraController->pitch), 0.0f, 0.0f);
     glm::vec3 playerRotation = glm::vec3(0.0f, glm::radians(player->cameraController->yaw), 0.0f);
 
@@ -42,10 +37,13 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
 
     finalMove.y = rb->linearVelocity.y;
 
-    if (player->isGrounded) {
-        if (input->jump) {
+    if (input->jump) {
+        if (player->isGrounded && player->canJump) {
             finalMove.y = player->jumpHeight;
+            player->canJump = false;
         }
+    } else {
+        player->canJump = true;
     }
 
     player->isGrounded = true;
