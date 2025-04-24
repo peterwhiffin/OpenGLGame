@@ -137,6 +137,8 @@ struct Scene {
     float deltaTime;
     float gravity;
 
+    bool useDeferred = false;
+
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 

@@ -76,6 +76,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
     ImGui::InputFloat("jump height", &player->jumpHeight);
     ImGui::InputFloat("gravity", &scene->gravity);
+    ImGui::Checkbox("Use Deferred", &scene->useDeferred);
     ImGui::Checkbox("Enable Directional Light", &scene->sun.isEnabled);
     if (scene->sun.isEnabled) {
         ImGui::SliderFloat("Directional Light Brightness", &scene->sun.diffuseBrightness, 0.0f, 10.0f);

@@ -215,9 +215,13 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, player);
-        drawGBuffer(scene);
-        drawFullScreenQuad(scene);
-        // drawScene(scene, nodeclicked);
+
+        if (scene->useDeferred) {
+            drawGBuffer(scene);
+            drawFullScreenQuad(scene);
+        } else {
+            drawScene(scene, nodeclicked);
+        }
         drawDebug(scene, nodeFlags, nodeclicked, player);
         glfwSwapBuffers(window);
     }
