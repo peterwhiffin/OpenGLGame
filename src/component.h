@@ -137,6 +137,8 @@ struct Scene {
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 
+    Model* trashcanModel;
+
     DirectionalLight sun;
     std::vector<PointLight> pointLights;
     std::vector<Texture> textures;

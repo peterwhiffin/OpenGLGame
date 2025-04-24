@@ -1,8 +1,31 @@
 #include "player.h"
 #include "transform.h"
 
+void spawnTrashCan(Scene* scene, Player* player) {
+    uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+    RigidBody* rb = addRigidbody(scene, trashcanID);
+    Transform* transform = getTransform(scene, trashcanID);
+    getBoxCollider(scene, transform->childEntityIds[0])->isActive = false;
+
+    rb->mass = 10.0f;
+    rb->linearDrag = 3.0f;
+    rb->friction = 5.0f;
+    glm::vec3 camForward = forward(scene, player->cameraController->camera->entityID);
+    rb->linearVelocity = camForward * 30.0f;
+    setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
+}
+
 void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player* player) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    if (input->spawn) {
+        if (player->canSpawnCan) {
+            player->canSpawnCan = false;
+            spawnTrashCan(scene, player);
+        }
+    } else {
+        player->canSpawnCan = true;
+    }
 
     float xOffset = input->lookX * player->cameraController->sensitivity;
     float yOffset = input->lookY * player->cameraController->sensitivity;

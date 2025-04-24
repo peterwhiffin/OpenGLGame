@@ -152,10 +152,10 @@ int main() {
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
-    Model* trashcan = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
+    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
 
     uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
-    uint32_t trashCanEntity = createEntityFromModel(scene, trashcan->rootNode, INVALID_ID, true);
+    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
     uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
 
     addAnimator(scene, wrenchEntity, wrench);

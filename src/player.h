@@ -5,9 +5,10 @@
 struct Player {
     uint32_t entityID;
     CameraController* cameraController;
-    float jumpHeight = 10.0f;
     bool isGrounded = false;
     bool canJump = true;
+    bool canSpawnCan = true;
+    float jumpHeight = 10.0f;
     float moveSpeed = 10.0f;
     float groundCheckDistance = 0.2f;
 };
