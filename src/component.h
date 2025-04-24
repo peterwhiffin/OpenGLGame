@@ -125,7 +125,10 @@ struct WindowData {
 struct Scene {
     WindowData windowData;
 
-    unsigned int defaultShader;
+    unsigned int gBuffer, gPosition, gNormal, gColorSpec, gDepth;
+    unsigned int fullscreenVAO, fullscreenVBO;
+    unsigned int defaultShader, gBufferShader, fullscreenShader;
+
     float FPS = 0.0f;
     float timeAccum = 0.0f;
     float frameCount = 0;

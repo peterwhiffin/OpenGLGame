@@ -22,6 +22,9 @@ constexpr unsigned int kTextureDiffuse = 5;
 constexpr unsigned int kTextureSpecular = 6;
 constexpr unsigned int kTextureShadowMap = 7;
 constexpr unsigned int kTextureNoise = 8;
+constexpr unsigned int kGBufferTexPosition = 11;
+constexpr unsigned int kGBufferTexNormal = 12;
+constexpr unsigned int kGBufferTexAlbedoSpec = 13;
 
 constexpr unsigned int kTextureDiffuseUnit = 0;
 constexpr unsigned int kTextureSpecularUnit = 1;

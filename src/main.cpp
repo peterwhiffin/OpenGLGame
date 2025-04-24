@@ -114,11 +114,28 @@ int main() {
     scene->sun.isEnabled = true;
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
+    createGBuffer(scene);
+    createFullScreenQuad(scene);
 
     unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    scene->fullscreenShader = loadShader("../src/shaders/fullscreenshader.vs", "../src/shaders/fullscreenshader.fs");
+    scene->gBufferShader = loadShader("../src/shaders/gbuffershader.vs", "../src/shaders/gbuffershader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
-
     scene->defaultShader = defaultShader;
+
+    glUseProgram(scene->gBufferShader);
+    glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
+    glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
+
+    glUseProgram(scene->fullscreenShader);
+    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gPosition"), 0);
+    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gNormal"), 1);
+    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gAlbedoSpec"), 2);
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
+
     glUseProgram(defaultShader);
     glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
     glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
@@ -139,6 +156,7 @@ int main() {
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 1;
+    pointLight->brightness = 2.0f;
 
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
     glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
@@ -149,6 +167,17 @@ int main() {
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].quadratic"), pointLight->quadratic);
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), pointLight->brightness);
     glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[0].isActive"), pointLight->isActive);
+
+    glUseProgram(scene->fullscreenShader);
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular));
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].constant"), pointLight->constant);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].linear"), pointLight->linear);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].quadratic"), pointLight->quadratic);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].brightness"), pointLight->brightness);
+    glUniform1ui(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].isActive"), pointLight->isActive);
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
@@ -186,7 +215,9 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, player);
-        drawScene(scene, nodeclicked);
+        drawGBuffer(scene);
+        drawFullScreenQuad(scene);
+        // drawScene(scene, nodeclicked);
         drawDebug(scene, nodeFlags, nodeclicked, player);
         glfwSwapBuffers(window);
     }
