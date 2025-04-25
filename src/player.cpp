@@ -11,12 +11,25 @@ void spawnTrashCan(Scene* scene, Player* player) {
     rb->linearDrag = 3.0f;
     rb->friction = 5.0f;
     glm::vec3 camForward = forward(scene, player->cameraController->camera->entityID);
-    rb->linearVelocity = camForward * 30.0f;
+    rb->linearVelocity = camForward * 20.0f;
     setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
 }
 
 void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player* player) {
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    if (input->menu) {
+        if (scene->menuCanOpen) {
+            scene->menuOpen = !scene->menuOpen;
+            scene->menuCanOpen = false;
+
+            glfwSetInputMode(window, GLFW_CURSOR, scene->menuOpen ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+        }
+    } else {
+        scene->menuCanOpen = true;
+    }
+
+    if (scene->menuOpen) {
+        return;
+    }
 
     if (input->spawn) {
         if (player->canSpawnCan) {

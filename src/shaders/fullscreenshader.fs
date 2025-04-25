@@ -34,7 +34,8 @@ struct PointLight {
 
 layout (location = 10) uniform vec3 viewPos;
 layout (location = 100) uniform DirectionalLight dirLight;
-uniform PointLight pointLights[4];
+uniform PointLight pointLights[16];
+uniform int numPointLights;
 // layout (location = 4) uniform vec4 baseColor;
 vec4 diffuseColor;
 vec3 fragPos;
@@ -97,18 +98,18 @@ void main(){
     if(dirLight.enabled){
         finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, ambient), 1.0f);
     } else{
-         finalColor = vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, 1.0f);
+        //  finalColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
-    
-     for(int i = 0; i < 1; i++){
-        if(pointLights[i].isEnabled != 1){
-            //continue;
-        }
 
+     for(int i = 0; i < numPointLights; i++){
         vec3 next = CalcPointLight(pointLights[i], norm, fragPos, viewDir);
-        finalColor += vec4(next.r, next.g, next.b, 1.0f);
+         finalColor += vec4(next.r, next.g, next.b, 1.0f);
     } 
 
+/* if (any(isnan(finalColor))) {
+    FragColor = vec4(1, 0, 1, 1); // bright magenta = NaN
+    return;
+} */
     FragColor = finalColor;
 }
 

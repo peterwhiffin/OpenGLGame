@@ -129,15 +129,18 @@ void drawFullScreenQuad(Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->fullscreenShader);
 
-    PointLight* pointLight = &scene->pointLights[0];
+    for (int i = 0; i < scene->pointLights.size(); i++) {
+        PointLight* pointLight = &scene->pointLights[i];
+        std::string locationBase = "pointLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(scene->fullscreenShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(glGetUniformLocation(scene->fullscreenShader, (locationBase + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
+        glUniform3fv(glGetUniformLocation(scene->fullscreenShader, (locationBase + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
+    }
     glUniform1i(glGetUniformLocation(scene->fullscreenShader, "dirLight.enabled"), scene->sun.isEnabled);
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient * scene->sun.ambientBrightness));
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse * scene->sun.diffuseBrightness));
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular * scene->sun.diffuseBrightness));
 
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
     glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     // glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(subMesh->material.baseColor));
     glUniform1f(uniform_location::kShininess, 32.0f);

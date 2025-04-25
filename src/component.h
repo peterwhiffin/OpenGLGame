@@ -137,6 +137,8 @@ struct Scene {
     float deltaTime;
     float gravity;
 
+    bool menuOpen = false;
+    bool menuCanOpen = true;
     bool useDeferred = false;
 
     uint32_t nextEntityID = 1;

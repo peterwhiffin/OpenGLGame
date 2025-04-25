@@ -119,10 +119,11 @@ unsigned int loadTextureFromFile(const char* path, bool gamma) {
     return textureID;
 }
 
-Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool gamma) {
+Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool whiteIsDefault, bool gamma) {
     Texture newTexture;
     newTexture.path = "default";
-    newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(0).id;
+    int defaultTex = whiteIsDefault ? 0 : 1;
+    newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(defaultTex).id;
 
     if (mat->GetTextureCount(type) != 0) {
         aiString texPath;
@@ -145,7 +146,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
     return newTexture;
 }
 
-void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
+void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     SubMesh* subMesh = new SubMesh();
     parentMesh->subMeshes.push_back(subMesh);
 
@@ -187,8 +188,8 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true);
-        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, false);
+        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true, whiteIsDefault);
+        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, false, whiteIsDefault);
 
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
         material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
@@ -207,7 +208,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     subMesh->material = newMaterial;
 }
 
-ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader) {
+ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
@@ -232,7 +233,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader);
+            processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
         }
 
         childNode->mesh->center = (childNode->mesh->min + childNode->mesh->max) * 0.5f;
@@ -248,13 +249,13 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        childNode->children.push_back(processNode(node->mChildren[i], scene, globalTransform, model, childNode, directory, allTextures, shader));
+        childNode->children.push_back(processNode(node->mChildren[i], scene, globalTransform, model, childNode, directory, allTextures, shader, whiteIsDefault));
     }
 
     return childNode;
 }
 
-Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader) {
+Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     Assimp::Importer importer;
     std::string directory;
 
@@ -272,6 +273,6 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
     Model* newModel = new Model();
     newModel->name = name;
     processAnimations(scene, newModel);
-    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader);
+    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
     return newModel;
 }

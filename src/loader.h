@@ -89,5 +89,5 @@ struct Model {
     ModelNode* rootNode;
 };
 
-Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader);
+Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault);
 unsigned int loadTextureFromFile(const char* path, bool gamma);

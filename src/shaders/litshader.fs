@@ -33,8 +33,8 @@ layout (location = 4) uniform vec4 baseColor;
 layout (location = 10) uniform vec3 viewPos;
 layout (location = 9) uniform float shininess;
 layout (location = 100) uniform DirectionalLight dirLight;
-uniform PointLight pointLights[4];
-
+uniform PointLight pointLights[16];
+uniform int numPointLights;
 out vec4 FragColor;
 
 vec4 diffuseColor;
@@ -88,11 +88,7 @@ void main(){
         //finalColor = diffuseColor;
     }
     
-    for(int i = 0; i < 1; i++){
-        if(pointLights[i].isEnabled != 1){
-            //continue;
-        }
-
+    for(int i = 0; i < numPointLights; i++){
         finalColor += vec4(CalcPointLight(pointLights[i], norm, fragPos, viewDir).rgb, 1.0f);
     }
 

@@ -33,7 +33,8 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
         Transform* transform = getTransform(scene, entityID);
 
         glm::vec3 position = transform->localPosition;
-        ImGui::SliderFloat3("Pos", glm::value_ptr(position), -100.0f, 100.0f);
+        ImGui::DragFloat3("Pos", glm::value_ptr(position), 0.1f, -1000.0f, 1000.0f);
+
         setLocalPosition(scene, entityID, position);
 
         PointLight* light = getPointLight(scene, entityID);
@@ -82,7 +83,8 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
         ImGui::SliderFloat("Directional Light Brightness", &scene->sun.diffuseBrightness, 0.0f, 10.0f);
         ImGui::SliderFloat("Ambient Brightness", &scene->sun.ambientBrightness, 0.0f, 3.0f);
     }
-    // ImGui::Image((ImTextureID)(intptr_t)pickingTexture, ImVec2(200, 200));
+
+    ImGui::Image((ImTextureID)(intptr_t)scene->gNormal, ImVec2(200, 200));
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
             createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags, nodeClicked);

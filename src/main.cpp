@@ -131,6 +131,7 @@ int main() {
     glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gPosition"), 0);
     glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gNormal"), 1);
     glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gAlbedoSpec"), 2);
+
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
@@ -168,6 +169,29 @@ int main() {
     glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), pointLight->brightness);
     glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[0].isActive"), pointLight->isActive);
 
+    pointLightEntity = getNewEntity(scene, "PointLight2");
+    pointLight = addPointLight(scene, pointLightEntity->id);
+    setPosition(scene, pointLightEntity->id, glm::vec3(4.0f, 3.0f, -3.0f));
+    pointLight->ambient = glm::vec3(0.05f);
+    pointLight->diffuse = glm::vec3(0.8f);
+    pointLight->specular = glm::vec3(1.0f);
+    pointLight->constant = 1.0f;
+    pointLight->linear = 0.09f;
+    pointLight->quadratic = 0.032f;
+    pointLight->isActive = 1;
+    pointLight->brightness = 2.0f;
+
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].ambient"), 1, glm::value_ptr(pointLight->ambient));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
+    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].specular"), 1, glm::value_ptr(pointLight->specular));
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].constant"), pointLight->constant);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].linear"), pointLight->linear);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].quadratic"), pointLight->quadratic);
+    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].brightness"), pointLight->brightness);
+    glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[1].isActive"), pointLight->isActive);
+    glUniform1i(glGetUniformLocation(defaultShader, "numPointLights"), 2);
+
     glUseProgram(scene->fullscreenShader);
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
     glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
@@ -179,9 +203,20 @@ int main() {
     glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].brightness"), pointLight->brightness);
     glUniform1ui(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].isActive"), pointLight->isActive);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader);
-    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader);
-    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader);
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].ambient"), 1, glm::value_ptr(pointLight->ambient));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
+    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].specular"), 1, glm::value_ptr(pointLight->specular));
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].constant"), pointLight->constant);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].linear"), pointLight->linear);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].quadratic"), pointLight->quadratic);
+    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].brightness"), pointLight->brightness);
+    glUniform1ui(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].isActive"), pointLight->isActive);
+    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "numPointLights"), 2);
+
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader, true);
+    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader, true);
+    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader, true);
 
     uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
     uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
@@ -222,7 +257,10 @@ int main() {
         } else {
             drawScene(scene, nodeclicked);
         }
-        drawDebug(scene, nodeFlags, nodeclicked, player);
+
+        if (scene->menuOpen) {
+            drawDebug(scene, nodeFlags, nodeclicked, player);
+        }
         glfwSwapBuffers(window);
     }
 
