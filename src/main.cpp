@@ -71,6 +71,31 @@ void updateTime(Scene* scene) {
     scene->lastFrame = scene->currentFrame;
 }
 
+void initializeLights(Scene* scene, unsigned int shader) {
+    glUseProgram(shader);
+    glUniform3fv(glGetUniformLocation(shader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
+    glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
+    glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
+    glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
+
+    int numLights = scene->pointLights.size();
+    glUniform1i(glGetUniformLocation(shader, "numPointLights"), numLights);
+
+    for (int i = 0; i < numLights; i++) {
+        PointLight* pointLight = &scene->pointLights[i];
+        std::string base = "pointLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular));
+        glUniform1f(glGetUniformLocation(shader, (base + ".constant").c_str()), pointLight->constant);
+        glUniform1f(glGetUniformLocation(shader, (base + ".linear").c_str()), pointLight->linear);
+        glUniform1f(glGetUniformLocation(shader, (base + ".quadratic").c_str()), pointLight->quadratic);
+        glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
+        glUniform1ui(glGetUniformLocation(shader, (base + ".isActive").c_str()), pointLight->isActive);
+    }
+}
+
 int main() {
     unsigned int pickingShader;
     unsigned int pickingFBO, pickingRBO, pickingTexture;
@@ -113,40 +138,6 @@ int main() {
     scene->sun.diffuseBrightness = 2.0f;
     scene->sun.isEnabled = true;
 
-    createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
-    createGBuffer(scene);
-    createFullScreenQuad(scene);
-
-    unsigned int defaultShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
-    scene->fullscreenShader = loadShader("../src/shaders/fullscreenshader.vs", "../src/shaders/fullscreenshader.fs");
-    scene->gBufferShader = loadShader("../src/shaders/gbuffershader.vs", "../src/shaders/gbuffershader.fs");
-    pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
-    scene->defaultShader = defaultShader;
-
-    glUseProgram(scene->gBufferShader);
-    glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
-    glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
-
-    glUseProgram(scene->fullscreenShader);
-    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gPosition"), 0);
-    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gNormal"), 1);
-    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "gAlbedoSpec"), 2);
-
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
-
-    glUseProgram(defaultShader);
-    glUniform1i(uniform_location::kTextureDiffuse, uniform_location::kTextureDiffuseUnit);
-    glUniform1i(uniform_location::kTextureSpecular, uniform_location::kTextureSpecularUnit);
-    glUniform1i(uniform_location::kTextureShadowMap, uniform_location::kTextureShadowMapUnit);
-    glUniform1i(uniform_location::kTextureNoise, uniform_location::kTextureNoiseUnit);
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
-    glUniform3fv(glGetUniformLocation(defaultShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
-
     Entity* pointLightEntity = getNewEntity(scene, "PointLight");
     PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
@@ -158,16 +149,6 @@ int main() {
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 1;
     pointLight->brightness = 2.0f;
-
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular));
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].constant"), pointLight->constant);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].linear"), pointLight->linear);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].quadratic"), pointLight->quadratic);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[0].brightness"), pointLight->brightness);
-    glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[0].isActive"), pointLight->isActive);
 
     pointLightEntity = getNewEntity(scene, "PointLight2");
     pointLight = addPointLight(scene, pointLightEntity->id);
@@ -181,42 +162,21 @@ int main() {
     pointLight->isActive = 1;
     pointLight->brightness = 2.0f;
 
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].ambient"), 1, glm::value_ptr(pointLight->ambient));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
-    glUniform3fv(glGetUniformLocation(defaultShader, "pointLights[1].specular"), 1, glm::value_ptr(pointLight->specular));
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].constant"), pointLight->constant);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].linear"), pointLight->linear);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].quadratic"), pointLight->quadratic);
-    glUniform1f(glGetUniformLocation(defaultShader, "pointLights[1].brightness"), pointLight->brightness);
-    glUniform1ui(glGetUniformLocation(defaultShader, "pointLights[1].isActive"), pointLight->isActive);
-    glUniform1i(glGetUniformLocation(defaultShader, "numPointLights"), 2);
+    createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
+    createGBuffer(scene);
+    createFullScreenQuad(scene);
 
-    glUseProgram(scene->fullscreenShader);
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].ambient"), 1, glm::value_ptr(pointLight->ambient));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].specular"), 1, glm::value_ptr(pointLight->specular));
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].constant"), pointLight->constant);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].linear"), pointLight->linear);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].quadratic"), pointLight->quadratic);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].brightness"), pointLight->brightness);
-    glUniform1ui(glGetUniformLocation(scene->fullscreenShader, "pointLights[0].isActive"), pointLight->isActive);
+    scene->litForward = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    scene->deferredLightingPass = loadShader("../src/shaders/deferredlightingshader.vs", "../src/shaders/deferredlightingshader.fs");
+    scene->geometryPass = loadShader("../src/shaders/gbuffershader.vs", "../src/shaders/gbuffershader.fs");
+    pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].position"), 1, glm::value_ptr(getPosition(scene, pointLightEntity->id)));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].ambient"), 1, glm::value_ptr(pointLight->ambient));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].diffuse"), 1, glm::value_ptr(pointLight->diffuse));
-    glUniform3fv(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].specular"), 1, glm::value_ptr(pointLight->specular));
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].constant"), pointLight->constant);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].linear"), pointLight->linear);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].quadratic"), pointLight->quadratic);
-    glUniform1f(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].brightness"), pointLight->brightness);
-    glUniform1ui(glGetUniformLocation(scene->fullscreenShader, "pointLights[1].isActive"), pointLight->isActive);
-    glUniform1i(glGetUniformLocation(scene->fullscreenShader, "numPointLights"), 2);
+    initializeLights(scene, scene->litForward);
+    initializeLights(scene, scene->deferredLightingPass);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, defaultShader, true);
-    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, defaultShader, true);
-    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, defaultShader, true);
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, scene->litForward, true);
+    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, scene->litForward, true);
+    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->litForward, true);
 
     uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
     uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
@@ -225,10 +185,12 @@ int main() {
     addAnimator(scene, wrenchEntity, wrench);
     setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
     getBoxCollider(scene, trashCanEntity)->isActive = false;
+    getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
+
     RigidBody* rb = addRigidbody(scene, trashCanEntity);
     rb->mass = 10.0f;
     rb->linearDrag = 3.0f;
-    rb->friction = 5.0f;
+    rb->friction = 10.0f;
 
     Player* player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);

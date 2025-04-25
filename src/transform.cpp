@@ -119,6 +119,10 @@ glm::vec3 getLocalScale(Scene* scene, uint32_t entityID) {
 
 void setPosition(Scene* scene, uint32_t entityID, glm::vec3 position) {
     Transform* transform = getTransform(scene, entityID);
+    /* Entity* entity = getEntity(scene, entityID);
+    if (entity->name == "Player") {
+        std::cout << "player" << std::endl;
+    } */
 
     if (transform->parentEntityID == INVALID_ID) {
         transform->localPosition = position;

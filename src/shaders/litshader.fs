@@ -22,25 +22,27 @@ struct PointLight {
     vec3 specular;
 };
 
-layout (location = 5) uniform sampler2D texture_diffuse;
-layout (location = 6) uniform sampler2D texture_specular;
+layout (location = 5, binding = 0) uniform sampler2D texture_diffuse;
+layout (location = 6, binding = 1) uniform sampler2D texture_specular;
+layout(location = 14, binding = 2) uniform sampler2D texture_normal;
 
 layout (location = 0) in vec2 texCoord;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 fragPos;
+layout (location = 3) in mat3 TBN;
 
 layout (location = 4) uniform vec4 baseColor;
 layout (location = 10) uniform vec3 viewPos;
 layout (location = 9) uniform float shininess;
-layout (location = 100) uniform DirectionalLight dirLight;
-uniform PointLight pointLights[16];
+layout (location = 30) uniform DirectionalLight dirLight;
+layout (location = 64) uniform PointLight pointLights[16];
 uniform int numPointLights;
 out vec4 FragColor;
 
 vec4 diffuseColor;
 vec4 specularColor;
 
-vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 color, vec3 ambient);
+vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 ambient);
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
@@ -75,27 +77,32 @@ void main(){
     
     specularColor = texture(texture_specular, texCoord);
 
-    vec3 norm = normalize(normal);
+    // vec3 norm = normalize(normal);
+    vec3 norm = texture(texture_normal, texCoord).rgb;
+    norm = norm * 2.0 - 1.0;
+    norm = normalize(TBN * norm);
+
     vec3 viewDir = normalize(viewPos - fragPos);
 
     vec3 ambient = dirLight.ambient;
-    diffuseColor *= baseColor; 
-    vec4 finalColor;
+    // diffuseColor *= baseColor; 
+    vec4 finalColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     if(dirLight.enabled){
-        finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, vec3(baseColor.r, baseColor.g, baseColor.b), ambient), 1.0f);
+        finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, ambient), 1.0f);
     } else{
         //finalColor = diffuseColor;
     }
     
     for(int i = 0; i < numPointLights; i++){
-        finalColor += vec4(CalcPointLight(pointLights[i], norm, fragPos, viewDir).rgb, 1.0f);
+        vec3 next = CalcPointLight(pointLights[i], norm, fragPos, viewDir);
+         finalColor += vec4(next.r, next.g, next.b, 1.0f);
     }
 
     FragColor = finalColor;
 }
 
-vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 color, vec3 ambient){
+vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 ambient){
     vec3 lightDir = normalize(light.position - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float diff = max(dot(normal, lightDir), 0.0);

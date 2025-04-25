@@ -9,13 +9,14 @@ void spawnTrashCan(Scene* scene, Player* player) {
 
     rb->mass = 10.0f;
     rb->linearDrag = 3.0f;
-    rb->friction = 5.0f;
+    rb->friction = 10.0f;
     glm::vec3 camForward = forward(scene, player->cameraController->camera->entityID);
     rb->linearVelocity = camForward * 20.0f;
     setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
 }
 
 void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player* player) {
+    Transform* transform = getTransform(scene, player->entityID);
     if (input->menu) {
         if (scene->menuCanOpen) {
             scene->menuOpen = !scene->menuOpen;

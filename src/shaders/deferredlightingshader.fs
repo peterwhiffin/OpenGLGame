@@ -1,8 +1,8 @@
 #version 460 core
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-uniform sampler2D gAlbedoSpec;
+layout (location = 0, binding = 0) uniform sampler2D gPosition;
+layout (location = 1, binding = 1) uniform sampler2D gNormal;
+layout (location = 2, binding = 2) uniform sampler2D gAlbedoSpec;
 
 // uniform int map;
 
@@ -33,8 +33,8 @@ struct PointLight {
 };
 
 layout (location = 10) uniform vec3 viewPos;
-layout (location = 100) uniform DirectionalLight dirLight;
-uniform PointLight pointLights[16];
+layout (location = 30) uniform DirectionalLight dirLight;
+layout (location = 64) uniform PointLight pointLights[16];
 uniform int numPointLights;
 // layout (location = 4) uniform vec4 baseColor;
 vec4 diffuseColor;
@@ -93,7 +93,7 @@ void main(){
 
     vec3 ambient = dirLight.ambient;
     // diffuseColor *= baseColor; 
-    vec4 finalColor;
+    vec4 finalColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     if(dirLight.enabled){
         finalColor = vec4(applyDirectionalLight(dirLight, norm, viewDir, ambient), 1.0f);

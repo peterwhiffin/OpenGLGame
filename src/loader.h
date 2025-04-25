@@ -8,6 +8,8 @@
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
     glm::vec2 texCoord;
 };
 
@@ -90,4 +92,4 @@ struct Model {
 };
 
 Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault);
-unsigned int loadTextureFromFile(const char* path, bool gamma);
+// unsigned int loadTextureFromFile(const char* path, bool gamma, GLint filter);

@@ -127,7 +127,7 @@ struct Scene {
 
     unsigned int gBuffer, gPosition, gNormal, gColorSpec, gDepth;
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int defaultShader, gBufferShader, fullscreenShader;
+    unsigned int litForward, geometryPass, deferredLightingPass;
 
     float FPS = 0.0f;
     float timeAccum = 0.0f;

@@ -75,13 +75,19 @@ void createMeshBuffers(Mesh* mesh) {
     glEnableVertexAttribArray(vertex_attribute_location::kVertexNormal);
     glVertexAttribPointer(vertex_attribute_location::kVertexNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexTangent);
+    glVertexAttribPointer(vertex_attribute_location::kVertexTangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexBitangent);
+    glVertexAttribPointer(vertex_attribute_location::kVertexBitangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+
     glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
     glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
 
     glBindVertexArray(0);
 }
 
-unsigned int loadTextureFromFile(const char* path, bool gamma) {
+unsigned int loadTextureFromFile(const char* path, bool gamma, GLint filter) {
     unsigned int textureID = 1;
     int width;
     int height;
@@ -108,8 +114,8 @@ unsigned int loadTextureFromFile(const char* path, bool gamma) {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
     } else {
         std::cerr << "ERROR::TEXTURE_FAILED_TO_LOAD at: " << path << std::endl;
@@ -124,6 +130,12 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
     newTexture.path = "default";
     int defaultTex = whiteIsDefault ? 0 : 1;
     newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(defaultTex).id;
+    GLint filter = GL_NEAREST;
+
+    if (type == aiTextureType_NORMALS) {
+        newTexture.id = allTextures->at(1).id;
+        // filter = GL_LINEAR;
+    }
 
     if (mat->GetTextureCount(type) != 0) {
         aiString texPath;
@@ -139,7 +151,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
 
         std::string fullPath = *directory + '/' + texPath.C_Str();
         newTexture.path = texPath.C_Str();
-        newTexture.id = loadTextureFromFile(fullPath.data(), gamma);
+        newTexture.id = loadTextureFromFile(fullPath.data(), gamma, filter);
         allTextures->push_back(newTexture);
     }
 
@@ -158,6 +170,8 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
         vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
+        vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+        vertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 
         parentMesh->min = glm::min(parentMesh->min, vertex.position);
         parentMesh->max = glm::max(parentMesh->max, vertex.position);
@@ -188,8 +202,9 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, true, whiteIsDefault);
-        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, false, whiteIsDefault);
+        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
+        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, false);
+        Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, true);
 
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
         material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
@@ -198,6 +213,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
         newMaterial.textures.push_back(diffuseTexture);
         newMaterial.textures.push_back(specularTexture);
+        newMaterial.textures.push_back(normalTexture);
         newMaterial.name = material->GetName().C_Str();
     } else {
         newMaterial.baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -259,7 +275,7 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
     Assimp::Importer importer;
     std::string directory;
 
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;

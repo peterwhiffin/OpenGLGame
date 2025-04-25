@@ -4,6 +4,7 @@
 void updateRigidBodies(Scene* scene) {
     float deltaTime = scene->deltaTime;
     float totalDamping = 0.0f;
+    float epsilon = 1e-6f;
     glm::vec3 collisionResolution = glm::vec3(0.0f);
 
     for (RigidBody& rigidbody : scene->rigidbodies) {
@@ -26,7 +27,12 @@ void updateRigidBodies(Scene* scene) {
                 setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution / 2.0f));
                 setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution / 2.0f));
 
-                glm::vec3 flatForce = glm::normalize(rigidbodyA->linearVelocity - rigidbodyB->linearVelocity);
+                glm::vec3 flatForce = rigidbodyA->linearVelocity - rigidbodyB->linearVelocity;
+
+                if (glm::length(flatForce) > epsilon) {
+                    flatForce = glm::normalize(flatForce);
+                }
+
                 flatForce.y = 0.0f;
 
                 if (collisionResolution.y != 0.0f) {

@@ -78,6 +78,7 @@ BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID) {
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
+    rigidbody.linearVelocity = glm::vec3(0.0f);
     size_t index = scene->rigidbodies.size();
     scene->rigidbodies.push_back(rigidbody);
     scene->rigidbodyIndexMap[entityID] = index;
