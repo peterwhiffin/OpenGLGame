@@ -36,11 +36,13 @@ layout (location = 9) uniform vec4 baseColor;
 layout (location = 10) uniform float shininess;
 layout (location = 11) uniform float normalStrength;
 layout (location = 12) uniform int numPointLights;
+layout (location = 13) uniform float bloomThreshold;
 
 layout (location = 32) uniform DirectionalLight dirLight;
 layout (location = 37) uniform PointLight pointLights[16];
 
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BloomColor;
 
 vec4 diffuseColor;
 vec4 specularColor;
@@ -115,7 +117,14 @@ void main(){
          finalColor += vec4(next.r, next.g, next.b, 1.0f);
     }
 
-    vec3 color = vec3(finalColor.r, finalColor.g, finalColor.b);
-    FragColor = vec4(pow(finalColor.rgb, vec3(1.0/2.2)), 1.0f); 
+    FragColor = vec4(finalColor.rgb, 1.0f); 
+ 
+    float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+
+    if(brightness > bloomThreshold){
+        BloomColor = vec4(FragColor.rgb, 1.0);
+    } else {
+        BloomColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
 }
 

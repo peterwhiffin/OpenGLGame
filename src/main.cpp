@@ -141,21 +141,21 @@ int main() {
     Entity* pointLightEntity = getNewEntity(scene, "PointLight");
     PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
-    pointLight->ambient = glm::vec3(0.05f);
+    pointLight->ambient = glm::vec3(0.001f);
     pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(1.0f);
+    pointLight->specular = glm::vec3(0.3f);
     pointLight->constant = 1.0f;
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
-    pointLight->isActive = 1;
+    pointLight->isActive = 0;
     pointLight->brightness = 2.0f;
 
     pointLightEntity = getNewEntity(scene, "PointLight2");
     pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(4.0f, 3.0f, -3.0f));
-    pointLight->ambient = glm::vec3(0.05f);
+    pointLight->ambient = glm::vec3(0.001f);
     pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(1.0f);
+    pointLight->specular = glm::vec3(0.3f);
     pointLight->constant = 1.0f;
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
@@ -163,10 +163,12 @@ int main() {
     pointLight->brightness = 2.0f;
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
-    createHDRBuffer(scene);
+    createForwardBuffer(scene);
+    createBlurBuffers(scene);
     createFullScreenQuad(scene);
 
     scene->litForward = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    scene->blurPass = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
     scene->postProcess = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
@@ -211,6 +213,7 @@ int main() {
         updateAnimators(scene);
         updateCamera(scene, player);
         drawScene(scene, nodeclicked);
+        drawBlurPass(scene);
         drawFullScreenQuad(scene);
 
         if (scene->menuOpen) {

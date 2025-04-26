@@ -7,4 +7,6 @@ void drawScene(Scene* scene, uint32_t nodeClicked);
 void createPickingFBO(Scene* scene, unsigned int* fbo, unsigned int* rbo, unsigned int* texture);
 void createFullScreenQuad(Scene* scene);
 void drawFullScreenQuad(Scene* scene);
-void createHDRBuffer(Scene* scene);
+void createForwardBuffer(Scene* scene);
+void createBlurBuffers(Scene* scene);
+void drawBlurPass(Scene* scene);

@@ -25,6 +25,7 @@ constexpr unsigned int kBaseColor = 9;
 constexpr unsigned int kShininess = 10;
 constexpr unsigned int kNormalStrength = 11;
 constexpr unsigned int kNumPointLights = 12;
+constexpr unsigned int kBloomThreshold = 13;
 constexpr unsigned int kDirectionalLight = 32;
 constexpr unsigned int kPointLight = 37;
 
@@ -34,10 +35,11 @@ constexpr unsigned int kTextureSpecular = 1;
 constexpr unsigned int kTextureNormal = 2;
 
 // post-process uniforms
-constexpr unsigned int kPTexCoord = 2;
+constexpr unsigned int kPExposure = 3;
 //  post-process samplers
 constexpr unsigned int kForwardBuffer = 0;
-
+// blur uniforms
+constexpr unsigned int kBHorizontal = 3;
 // texture units
 constexpr unsigned int kTextureDiffuseUnit = 0;
 constexpr unsigned int kTextureSpecularUnit = 1;

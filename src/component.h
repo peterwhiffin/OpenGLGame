@@ -125,9 +125,10 @@ struct WindowData {
 struct Scene {
     WindowData windowData;
 
-    unsigned int forwardBuffer, forwardColor, forwardDepth;
+    unsigned int forwardBuffer, forwardColor, forwardBloom, forwardDepth;
+    unsigned int blurFBO[2], blurBuffer[2];
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int litForward, postProcess;
+    unsigned int litForward, postProcess, blurPass;
 
     float FPS = 0.0f;
     float frameTime = 0.0f;
@@ -138,10 +139,13 @@ struct Scene {
     float deltaTime;
     float gravity;
     float normalStrength = 1.0f;
+    float exposure = 1.0f;
+    float bloomThreshold = 1.0f;
 
     bool menuOpen = false;
     bool menuCanOpen = true;
     bool useDeferred = false;
+    bool horizontalBlur = true;
 
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);

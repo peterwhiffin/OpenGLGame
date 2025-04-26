@@ -39,7 +39,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
 
         PointLight* light = getPointLight(scene, entityID);
         if (light != nullptr) {
-            ImGui::SliderFloat("brightness", &light->brightness, 0.0f, 10.0f);
+            ImGui::DragFloat("brightness", &light->brightness, 0.1f, 0.0f, 1000.0f);
         }
 
         if (transform->parentEntityID != INVALID_ID) {
@@ -79,10 +79,12 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     ImGui::InputFloat("jump height", &player->jumpHeight);
     ImGui::InputFloat("gravity", &scene->gravity);
     ImGui::DragFloat("Normal Strength", &scene->normalStrength, 0.1f, 0, 100.0f);
+    ImGui::DragFloat("Exposure", &scene->exposure, 0.1f, 0, 1000.0f);
+    ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.1f, 0, 100.0f);
     ImGui::Checkbox("Enable Directional Light", &scene->sun.isEnabled);
     if (scene->sun.isEnabled) {
-        ImGui::SliderFloat("Directional Light Brightness", &scene->sun.diffuseBrightness, 0.0f, 10.0f);
-        ImGui::SliderFloat("Ambient Brightness", &scene->sun.ambientBrightness, 0.0f, 3.0f);
+        ImGui::DragFloat("Directional Light Brightness", &scene->sun.diffuseBrightness, 0.1f, 0.0f, 1000.0f);
+        ImGui::DragFloat("Ambient Brightness", &scene->sun.ambientBrightness, 0.1f, 0.0f, 1000.0f);
     }
 
     // ImGui::Image((ImTextureID)(intptr_t)scene->gNormal, ImVec2(200, 200));

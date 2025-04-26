@@ -58,6 +58,8 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
     }
 
+    glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
+
     glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
     glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
     glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
@@ -101,9 +103,12 @@ void drawFullScreenQuad(Scene* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->postProcess);
+    glUniform1f(uniform_location::kPExposure, scene->exposure);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->forwardColor);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, scene->blurBuffer[scene->horizontalBlur]);
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
@@ -141,12 +146,32 @@ void setFlags() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void createHDRBuffer(Scene* scene) {
+void createBlurBuffers(Scene* scene) {
     unsigned int width = scene->windowData.width;
     unsigned int height = scene->windowData.height;
 
+    glGenFramebuffers(2, scene->blurFBO);
+    glGenTextures(2, scene->blurBuffer);
+
+    for (unsigned int i = 0; i < 2; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, scene->blurBuffer[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->blurBuffer[i], 0);
+    }
+}
+void createForwardBuffer(Scene* scene) {
+    unsigned int width = scene->windowData.width;
+    unsigned int height = scene->windowData.height;
+    unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+
     glGenFramebuffers(1, &scene->forwardBuffer);
     glGenTextures(1, &scene->forwardColor);
+    glGenTextures(1, &scene->forwardBloom);
     glGenRenderbuffers(1, &scene->forwardDepth);
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->forwardBuffer);
@@ -156,14 +181,46 @@ void createHDRBuffer(Scene* scene) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+    glBindTexture(GL_TEXTURE_2D, scene->forwardBloom);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glBindRenderbuffer(GL_RENDERBUFFER, scene->forwardDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->forwardColor, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, scene->forwardBloom, 0);
+
+    glDrawBuffers(2, attachments);
+
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, scene->forwardDepth);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "ERROR::FRAMEBUFFER:: GBuffer framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void drawBlurPass(Scene* scene) {
+    scene->horizontalBlur = true;
+    bool firstIteration = true;
+    int amount = 10;
+    glUseProgram(scene->blurPass);
+    glActiveTexture(GL_TEXTURE0);
+
+    for (unsigned int i = 0; i < amount; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[scene->horizontalBlur]);
+        glUniform1i(uniform_location::kBHorizontal, scene->horizontalBlur);
+        glBindTexture(GL_TEXTURE_2D, firstIteration ? scene->forwardBloom : scene->blurBuffer[!scene->horizontalBlur]);
+        glBindVertexArray(scene->fullscreenVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
+        scene->horizontalBlur = !scene->horizontalBlur;
+        if (firstIteration) {
+            firstIteration = false;
+        }
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
