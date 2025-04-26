@@ -138,9 +138,11 @@ struct Scene {
     float lastFrame = 0.0f;
     float deltaTime;
     float gravity;
-    float normalStrength = 1.0f;
+    float normalStrength = 1.06f;
     float exposure = 1.0f;
-    float bloomThreshold = 1.0f;
+    float bloomThreshold = 0.39f;
+    float bloomAmount = 0.1f;
+    float ambient = 0.108f;
 
     bool menuOpen = false;
     bool menuCanOpen = true;

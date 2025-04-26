@@ -36,6 +36,7 @@ constexpr unsigned int kTextureNormal = 2;
 
 // post-process uniforms
 constexpr unsigned int kPExposure = 3;
+constexpr unsigned int kPBloomAmount = 4;
 //  post-process samplers
 constexpr unsigned int kForwardBuffer = 0;
 // blur uniforms

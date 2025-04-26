@@ -54,7 +54,7 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
         std::string locationBase = "pointLights[" + std::to_string(i) + "]";
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
-        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient * pointLight->brightness));
+        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient * scene->ambient));
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
     }
 
@@ -104,6 +104,7 @@ void drawFullScreenQuad(Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->postProcess);
     glUniform1f(uniform_location::kPExposure, scene->exposure);
+    glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->forwardColor);
@@ -156,7 +157,7 @@ void createBlurBuffers(Scene* scene) {
     for (unsigned int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[i]);
         glBindTexture(GL_TEXTURE_2D, scene->blurBuffer[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -183,8 +184,10 @@ void createForwardBuffer(Scene* scene) {
 
     glBindTexture(GL_TEXTURE_2D, scene->forwardBloom);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glBindRenderbuffer(GL_RENDERBUFFER, scene->forwardDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);

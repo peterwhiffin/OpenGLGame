@@ -136,31 +136,31 @@ int main() {
     scene->sun.specular = glm::vec3(0.18f);
     scene->sun.ambientBrightness = 1.7f;
     scene->sun.diffuseBrightness = 2.0f;
-    scene->sun.isEnabled = true;
+    scene->sun.isEnabled = false;
 
     Entity* pointLightEntity = getNewEntity(scene, "PointLight");
     PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
-    pointLight->ambient = glm::vec3(0.001f);
+    pointLight->ambient = glm::vec3(1.0f);
     pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(0.3f);
+    pointLight->specular = glm::vec3(0.2f);
     pointLight->constant = 1.0f;
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 0;
-    pointLight->brightness = 2.0f;
+    pointLight->brightness = 2.35f;
 
     pointLightEntity = getNewEntity(scene, "PointLight2");
     pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(4.0f, 3.0f, -3.0f));
-    pointLight->ambient = glm::vec3(0.001f);
+    pointLight->ambient = glm::vec3(1.0f);
     pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(0.3f);
+    pointLight->specular = glm::vec3(0.2f);
     pointLight->constant = 1.0f;
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 1;
-    pointLight->brightness = 2.0f;
+    pointLight->brightness = 2.35f;
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
     createForwardBuffer(scene);
