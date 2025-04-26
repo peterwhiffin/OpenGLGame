@@ -5,15 +5,15 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aTangent;
 layout (location = 3) in vec2 aTexCoord;
 
-layout (location = 0) uniform mat4 model;
-layout (location = 1) uniform mat4 view;
-layout (location = 2) uniform mat4 projection;
-layout (location = 3) uniform mat3 normalMatrix;
+layout (location = 4) uniform mat4 model;
+layout (location = 5) uniform mat4 view;
+layout (location = 6) uniform mat4 projection;
+layout (location = 7) uniform mat3 normalMatrix;
 
-layout (location = 0) out vec2 texCoord;
-layout (location = 1) out vec3 normaly;
-layout (location = 2) out vec3 fragPos;
-layout (location = 3) out mat3 TBN;
+layout (location = 13) out vec2 texCoord;
+layout (location = 14) out vec3 normaly;
+layout (location = 15) out vec3 fragPos;
+layout (location = 16) out mat3 TBN;
 
 void main(){
     fragPos = vec3(model * vec4(aPos, 1.0));

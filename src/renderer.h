@@ -5,7 +5,6 @@ void setFlags();
 void drawPickingScene(Scene* scene, unsigned int pickingFBO, unsigned int pickingShader);
 void drawScene(Scene* scene, uint32_t nodeClicked);
 void createPickingFBO(Scene* scene, unsigned int* fbo, unsigned int* rbo, unsigned int* texture);
-void createGBuffer(Scene* scene);
 void createFullScreenQuad(Scene* scene);
 void drawFullScreenQuad(Scene* scene);
-void drawGBuffer(Scene* scene);
+void createHDRBuffer(Scene* scene);

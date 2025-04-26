@@ -22,24 +22,26 @@ struct PointLight {
     vec3 specular;
 };
 
-layout (location = 5, binding = 0) uniform sampler2D texture_diffuse;
-layout (location = 6, binding = 1) uniform sampler2D texture_specular;
-layout(location = 14, binding = 2) uniform sampler2D texture_normal;
+layout (location = 0, binding = 0) uniform sampler2D texture_diffuse;
+layout (location = 1, binding = 1) uniform sampler2D texture_specular;
+layout(location = 2, binding = 2) uniform sampler2D texture_normal;
 
-layout (location = 0) in vec2 texCoord;
-layout (location = 1) in vec3 normaly;
-layout (location = 2) in vec3 fragPos;
-layout (location = 3) in mat3 TBN;
+layout (location = 13) in vec2 texCoord;
+layout (location = 14) in vec3 normaly;
+layout (location = 15) in vec3 fragPos;
+layout (location = 16) in mat3 TBN;
 
-layout (location = 4) uniform vec4 baseColor;
-layout (location = 10) uniform vec3 viewPos;
-layout (location = 9) uniform float shininess;
-layout (location = 30) uniform DirectionalLight dirLight;
-layout (location = 64) uniform PointLight pointLights[16];
-uniform int numPointLights;
+layout (location = 8) uniform vec3 viewPos;
+layout (location = 9) uniform vec4 baseColor;
+layout (location = 10) uniform float shininess;
+layout (location = 11) uniform float normalStrength;
+layout (location = 12) uniform int numPointLights;
+
+layout (location = 32) uniform DirectionalLight dirLight;
+layout (location = 37) uniform PointLight pointLights[16];
+
 out vec4 FragColor;
 
-layout (location = 15) uniform float normalStrength;
 vec4 diffuseColor;
 vec4 specularColor;
 

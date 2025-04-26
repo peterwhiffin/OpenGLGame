@@ -163,16 +163,14 @@ int main() {
     pointLight->brightness = 2.0f;
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
-    createGBuffer(scene);
+    createHDRBuffer(scene);
     createFullScreenQuad(scene);
 
     scene->litForward = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
-    scene->deferredLightingPass = loadShader("../src/shaders/deferredlightingshader.vs", "../src/shaders/deferredlightingshader.fs");
-    scene->geometryPass = loadShader("../src/shaders/gbuffershader.vs", "../src/shaders/gbuffershader.fs");
+    scene->postProcess = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
     initializeLights(scene, scene->litForward);
-    initializeLights(scene, scene->deferredLightingPass);
 
     Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, scene->litForward, true);
     Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, scene->litForward, true);
@@ -212,17 +210,13 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, player);
-
-        if (scene->useDeferred) {
-            drawGBuffer(scene);
-            drawFullScreenQuad(scene);
-        } else {
-            drawScene(scene, nodeclicked);
-        }
+        drawScene(scene, nodeclicked);
+        drawFullScreenQuad(scene);
 
         if (scene->menuOpen) {
             drawDebug(scene, nodeFlags, nodeclicked, player);
         }
+
         glfwSwapBuffers(window);
     }
 

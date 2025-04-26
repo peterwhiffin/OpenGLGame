@@ -125,9 +125,9 @@ struct WindowData {
 struct Scene {
     WindowData windowData;
 
-    unsigned int gBuffer, gPosition, gNormal, gColorSpec, gDepth;
+    unsigned int forwardBuffer, forwardColor, forwardDepth;
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int litForward, geometryPass, deferredLightingPass;
+    unsigned int litForward, postProcess;
 
     float FPS = 0.0f;
     float frameTime = 0.0f;
