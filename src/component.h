@@ -130,12 +130,14 @@ struct Scene {
     unsigned int litForward, geometryPass, deferredLightingPass;
 
     float FPS = 0.0f;
+    float frameTime = 0.0f;
     float timeAccum = 0.0f;
     float frameCount = 0;
     float currentFrame = 0.0f;
     float lastFrame = 0.0f;
     float deltaTime;
     float gravity;
+    float normalStrength = 1.0f;
 
     bool menuOpen = false;
     bool menuCanOpen = true;

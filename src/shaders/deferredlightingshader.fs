@@ -39,7 +39,7 @@ uniform int numPointLights;
 // layout (location = 4) uniform vec4 baseColor;
 vec4 diffuseColor;
 vec3 fragPos;
-vec3 normal;
+vec3 norm;
 layout (location = 9) uniform float shininess;
 
 vec3 applyDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 ambient){
@@ -82,13 +82,12 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 void main(){
     diffuseColor = texture(gAlbedoSpec, texCoord);
     fragPos = texture(gPosition, texCoord).rgb;
-    normal = texture(gNormal, texCoord).rgb;
+    norm = texture(gNormal, texCoord).rgb;
 
    /*  if(diffuseColor.a < 0.1f){
         discard;
     } */
     
-    vec3 norm = normalize(normal);
     vec3 viewDir = normalize(viewPos - fragPos);
 
     vec3 ambient = dirLight.ambient;

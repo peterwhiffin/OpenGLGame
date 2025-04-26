@@ -54,6 +54,7 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
         std::string locationBase = "pointLights[" + std::to_string(i) + "]";
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
+        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient * pointLight->brightness));
         glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
     }
 
@@ -62,12 +63,14 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
     glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     glUniform1f(uniform_location::kShininess, 32.0f);
 
+    glUniform1f(uniform_location::kNormalStrength, scene->normalStrength);
+
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
         glm::mat4 model = getTransform(scene, renderer->entityID)->worldTransform;
-        glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
+        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
         for (SubMesh* subMesh : renderer->mesh->subMeshes) {
             unsigned int shader = subMesh->material.shader;
@@ -105,9 +108,9 @@ void drawGBuffer(Scene* scene) {
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
         glm::mat4 model = getTransform(scene, renderer->entityID)->worldTransform;
-        glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
+        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
         glBindVertexArray(renderer->mesh->VAO);
 
@@ -119,6 +122,8 @@ void drawGBuffer(Scene* scene) {
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[1].id);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
+            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[2].id);
             glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
 

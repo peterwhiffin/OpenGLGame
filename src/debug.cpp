@@ -66,6 +66,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
 
     if (scene->timeAccum >= 1.0f) {
         scene->FPS = scene->frameCount / scene->timeAccum;
+        scene->frameTime = scene->timeAccum / scene->frameCount;
         scene->timeAccum = 0.0f;
         scene->frameCount = 0;
     } else {
@@ -73,10 +74,11 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
         scene->frameCount++;
     }
 
-    ImGui::Text("FPS: %.0f", scene->FPS);
+    ImGui::Text("FPS: %.0f / FrameTime: %.6f", scene->FPS, scene->frameTime);
     ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
     ImGui::InputFloat("jump height", &player->jumpHeight);
     ImGui::InputFloat("gravity", &scene->gravity);
+    ImGui::DragFloat("Normal Strength", &scene->normalStrength, 0.1f, 0, 100.0f);
     ImGui::Checkbox("Use Deferred", &scene->useDeferred);
     ImGui::Checkbox("Enable Directional Light", &scene->sun.isEnabled);
     if (scene->sun.isEnabled) {

@@ -78,16 +78,13 @@ void createMeshBuffers(Mesh* mesh) {
     glEnableVertexAttribArray(vertex_attribute_location::kVertexTangent);
     glVertexAttribPointer(vertex_attribute_location::kVertexTangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
 
-    glEnableVertexAttribArray(vertex_attribute_location::kVertexBitangent);
-    glVertexAttribPointer(vertex_attribute_location::kVertexBitangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
-
     glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
     glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
 
     glBindVertexArray(0);
 }
 
-unsigned int loadTextureFromFile(const char* path, bool gamma, GLint filter) {
+unsigned int loadTextureFromFile(const char* path, bool gamma, bool isNormal, GLint filter) {
     unsigned int textureID = 1;
     int width;
     int height;
@@ -99,17 +96,26 @@ unsigned int loadTextureFromFile(const char* path, bool gamma, GLint filter) {
         glGenTextures(1, &textureID);
         GLenum format = GL_RED;
         GLenum internalFormat = GL_RED;
+        GLenum dataType = GL_UNSIGNED_BYTE;
 
         if (componentCount == 3) {
             format = GL_RGB;
             internalFormat = gamma ? GL_SRGB : GL_RGB;
+            // internalFormat = GL_RGB;
         } else if (componentCount == 4) {
             format = GL_RGBA;
             internalFormat = gamma ? GL_SRGB_ALPHA : GL_RGBA;
+            // internalFormat = GL_RGBA;
         }
 
+        /*         if (isNormal) {
+                    format = GL_RGBA;
+                    internalFormat = GL_RGBA;
+                    dataType = GL_UNSIGNED_BYTE;
+                }
+         */
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -131,10 +137,12 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
     int defaultTex = whiteIsDefault ? 0 : 1;
     newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(defaultTex).id;
     GLint filter = GL_NEAREST;
+    bool isNormal = false;
 
     if (type == aiTextureType_NORMALS) {
         newTexture.id = allTextures->at(1).id;
-        // filter = GL_LINEAR;
+        filter = GL_LINEAR;
+        isNormal = true;
     }
 
     if (mat->GetTextureCount(type) != 0) {
@@ -151,7 +159,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
 
         std::string fullPath = *directory + '/' + texPath.C_Str();
         newTexture.path = texPath.C_Str();
-        newTexture.id = loadTextureFromFile(fullPath.data(), gamma, filter);
+        newTexture.id = loadTextureFromFile(fullPath.data(), gamma, isNormal, filter);
         allTextures->push_back(newTexture);
     }
 
@@ -168,10 +176,10 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         Vertex vertex;
 
         vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
-        vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
+        // vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
+        vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         vertex.texCoord = glm::vec2(0.0f, 0.0f);
         vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-        vertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 
         parentMesh->min = glm::min(parentMesh->min, vertex.position);
         parentMesh->max = glm::max(parentMesh->max, vertex.position);
@@ -203,8 +211,8 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
-        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, false);
-        Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, true);
+        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
+        Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
 
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
         material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
