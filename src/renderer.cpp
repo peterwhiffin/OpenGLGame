@@ -1,3 +1,4 @@
+#include <random>
 #include "transform.h"
 #include "shader.h"
 #include "renderer.h"
@@ -26,7 +27,7 @@ void drawPickingScene(Scene* scene, unsigned int pickingFBO, unsigned int pickin
             glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
             glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
             glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
-            glUniform3fv(uniform_location::kBaseColor, 1, glm::value_ptr(idColor));
+            glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(idColor));
 
             glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
@@ -38,24 +39,22 @@ void drawPickingScene(Scene* scene, unsigned int pickingFBO, unsigned int pickin
 void drawScene(Scene* scene, uint32_t nodeClicked) {
     Camera* camera = scene->cameras[0];
 
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->forwardBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->litFrameBuffer);
     glViewport(0, 0, scene->windowData.width, scene->windowData.height);
     glClearColor(0.34, 0.34, 0.8, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(scene->litForward);
-    glUniform1i(glGetUniformLocation(scene->litForward, "dirLight.enabled"), scene->sun.isEnabled);
-    glUniform3fv(glGetUniformLocation(scene->litForward, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient * scene->sun.ambientBrightness));
-    glUniform3fv(glGetUniformLocation(scene->litForward, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse * scene->sun.diffuseBrightness));
-    glUniform3fv(glGetUniformLocation(scene->litForward, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular * scene->sun.diffuseBrightness));
+    glUseProgram(scene->lightingShader);
+    glUniform1i(glGetUniformLocation(scene->lightingShader, "dirLight.enabled"), scene->sun.isEnabled);
+    glUniform3fv(glGetUniformLocation(scene->lightingShader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient * scene->sun.ambientBrightness));
+    glUniform3fv(glGetUniformLocation(scene->lightingShader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse * scene->sun.diffuseBrightness));
+    glUniform3fv(glGetUniformLocation(scene->lightingShader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular * scene->sun.diffuseBrightness));
 
     for (int i = 0; i < scene->pointLights.size(); i++) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string locationBase = "pointLights[" + std::to_string(i) + "]";
-        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse * pointLight->brightness));
-        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient * scene->ambient));
-        glUniform3fv(glGetUniformLocation(scene->litForward, (locationBase + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular * pointLight->brightness));
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(pointLight->color * pointLight->brightness));
     }
 
     glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
@@ -63,9 +62,14 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
     glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
     glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
     glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
-    glUniform1f(uniform_location::kShininess, 32.0f);
+    // glUniform1f(uniform_location::kShininess, 32.0f);
 
     glUniform1f(uniform_location::kNormalStrength, scene->normalStrength);
+    glUniform1f(uniform_location::kMetallicStrength, 1.0f);
+    glUniform1f(uniform_location::kRoughnessStrength, 1.0f);
+    glUniform1f(uniform_location::kAOStrength, 1.0f);
+    glUniform1f(uniform_location::kAORadius, scene->AORadius);
+    glUniform1f(uniform_location::kAOBias, scene->AOBias);
 
     for (int i = 0; i < scene->meshRenderers.size(); i++) {
         MeshRenderer* renderer = &scene->meshRenderers[i];
@@ -73,26 +77,51 @@ void drawScene(Scene* scene, uint32_t nodeClicked) {
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glBindVertexArray(renderer->mesh->VAO);
 
         for (SubMesh* subMesh : renderer->mesh->subMeshes) {
             unsigned int shader = subMesh->material.shader;
             glm::vec4 baseColor = (renderer->entityID == nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh->material.baseColor;
 
-            glUseProgram(shader);
-            glUniform4fv(uniform_location::kBaseColor, 1, glm::value_ptr(baseColor));
-            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureDiffuseUnit);
+            // glUseProgram(shader);
+            glUniform4fv(uniform_location::kColor, 1, glm::value_ptr(baseColor));
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[0].id);
-            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureSpecularUnit);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureRoughnessUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[1].id);
-            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureMetallicUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[2].id);
-
-            glBindVertexArray(renderer->mesh->VAO);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAOUnit);
+            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[3].id);
+            glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
+            glBindTexture(GL_TEXTURE_2D, subMesh->material.textures[4].id);
             glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
-
-        glBindVertexArray(0);
     }
+}
+
+void drawDepthPrePass(Scene* scene) {
+    Camera* camera = scene->cameras[0];
+    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->depthBuffer);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(scene->depthShader);
+    glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
+    glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
+
+    for (int i = 0; i < scene->meshRenderers.size(); i++) {
+        MeshRenderer* renderer = &scene->meshRenderers[i];
+        glm::mat4 model = getTransform(scene, renderer->entityID)->worldTransform;
+        glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+        glBindVertexArray(renderer->mesh->VAO);
+
+        for (SubMesh* subMesh : renderer->mesh->subMeshes) {
+            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
+        }
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void drawFullScreenQuad(Scene* scene) {
@@ -101,15 +130,18 @@ void drawFullScreenQuad(Scene* scene) {
 
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(scene->postProcess);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glUseProgram(scene->postProcessShader);
     glUniform1f(uniform_location::kPExposure, scene->exposure);
     glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
+    glUniform1f(uniform_location::kAOAmount, scene->AOAmount);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, scene->forwardColor);
+    glBindTexture(GL_TEXTURE_2D, scene->litColorTex);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, scene->blurBuffer[scene->horizontalBlur]);
+    glBindTexture(GL_TEXTURE_2D, scene->blurTex[scene->horizontalBlur]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, scene->depthTex);
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
@@ -151,38 +183,43 @@ void createBlurBuffers(Scene* scene) {
     unsigned int width = scene->windowData.width;
     unsigned int height = scene->windowData.height;
 
-    glGenFramebuffers(2, scene->blurFBO);
-    glGenTextures(2, scene->blurBuffer);
+    glGenFramebuffers(2, scene->blurFrameBuffer);
+    glGenTextures(2, scene->blurTex);
 
     for (unsigned int i = 0; i < 2; i++) {
-        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[i]);
-        glBindTexture(GL_TEXTURE_2D, scene->blurBuffer[i]);
+        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[i]);
+        glBindTexture(GL_TEXTURE_2D, scene->blurTex[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->blurBuffer[i], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->blurTex[i], 0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "ERROR::FRAMEBUFFER:: Blur framebuffer is not complete!" << std::endl;
+        }
     }
 }
+
 void createForwardBuffer(Scene* scene) {
     unsigned int width = scene->windowData.width;
     unsigned int height = scene->windowData.height;
-    unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 
-    glGenFramebuffers(1, &scene->forwardBuffer);
-    glGenTextures(1, &scene->forwardColor);
-    glGenTextures(1, &scene->forwardBloom);
+    glGenFramebuffers(1, &scene->litFrameBuffer);
+    glGenTextures(1, &scene->litColorTex);
+    glGenTextures(1, &scene->bloomTex);
     glGenRenderbuffers(1, &scene->forwardDepth);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->forwardBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->litFrameBuffer);
 
-    glBindTexture(GL_TEXTURE_2D, scene->forwardColor);
+    glBindTexture(GL_TEXTURE_2D, scene->litColorTex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glBindTexture(GL_TEXTURE_2D, scene->forwardBloom);
+    glBindTexture(GL_TEXTURE_2D, scene->bloomTex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -192,8 +229,8 @@ void createForwardBuffer(Scene* scene) {
     glBindRenderbuffer(GL_RENDERBUFFER, scene->forwardDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->forwardColor, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, scene->forwardBloom, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->litColorTex, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, scene->bloomTex, 0);
 
     glDrawBuffers(2, attachments);
 
@@ -206,26 +243,49 @@ void createForwardBuffer(Scene* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void drawBlurPass(Scene* scene) {
-    scene->horizontalBlur = true;
-    bool firstIteration = true;
-    int amount = 10;
-    glUseProgram(scene->blurPass);
-    glActiveTexture(GL_TEXTURE0);
+void createDepthPrePassBuffer(Scene* scene) {
+    glGenFramebuffers(1, &scene->depthBuffer);
+    glGenTextures(1, &scene->depthTex);
+    glBindTexture(GL_TEXTURE_2D, scene->depthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scene->windowData.width, scene->windowData.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    for (unsigned int i = 0; i < amount; i++) {
-        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[scene->horizontalBlur]);
-        glUniform1i(uniform_location::kBHorizontal, scene->horizontalBlur);
-        glBindTexture(GL_TEXTURE_2D, firstIteration ? scene->forwardBloom : scene->blurBuffer[!scene->horizontalBlur]);
-        glBindVertexArray(scene->fullscreenVAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glBindVertexArray(0);
-        scene->horizontalBlur = !scene->horizontalBlur;
-        if (firstIteration) {
-            firstIteration = false;
-        }
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->depthBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, scene->depthTex, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void drawBlurPass(Scene* scene) {
+    scene->horizontalBlur = false;
+    int amount = 10;
+    glUseProgram(scene->blurShader);
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[1]);
+    glUniform1i(uniform_location::kBHorizontal, true);
+    glBindTexture(GL_TEXTURE_2D, scene->bloomTex);
+    glBindVertexArray(scene->fullscreenVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    for (unsigned int i = 0; i < amount - 1; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[scene->horizontalBlur]);
+        glUniform1i(uniform_location::kBHorizontal, scene->horizontalBlur);
+        glBindTexture(GL_TEXTURE_2D, scene->blurTex[!scene->horizontalBlur]);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        scene->horizontalBlur = !scene->horizontalBlur;
+    }
+
+    glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -260,9 +320,38 @@ void createFullScreenQuad(Scene* scene) {
     glBindBuffer(GL_ARRAY_BUFFER, scene->fullscreenVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(vertex_attribute_location::kPVertexPosition);
-    glVertexAttribPointer(vertex_attribute_location::kPVertexPosition, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexPosition);
+    glVertexAttribPointer(vertex_attribute_location::kVertexPosition, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 
-    glEnableVertexAttribArray(vertex_attribute_location::kPVertexTexCoord);
-    glVertexAttribPointer(vertex_attribute_location::kPVertexTexCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
+    glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+}
+
+void generateSSAOKernel(Scene* scene) {
+    std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+    std::default_random_engine generator;
+
+    for (unsigned int i = 0; i < 64; i++) {
+        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+        sample = glm::normalize(sample);
+        sample *= randomFloats(generator);
+        float scale = (float)i / 64.0f;
+        scale = 0.1f + (scale * scale) * (1.0f - 0.1f);
+        sample *= scale;
+        scene->ssaoKernel.push_back(sample);
+    }
+
+    for (unsigned int i = 0; i < 16; i++) {
+        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);  // rotate around z-axis (in tangent space)
+        scene->ssaoNoise.push_back(noise);
+    }
+
+    glGenTextures(1, &scene->ssaoNoiseTex);
+    glBindTexture(GL_TEXTURE_2D, scene->ssaoNoiseTex);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &scene->ssaoNoise[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }

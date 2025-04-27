@@ -82,7 +82,10 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     ImGui::DragFloat("Exposure", &scene->exposure, 0.01f, 0, 1000.0f);
     ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
     ImGui::DragFloat("Bloom Amount", &scene->bloomAmount, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Ambient", &scene->ambient, 0.0001f, 0, 100.0f);
+    ImGui::DragFloat("Ambient", &scene->ambient, 0.01f, 0, 100.0f);
+    ImGui::DragFloat("AORadius", &scene->AORadius, 0.0001f, 0, 100.0f);
+    ImGui::DragFloat("AOBias", &scene->AOBias, 0.0001f, 0, 100.0f);
+    ImGui::DragFloat("AOAmount", &scene->AOAmount, 0.0001f, 0, 100.0f);
     ImGui::Checkbox("Enable Directional Light", &scene->sun.isEnabled);
     if (scene->sun.isEnabled) {
         ImGui::DragFloat("Directional Light Brightness", &scene->sun.diffuseBrightness, 0.1f, 0.0f, 1000.0f);

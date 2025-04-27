@@ -72,14 +72,14 @@ void createMeshBuffers(Mesh* mesh) {
     glEnableVertexAttribArray(vertex_attribute_location::kVertexPosition);
     glVertexAttribPointer(vertex_attribute_location::kVertexPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
+    glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+
     glEnableVertexAttribArray(vertex_attribute_location::kVertexNormal);
     glVertexAttribPointer(vertex_attribute_location::kVertexNormal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 
     glEnableVertexAttribArray(vertex_attribute_location::kVertexTangent);
     glVertexAttribPointer(vertex_attribute_location::kVertexTangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-
-    glEnableVertexAttribArray(vertex_attribute_location::kVertexTexCoord);
-    glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
 
     glBindVertexArray(0);
 }
@@ -135,14 +135,27 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
     Texture newTexture;
     newTexture.path = "default";
     int defaultTex = whiteIsDefault ? 0 : 1;
-    newTexture.id = type == aiTextureType_DIFFUSE ? allTextures->at(0).id : allTextures->at(defaultTex).id;
     GLint filter = GL_NEAREST;
     bool isNormal = false;
 
-    if (type == aiTextureType_NORMALS) {
-        newTexture.id = allTextures->at(1).id;
-        filter = GL_LINEAR;
-        isNormal = true;
+    switch (type) {
+        case aiTextureType_DIFFUSE:  // albedo map
+            newTexture.id = allTextures->at(1).id;
+            break;
+        case aiTextureType_METALNESS:  // roughness map
+            newTexture.id = allTextures->at(1).id;
+            break;
+        case aiTextureType_DIFFUSE_ROUGHNESS:  // metallic map
+            newTexture.id = allTextures->at(1).id;
+            break;
+        case aiTextureType_AMBIENT_OCCLUSION:  // ao map
+            newTexture.id = allTextures->at(1).id;
+            break;
+        case aiTextureType_NORMALS:  // normal map
+            newTexture.id = allTextures->at(2).id;
+            filter = GL_LINEAR;
+            isNormal = true;
+            break;
     }
 
     if (mat->GetTextureCount(type) != 0) {
@@ -210,8 +223,10 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Texture diffuseTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
-        Texture specularTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
+        Texture albedoTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
+        Texture roughnessTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
+        Texture metallicTexture = loadTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
+        Texture aoTexture = loadTexture(material, aiTextureType_AMBIENT_OCCLUSION, directory, allTextures, whiteIsDefault, true);
         Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
 
         material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
@@ -219,8 +234,10 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
 
         newMaterial.shader = shader;
         newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
-        newMaterial.textures.push_back(diffuseTexture);
-        newMaterial.textures.push_back(specularTexture);
+        newMaterial.textures.push_back(albedoTexture);
+        newMaterial.textures.push_back(roughnessTexture);
+        newMaterial.textures.push_back(metallicTexture);
+        newMaterial.textures.push_back(aoTexture);
         newMaterial.textures.push_back(normalTexture);
         newMaterial.name = material->GetName().C_Str();
     } else {

@@ -112,6 +112,7 @@ struct PointLight {
     float linear;
     float quadratic;
     float brightness;
+    glm::vec3 color;
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
@@ -125,10 +126,10 @@ struct WindowData {
 struct Scene {
     WindowData windowData;
 
-    unsigned int forwardBuffer, forwardColor, forwardBloom, forwardDepth;
-    unsigned int blurFBO[2], blurBuffer[2];
+    unsigned int litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
+    unsigned int blurFrameBuffer[2], blurTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int litForward, postProcess, blurPass;
+    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader;
 
     float FPS = 0.0f;
     float frameTime = 0.0f;
@@ -143,6 +144,9 @@ struct Scene {
     float bloomThreshold = 0.39f;
     float bloomAmount = 0.1f;
     float ambient = 0.108f;
+    float AORadius = 0.5f;
+    float AOBias = 0.025f;
+    float AOAmount = 1.0f;
 
     bool menuOpen = false;
     bool menuCanOpen = true;
@@ -155,6 +159,8 @@ struct Scene {
     Model* trashcanModel;
 
     DirectionalLight sun;
+    std::vector<glm::vec3> ssaoKernel;
+    std::vector<glm::vec3> ssaoNoise;
     std::vector<PointLight> pointLights;
     std::vector<Texture> textures;
     std::vector<Entity> entities;

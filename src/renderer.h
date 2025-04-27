@@ -10,3 +10,6 @@ void drawFullScreenQuad(Scene* scene);
 void createForwardBuffer(Scene* scene);
 void createBlurBuffers(Scene* scene);
 void drawBlurPass(Scene* scene);
+void generateSSAOKernel(Scene* scene);
+void createDepthPrePassBuffer(Scene* scene);
+void drawDepthPrePass(Scene* scene);

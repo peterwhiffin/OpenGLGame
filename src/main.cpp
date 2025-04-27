@@ -85,15 +85,22 @@ void initializeLights(Scene* scene, unsigned int shader) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
         glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(glGetUniformLocation(shader, (base + ".ambient").c_str()), 1, glm::value_ptr(pointLight->ambient));
-        glUniform3fv(glGetUniformLocation(shader, (base + ".diffuse").c_str()), 1, glm::value_ptr(pointLight->diffuse));
-        glUniform3fv(glGetUniformLocation(shader, (base + ".specular").c_str()), 1, glm::value_ptr(pointLight->specular));
-        glUniform1f(glGetUniformLocation(shader, (base + ".constant").c_str()), pointLight->constant);
-        glUniform1f(glGetUniformLocation(shader, (base + ".linear").c_str()), pointLight->linear);
-        glUniform1f(glGetUniformLocation(shader, (base + ".quadratic").c_str()), pointLight->quadratic);
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(pointLight->color));
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
         glUniform1ui(glGetUniformLocation(shader, (base + ".isActive").c_str()), pointLight->isActive);
     }
+
+    glUseProgram(scene->ssaoShader);
+    for (int i = 0; i < scene->ssaoKernel.size(); i++) {
+        glUniform3fv(glGetUniformLocation(shader, ("u_kernel[" + std::to_string(i) + "]").c_str()), 1, glm::value_ptr(scene->ssaoKernel[i]));
+    }
+
+    glUniform1f(uniform_location::kAORadius, 0.5f);
+    glUniform1f(uniform_location::kAOBias, 0.025f);
+
+    glUseProgram(scene->postProcessShader);
+
+    glUniform1f(uniform_location::kAOAmount, 1.0f);
 }
 
 int main() {
@@ -101,9 +108,11 @@ int main() {
     unsigned int pickingFBO, pickingRBO, pickingTexture;
     unsigned int whiteTexture;
     unsigned int blackTexture;
+    unsigned int blueTexture;
     unsigned int nodeclicked = INVALID_ID;
     unsigned char whitePixel[4] = {255, 255, 255, 255};
     unsigned char blackPixel[4] = {0, 0, 0, 255};
+    unsigned char bluePixel[4] = {0, 0, 255, 255};
 
     Scene* scene = new Scene();
     scene->windowData.width = 800;
@@ -113,20 +122,28 @@ int main() {
 
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
+    glGenTextures(1, &blueTexture);
     glBindTexture(GL_TEXTURE_2D, whiteTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
     glBindTexture(GL_TEXTURE_2D, blackTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, blackPixel);
+    glBindTexture(GL_TEXTURE_2D, blueTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bluePixel);
 
     Texture white;
     Texture black;
+    Texture blue;
+
     white.id = whiteTexture;
     black.id = blackTexture;
+    blue.id = blueTexture;
     white.path = "white";
     black.path = "black";
+    blue.path = "blue";
 
-    scene->textures.push_back(white);
     scene->textures.push_back(black);
+    scene->textures.push_back(white);
+    scene->textures.push_back(blue);
     scene->gravity = -18.81f;
     scene->sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
     scene->sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -141,6 +158,7 @@ int main() {
     Entity* pointLightEntity = getNewEntity(scene, "PointLight");
     PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
+    pointLight->color = glm::vec3(1.0f);
     pointLight->ambient = glm::vec3(1.0f);
     pointLight->diffuse = glm::vec3(0.8f);
     pointLight->specular = glm::vec3(0.2f);
@@ -148,11 +166,12 @@ int main() {
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 0;
-    pointLight->brightness = 2.35f;
+    pointLight->brightness = 1.0f;
 
     pointLightEntity = getNewEntity(scene, "PointLight2");
     pointLight = addPointLight(scene, pointLightEntity->id);
     setPosition(scene, pointLightEntity->id, glm::vec3(4.0f, 3.0f, -3.0f));
+    pointLight->color = glm::vec3(1.0f);
     pointLight->ambient = glm::vec3(1.0f);
     pointLight->diffuse = glm::vec3(0.8f);
     pointLight->specular = glm::vec3(0.2f);
@@ -160,23 +179,28 @@ int main() {
     pointLight->linear = 0.09f;
     pointLight->quadratic = 0.032f;
     pointLight->isActive = 1;
-    pointLight->brightness = 2.35f;
+    pointLight->brightness = 1.0f;
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
+    createDepthPrePassBuffer(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
     createFullScreenQuad(scene);
+    generateSSAOKernel(scene);
 
-    scene->litForward = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
-    scene->blurPass = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
-    scene->postProcess = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
+    // scene->lightingShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
+    scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
+    scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
+    scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
+    scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
-    initializeLights(scene, scene->litForward);
+    // initializeLights(scene, scene->lightingShader);
+    initializeLights(scene, scene->lightingShader);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, scene->litForward, true);
-    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, scene->litForward, true);
-    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->litForward, true);
+    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
+    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
 
     uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
     uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
@@ -212,6 +236,7 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, player);
+        drawDepthPrePass(scene);
         drawScene(scene, nodeclicked);
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
