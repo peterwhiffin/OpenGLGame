@@ -184,19 +184,19 @@ int main() {
     // initializeLights(scene, scene->lightingShader);
     initializeLights(scene, scene->lightingShader);
 
-    // uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
-    // uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+    uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
+    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
     uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
 
     addAnimator(scene, wrenchEntity, wrench);
-    // setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
-    // getBoxCollider(scene, trashCanEntity)->isActive = false;
-    // getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
+    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
+    getBoxCollider(scene, trashCanEntity)->isActive = false;
+    getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
 
-    /*  RigidBody* rb = addRigidbody(scene, trashCanEntity);
-     rb->mass = 10.0f;
-     rb->linearDrag = 3.0f;
-     rb->friction = 10.0f; */
+    RigidBody* rb = addRigidbody(scene, trashCanEntity);
+    rb->mass = 10.0f;
+    rb->linearDrag = 3.0f;
+    rb->friction = 10.0f;
 
     Player* player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);

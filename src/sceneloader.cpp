@@ -527,6 +527,46 @@ void createPlayer(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
     }
+
+    if (block.memberValueMap.count("jumpHeight")) {
+        jumpHeight = std::stof(block.memberValueMap["jumpHeight"]);
+    }
+
+    if (block.memberValueMap.count("moveSpeed")) {
+        moveSpeed = std::stof(block.memberValueMap["moveSpeed"]);
+    }
+
+    if (block.memberValueMap.count("groundCheckDistance")) {
+        groundCheckDistance = std::stof(block.memberValueMap["groundCheckDistance"]);
+    }
+
+    if (block.memberValueMap.count("cameraControllerEntityID")) {
+        cameraController_EntityID = std::stoi(block.memberValueMap["cameraControllerEntityID"]);
+    }
+
+    if (block.memberValueMap.count("cameraControllerCameraTargetEntityID")) {
+        cameraController_CameraTargetEntityID = std::stoi(block.memberValueMap["cameraControllerCameraTargetEntityID"]);
+    }
+
+    if (block.memberValueMap.count("cameraControllerCameraEntityID")) {
+        cameraController_CameraEntityID = std::stoi(block.memberValueMap["cameraControllerCameraEntityID"]);
+    }
+
+    if (block.memberValueMap.count("sensitivity")) {
+        sensitivity = std::stof(block.memberValueMap["sensitivity"]);
+    }
+
+    Player* player = new Player();
+    player->cameraController = new CameraController();
+    player->entityID = entityID;
+    player->jumpHeight = jumpHeight;
+    player->moveSpeed = moveSpeed;
+    player->groundCheckDistance = groundCheckDistance;
+    player->cameraController->entityID = cameraController_EntityID;
+    player->cameraController->cameraTargetEntityID = cameraController_CameraTargetEntityID;
+    player->cameraController->cameraEntityID = cameraController_CameraEntityID;
+    player->cameraController->sensitivity = sensitivity;
+    scene->player = player;
 }
 
 void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
@@ -568,8 +608,7 @@ void loadScene(Scene* scene, std::string path) {
         updateTransformMatrices(scene, &scene->transforms[i]);
     }
 
-    for (int i = 0; i < scene->animators.size(); i++) {
-    }
+    scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
 }
 
 void writeEntities(Scene* scene, std::ofstream& stream) {
@@ -743,5 +782,8 @@ void saveScene(Scene* scene) {
     writeMeshRenderers(scene, stream);
     writeBoxColliders(scene, stream);
     writeRigidbodies(scene, stream);
+    writeAnimators(scene, stream);
     writePointLights(scene, stream);
+    writeCameras(scene, stream);
+    writePlayer(scene, stream);
 }

@@ -110,6 +110,7 @@ Player* createPlayer(Scene* scene) {
     player->cameraController->camera = camera;
     player->cameraController->entityID = playerEntityID;
     player->cameraController->cameraTargetEntityID = cameraTargetEntityID;
+    player->cameraController->cameraEntityID = cameraEntityID;
 
     setParent(scene, cameraTargetEntityID, playerEntityID);
     setPosition(scene, playerEntityID, glm::vec3(0.0f, 3.0f, 0.0f));

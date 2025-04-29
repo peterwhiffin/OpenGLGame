@@ -48,6 +48,19 @@ PointLight* getPointLight(Scene* scene, uint32_t entityID) {
     return &scene->pointLights[scene->pointLightIndexMap[entityID]];
 }
 
+Camera* getCamera(Scene* scene, uint32_t entityID) {
+    Camera* foundCamera = nullptr;
+
+    for (Camera* camera : scene->cameras) {
+        if (camera->entityID == entityID) {
+            foundCamera = camera;
+            break;
+        }
+    }
+
+    return foundCamera;
+}
+
 Transform* addTransform(Scene* scene, uint32_t entityID) {
     Transform transform;
     transform.entityID = entityID;

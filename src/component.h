@@ -295,3 +295,4 @@ BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
 Animator* getAnimator(Scene* scene, uint32_t entityID);
 PointLight* getPointLight(Scene* scene, uint32_t entityID);
+Camera* getCamera(Scene* scene, uint32_t entityID);
