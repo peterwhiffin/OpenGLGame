@@ -2,7 +2,18 @@
 #include "transform.h"
 
 uint32_t getEntityID(Scene* scene) {
-    return scene->nextEntityID++;
+    uint32_t newID = scene->nextEntityID++;
+
+    while (scene->usedIds.count(newID) != 0) {
+        newID = scene->nextEntityID++;
+    }
+
+    scene->usedIds[newID] = 0;
+    return newID;
+}
+
+void registerEntityID(Scene* scene, uint32_t id) {
+    scene->usedIds[id] = 0;
 }
 
 Entity* getEntity(Scene* scene, uint32_t entityID) {
@@ -46,9 +57,15 @@ Transform* addTransform(Scene* scene, uint32_t entityID) {
     return &scene->transforms[index];
 }
 
-Entity* getNewEntity(Scene* scene, std::string name) {
+Entity* getNewEntity(Scene* scene, std::string name, uint32_t id) {
     Entity entity;
-    entity.id = getEntityID(scene);
+    if (id == -1) {
+        entity.id = getEntityID(scene);
+    } else {
+        registerEntityID(scene, id);
+        entity.id = id;
+    }
+
     entity.name = name;
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
@@ -79,6 +96,7 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
     rigidbody.linearVelocity = glm::vec3(0.0f);
+    rigidbody.linearMagnitude = 0.0f;
     size_t index = scene->rigidbodies.size();
     scene->rigidbodies.push_back(rigidbody);
     scene->rigidbodyIndexMap[entityID] = index;
@@ -128,6 +146,25 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     for (Animation* animation : model->animations) {
         animatorPtr->animations.push_back(animation);
     }
+
+    mapAnimationChannels(scene, animatorPtr, entityID);
+
+    animatorPtr->currentAnimation = animatorPtr->animations[0];
+    return animatorPtr;
+}
+
+Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations) {
+    Animator animator;
+    animator.entityID = entityID;
+    size_t index = scene->animators.size();
+    scene->animators.push_back(animator);
+    scene->animatorIndexMap[entityID] = index;
+    Animator* animatorPtr = &scene->animators[index];
+    animator.animations = animations;
+    /*
+        for (Animation* animation : del->animations) {
+            animatorPtr->animations.push_back(animation);
+        } */
 
     mapAnimationChannels(scene, animatorPtr, entityID);
 

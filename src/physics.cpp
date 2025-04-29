@@ -24,8 +24,8 @@ void updateRigidBodies(Scene* scene) {
             BoxCollider* colliderB = getBoxCollider(scene, rigidbodyB->entityID);
 
             if (checkAABB(scene, colliderA, colliderB, &collisionResolution)) {
-                setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution / 2.0f));
-                setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution / 2.0f));
+                setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution * 0.5f));
+                setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution * 0.5f));
 
                 glm::vec3 flatForce = rigidbodyA->linearVelocity - rigidbodyB->linearVelocity;
 

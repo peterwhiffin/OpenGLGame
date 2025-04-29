@@ -36,7 +36,7 @@ layout (location = 10) uniform float metallicStrength;
 layout (location = 11) uniform float roughnessStrength;
 layout (location = 12) uniform float aoStrength;
 layout (location = 13) uniform float normalStrength;
-layout (location = 14) uniform float numPointLights;
+layout (location = 14) uniform int numPointLights;
 layout (location = 15) uniform float bloomThreshold;
 
 // lights
@@ -63,7 +63,8 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
 
 float GeometrySchlickGGX(float NdotV, float roughness) {
     float r = (roughness + 1.0);
-    float k = (r*r) / 8.0;
+    // float k = (r*r) / 8.0;
+    float k = (r*r) * 0.125;
 
     float num   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
@@ -110,7 +111,7 @@ void main() {
     // reflectance equation
     vec3 Lo = vec3(0.0);
 
-    for(int i = 0; i < 1; ++i) {
+    for(int i = 0; i < numPointLights; ++i) {
         // calculate per-light radiance
         vec3 L = normalize(pointLights[i].position - WorldPos);
         vec3 H = normalize(V + L);

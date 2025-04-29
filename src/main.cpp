@@ -9,6 +9,7 @@
 #include "transform.h"
 #include "shader.h"
 #include "debug.h"
+#include "sceneloader.h"
 
 void exitProgram(int code) {
     ImGui_ImplOpenGL3_Shutdown();
@@ -90,17 +91,10 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1ui(glGetUniformLocation(shader, (base + ".isActive").c_str()), pointLight->isActive);
     }
 
-    glUseProgram(scene->ssaoShader);
+    /* glUseProgram(scene->ssaoShader);
     for (int i = 0; i < scene->ssaoKernel.size(); i++) {
         glUniform3fv(glGetUniformLocation(shader, ("u_kernel[" + std::to_string(i) + "]").c_str()), 1, glm::value_ptr(scene->ssaoKernel[i]));
-    }
-
-    glUniform1f(uniform_location::kAORadius, 0.5f);
-    glUniform1f(uniform_location::kAOBias, 0.025f);
-
-    glUseProgram(scene->postProcessShader);
-
-    glUniform1f(uniform_location::kAOAmount, 1.0f);
+    } */
 }
 
 int main() {
@@ -114,7 +108,13 @@ int main() {
     unsigned char blackPixel[4] = {0, 0, 0, 255};
     unsigned char bluePixel[4] = {0, 0, 255, 255};
 
-    Scene* scene = new Scene();
+    std::string scenePath;
+    Scene* scene = new Scene;
+
+    if (findLastScene(&scenePath)) {
+        loadScene(scene, scenePath);
+    }
+
     scene->windowData.width = 800;
     scene->windowData.height = 600;
 
@@ -155,31 +155,20 @@ int main() {
     scene->sun.diffuseBrightness = 2.0f;
     scene->sun.isEnabled = false;
 
-    Entity* pointLightEntity = getNewEntity(scene, "PointLight");
-    PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
-    setPosition(scene, pointLightEntity->id, glm::vec3(2.0f, 3.0f, 1.0f));
-    pointLight->color = glm::vec3(1.0f);
-    pointLight->ambient = glm::vec3(1.0f);
-    pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(0.2f);
-    pointLight->constant = 1.0f;
-    pointLight->linear = 0.09f;
-    pointLight->quadratic = 0.032f;
-    pointLight->isActive = 0;
-    pointLight->brightness = 1.0f;
-
-    pointLightEntity = getNewEntity(scene, "PointLight2");
-    pointLight = addPointLight(scene, pointLightEntity->id);
-    setPosition(scene, pointLightEntity->id, glm::vec3(4.0f, 3.0f, -3.0f));
-    pointLight->color = glm::vec3(1.0f);
-    pointLight->ambient = glm::vec3(1.0f);
-    pointLight->diffuse = glm::vec3(0.8f);
-    pointLight->specular = glm::vec3(0.2f);
-    pointLight->constant = 1.0f;
-    pointLight->linear = 0.09f;
-    pointLight->quadratic = 0.032f;
-    pointLight->isActive = 1;
-    pointLight->brightness = 1.0f;
+    for (int i = 0; i < 10; i++) {
+        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
+        PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
+        setPosition(scene, pointLightEntity->id, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
+        pointLight->color = glm::vec3(1.0f);
+        pointLight->ambient = glm::vec3(1.0f);
+        pointLight->diffuse = glm::vec3(0.8f);
+        pointLight->specular = glm::vec3(0.2f);
+        pointLight->constant = 1.0f;
+        pointLight->linear = 0.09f;
+        pointLight->quadratic = 0.032f;
+        pointLight->isActive = 0;
+        pointLight->brightness = 1.0f;
+    }
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
     createDepthPrePassBuffer(scene);
@@ -198,9 +187,9 @@ int main() {
     // initializeLights(scene, scene->lightingShader);
     initializeLights(scene, scene->lightingShader);
 
-    Model* testRoom = loadModel("../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    Model* wrench = loadModel("../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
-    scene->trashcanModel = loadModel("../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
+    Model* testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    Model* wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
+    scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
 
     uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
     uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
@@ -236,7 +225,7 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, player);
-        drawDepthPrePass(scene);
+        // drawDepthPrePass(scene);
         drawScene(scene, nodeclicked);
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
@@ -248,6 +237,7 @@ int main() {
         glfwSwapBuffers(window);
     }
 
+    saveScene(scene);
     exitProgram(0);
     return 0;
 }

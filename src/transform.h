@@ -12,6 +12,7 @@ glm::vec3 getPosition(Scene* scene, uint32_t entityID);
 glm::quat getRotation(Scene* scene, uint32_t entityID);
 glm::vec3 getScale(Scene* scene, uint32_t entityID);
 
+void updateTransformMatrices(Scene* scene, Transform* transform);
 void setLocalPosition(Scene* scene, uint32_t entityID, glm::vec3 localPosition);
 void setLocalRotation(Scene* scene, uint32_t entityID, glm::quat localRotation);
 void setLocalScale(Scene* scene, uint32_t entityID, glm::vec3 localScale);

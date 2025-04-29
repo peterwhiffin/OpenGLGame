@@ -10,10 +10,93 @@
 #include <string>
 #include <iostream>
 
-#include "loader.h"
+// #include "loader.h"
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec2 texCoord;
+};
 
+struct Texture {
+    std::string path;
+    unsigned int id;
+};
+
+struct Material {
+    unsigned int shader;
+    std::string name;
+    std::vector<Texture> textures;
+    glm::vec4 baseColor;
+    float shininess;
+};
+
+struct SubMesh {
+    unsigned int indexOffset;
+    unsigned int indexCount;
+    Material material;
+};
+
+struct Mesh {
+    std::string name;
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    std::vector<SubMesh*> subMeshes;
+    glm::vec3 center;
+    glm::vec3 extent;
+    glm::vec3 min;
+    glm::vec3 max;
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
+};
+
+struct KeyFramePosition {
+    glm::vec3 position;
+    float time;
+};
+
+struct KeyFrameRotation {
+    glm::quat rotation;
+    float time;
+};
+
+struct KeyFrameScale {
+    glm::vec3 scale;
+    float time;
+};
+
+struct AnimationChannel {
+    std::string name;
+    std::vector<KeyFramePosition> positions;
+    std::vector<KeyFrameRotation> rotations;
+    std::vector<KeyFrameScale> scales;
+};
+
+struct Animation {
+    std::string name;
+    float duration;
+    std::vector<AnimationChannel*> channels;
+};
+
+struct ModelNode {
+    std::string name;
+    ModelNode* parent;
+    glm::mat4 transform;
+    std::vector<ModelNode*> children;
+    Mesh* mesh;
+};
+
+struct Model {
+    std::string name;
+    std::vector<Mesh*> meshes;
+    std::vector<Material*> materials;
+    std::vector<Animation*> animations;
+    std::unordered_map<ModelNode*, AnimationChannel*> channelMap;
+    ModelNode* rootNode;
+};
 struct Entity {
     uint32_t id;
     std::string name;
@@ -108,14 +191,8 @@ struct DirectionalLight {
 struct PointLight {
     uint32_t entityID;
     unsigned int isActive;
-    float constant;
-    float linear;
-    float quadratic;
     float brightness;
     glm::vec3 color;
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
 };
 
 struct WindowData {
@@ -124,6 +201,7 @@ struct WindowData {
 };
 
 struct Scene {
+    std::string name;
     WindowData windowData;
 
     unsigned int litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
@@ -159,6 +237,8 @@ struct Scene {
     Model* trashcanModel;
 
     DirectionalLight sun;
+    std::unordered_map<uint32_t, uint32_t> usedIds;
+    std::vector<Model*> models;
     std::vector<glm::vec3> ssaoKernel;
     std::vector<glm::vec3> ssaoNoise;
     std::vector<PointLight> pointLights;
@@ -171,6 +251,9 @@ struct Scene {
     std::vector<Animator> animators;
     std::vector<Camera*> cameras;
 
+    std::unordered_map<std::string, Mesh*> meshMap;
+    std::unordered_map<std::string, Animation*> animationMap;
+
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
     std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
@@ -182,7 +265,7 @@ struct Scene {
 
 uint32_t getEntityID(Scene* scene);
 Transform* addTransform(Scene* scene, uint32_t entityID);
-Entity* getNewEntity(Scene* scene, std::string name);
+Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1);
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);

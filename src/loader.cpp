@@ -11,7 +11,7 @@
 #include "glm/ext/quaternion_float.hpp"
 #include "shader.h"
 
-void processAnimations(const aiScene* scene, Model* model) {
+void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
     for (int i = 0; i < scene->mNumAnimations; i++) {
         aiAnimation* aiAnim = scene->mAnimations[i];
         Animation* newAnimation = new Animation();
@@ -53,6 +53,7 @@ void processAnimations(const aiScene* scene, Model* model) {
         }
 
         model->animations.push_back(newAnimation);
+        gameScene->animationMap[newAnimation->name] = newAnimation;
     }
 }
 
@@ -249,7 +250,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     subMesh->material = newMaterial;
 }
 
-ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
+ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     glm::mat4 nodeTransform = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
     glm::mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
@@ -287,16 +288,17 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, glm::mat4 parentTrans
         }
 
         createMeshBuffers(childNode->mesh);
+        gameScene->meshMap[childNode->mesh->name] = childNode->mesh;
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        childNode->children.push_back(processNode(node->mChildren[i], scene, globalTransform, model, childNode, directory, allTextures, shader, whiteIsDefault));
+        childNode->children.push_back(processNode(node->mChildren[i], scene, gameScene, globalTransform, model, childNode, directory, allTextures, shader, whiteIsDefault));
     }
 
     return childNode;
 }
 
-Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
+Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     Assimp::Importer importer;
     std::string directory;
 
@@ -313,7 +315,7 @@ Model* loadModel(std::string path, std::vector<Texture>* allTextures, unsigned i
 
     Model* newModel = new Model();
     newModel->name = name;
-    processAnimations(scene, newModel);
-    newModel->rootNode = processNode(scene->mRootNode, scene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
+    processAnimations(gameScene, scene, newModel);
+    newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
     return newModel;
 }
