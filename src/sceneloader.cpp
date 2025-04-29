@@ -438,6 +438,95 @@ void createAnimator(Scene* scene, ComponentBlock block) {
 }
 
 void createCamera(Scene* scene, ComponentBlock block) {
+    uint32_t entityID = INVALID_ID;
+    float fov = 68.0f;
+    float aspectRatio = (float)800 / 600;
+    float nearPlane = 0.1f;
+    float farPlane = 800.0f;
+
+    if (block.memberValueMap.count("entityID")) {
+        entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
+
+    if (block.memberValueMap.count("fov")) {
+        fov = std::stof(block.memberValueMap["fov"]);
+    }
+
+    if (block.memberValueMap.count("aspectRatio")) {
+        aspectRatio = std::stof(block.memberValueMap["aspectRatio"]);
+    }
+
+    if (block.memberValueMap.count("nearPlane")) {
+        nearPlane = std::stof(block.memberValueMap["nearPlane"]);
+    }
+
+    if (block.memberValueMap.count("farPlane")) {
+        farPlane = std::stof(block.memberValueMap["farPlane"]);
+    }
+
+    Camera* camera = addCamera(scene, entityID, fov, aspectRatio, nearPlane, farPlane);
+}
+
+void createPointLights(Scene* scene, ComponentBlock block) {
+    uint32_t entityID = INVALID_ID;
+    bool isActive = false;
+    float brightness = 1.0f;
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    if (block.memberValueMap.count("entityID")) {
+        entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
+
+    if (block.memberValueMap.count("isActive")) {
+        isActive = block.memberValueMap["isActive"] == "true" ? true : false;
+    }
+
+    if (block.memberValueMap.count("brightness")) {
+        brightness = std::stof(block.memberValueMap["brightness"]);
+    }
+
+    if (block.memberValueMap.count("color")) {
+        std::string colorString = block.memberValueMap["color"];
+
+        size_t commaPos = colorString.find_first_of(",");
+        size_t currentPos = 0;
+        std::vector<float> vectorComps = {1.0f, 1.0f, 1.0f};
+        int currentIndex = 0;
+
+        while (commaPos != std::string::npos) {
+            vectorComps[currentIndex] = std::stof(colorString.substr(currentPos, commaPos - 1));
+            currentPos = commaPos + 1;
+            commaPos = colorString.find_first_of(",", currentPos);
+            currentIndex++;
+            if (currentIndex == 3) {
+                break;
+            }
+        }
+
+        color.r = vectorComps[0];
+        color.g = vectorComps[1];
+        color.b = vectorComps[2];
+    }
+
+    PointLight* light = addPointLight(scene, entityID);
+    light->isActive = isActive;
+    light->brightness = brightness;
+    light->color = color;
+}
+
+void createPlayer(Scene* scene, ComponentBlock block) {
+    uint32_t entityID = INVALID_ID;
+    float jumpHeight = 10.0f;
+    float moveSpeed = 10.0f;
+    float groundCheckDistance = 0.2f;
+    uint32_t cameraController_EntityID;
+    uint32_t cameraController_CameraTargetEntityID;
+    uint32_t cameraController_CameraEntityID;
+    float sensitivity = 0.3f;
+
+    if (block.memberValueMap.count("entityID")) {
+        entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
 }
 
 void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
@@ -458,6 +547,9 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createAnimator(scene, block);
         } else if (block.type == "Camera") {
             createCamera(scene, block);
+        } else if (block.type == "PointLight") {
+            createPointLights(scene, block);
+        } else if (block.type == "Player") {
         }
     }
 }
@@ -602,8 +694,54 @@ void writePointLights(Scene* scene, std::ofstream& stream) {
     }
 }
 
+void writePlayer(Scene* scene, std::ofstream& stream) {
+    std::string entityID = std::to_string(scene->player->entityID);
+    std::string jumpHeight = std::to_string(scene->player->jumpHeight);
+    std::string moveSpeed = std::to_string(scene->player->moveSpeed);
+    std::string groundCheckDistance = std::to_string(scene->player->groundCheckDistance);
+    std::string cameraController_EntityID = std::to_string(scene->player->cameraController->entityID);
+    std::string cameraController_cameraTargetEntityID = std::to_string(scene->player->cameraController->cameraTargetEntityID);
+    std::string cameraController_cameraEntityID = std::to_string(scene->player->cameraController->cameraEntityID);
+    std::string cameraController_Sensitivity = std::to_string(scene->player->cameraController->sensitivity);
+
+    stream << "Player {" << std::endl;
+    stream << "entityID: " << entityID << std::endl;
+    stream << "jumpHeight: " << jumpHeight << std::endl;
+    stream << "moveSpeed: " << moveSpeed << std::endl;
+    stream << "groundCheckDistance: " << groundCheckDistance << std::endl;
+    stream << "cameraControllerEntityID: " << cameraController_EntityID << std::endl;
+    stream << "cameraControllerCameraTargetEntityID: " << cameraController_cameraTargetEntityID << std::endl;
+    stream << "cameraControllerCameraEntityID: " << cameraController_cameraEntityID << std::endl;
+    stream << "cameraControllerSensitivity: " << cameraController_Sensitivity << std::endl;
+    stream << "}" << std::endl
+           << std::endl;
+}
+
+void writeCameras(Scene* scene, std::ofstream& stream) {
+    for (Camera* camera : scene->cameras) {
+        std::string entityID = std::to_string(camera->entityID);
+        std::string fov = std::to_string(camera->fov);
+        std::string aspectRatio = std::to_string(camera->aspectRatio);
+        std::string nearPlane = std::to_string(camera->nearPlane);
+        std::string farPlane = std::to_string(camera->farPlane);
+
+        stream << "Camera {" << std::endl;
+        stream << "entityID: " << entityID << std::endl;
+        stream << "fov: " << fov << std::endl;
+        stream << "aspectRatio: " << aspectRatio << std::endl;
+        stream << "nearPlane: " << nearPlane << std::endl;
+        stream << "farPlane: " << farPlane << std::endl;
+        stream << "}" << std::endl
+               << std::endl;
+    }
+}
+
 void saveScene(Scene* scene) {
     std::ofstream stream(scene->name);
     writeEntities(scene, stream);
     writeTransforms(scene, stream);
+    writeMeshRenderers(scene, stream);
+    writeBoxColliders(scene, stream);
+    writeRigidbodies(scene, stream);
+    writePointLights(scene, stream);
 }

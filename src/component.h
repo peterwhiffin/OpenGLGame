@@ -158,6 +158,7 @@ struct Camera {
 struct CameraController {
     uint32_t entityID;
     uint32_t cameraTargetEntityID;
+    uint32_t cameraEntityID;
     Camera* camera;
     float pitch = 0;
     float yaw = 0;
@@ -190,7 +191,7 @@ struct DirectionalLight {
 
 struct PointLight {
     uint32_t entityID;
-    unsigned int isActive;
+    bool isActive;
     float brightness;
     glm::vec3 color;
 };
@@ -198,6 +199,17 @@ struct PointLight {
 struct WindowData {
     unsigned int width;
     unsigned int height;
+};
+
+struct Player {
+    uint32_t entityID;
+    CameraController* cameraController;
+    bool isGrounded = false;
+    bool canJump = true;
+    bool canSpawnCan = true;
+    float jumpHeight = 10.0f;
+    float moveSpeed = 10.0f;
+    float groundCheckDistance = 0.2f;
 };
 
 struct Scene {
@@ -235,6 +247,7 @@ struct Scene {
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 
     Model* trashcanModel;
+    Player* player;
 
     DirectionalLight sun;
     std::unordered_map<uint32_t, uint32_t> usedIds;
@@ -270,6 +283,7 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
+Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);

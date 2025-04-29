@@ -111,15 +111,7 @@ int main() {
     std::string scenePath;
     Scene* scene = new Scene;
 
-    if (findLastScene(&scenePath)) {
-        loadScene(scene, scenePath);
-    }
-
-    scene->windowData.width = 800;
-    scene->windowData.height = 600;
-
     GLFWwindow* window = createContext(scene);
-
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
     glGenTextures(1, &blueTexture);
@@ -144,6 +136,17 @@ int main() {
     scene->textures.push_back(black);
     scene->textures.push_back(white);
     scene->textures.push_back(blue);
+    Model* testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    Model* wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
+    scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
+
+    if (findLastScene(&scenePath)) {
+        loadScene(scene, scenePath);
+    }
+
+    scene->windowData.width = 800;
+    scene->windowData.height = 600;
+
     scene->gravity = -18.81f;
     scene->sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
     scene->sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -155,20 +158,14 @@ int main() {
     scene->sun.diffuseBrightness = 2.0f;
     scene->sun.isEnabled = false;
 
-    for (int i = 0; i < 10; i++) {
+    /* for (int i = 0; i < 10; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
         setPosition(scene, pointLightEntity->id, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
         pointLight->color = glm::vec3(1.0f);
-        pointLight->ambient = glm::vec3(1.0f);
-        pointLight->diffuse = glm::vec3(0.8f);
-        pointLight->specular = glm::vec3(0.2f);
-        pointLight->constant = 1.0f;
-        pointLight->linear = 0.09f;
-        pointLight->quadratic = 0.032f;
-        pointLight->isActive = 0;
+        pointLight->isActive = true;
         pointLight->brightness = 1.0f;
-    }
+    } */
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
     createDepthPrePassBuffer(scene);
@@ -187,23 +184,19 @@ int main() {
     // initializeLights(scene, scene->lightingShader);
     initializeLights(scene, scene->lightingShader);
 
-    Model* testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    Model* wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
-    scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
-
-    uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
-    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+    // uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
+    // uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
     uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
 
     addAnimator(scene, wrenchEntity, wrench);
-    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
-    getBoxCollider(scene, trashCanEntity)->isActive = false;
-    getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
+    // setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
+    // getBoxCollider(scene, trashCanEntity)->isActive = false;
+    // getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
 
-    RigidBody* rb = addRigidbody(scene, trashCanEntity);
-    rb->mass = 10.0f;
-    rb->linearDrag = 3.0f;
-    rb->friction = 10.0f;
+    /*  RigidBody* rb = addRigidbody(scene, trashCanEntity);
+     rb->mass = 10.0f;
+     rb->linearDrag = 3.0f;
+     rb->friction = 10.0f; */
 
     Player* player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
