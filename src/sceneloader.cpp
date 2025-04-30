@@ -4,6 +4,32 @@
 #include "sceneloader.h"
 #include "transform.h"
 
+void parseList(std::string memberString, std::vector<uint32_t>* out) {
+    size_t currentPos = 0;
+    size_t commaPos = 0;
+    int currentIndex = 0;
+
+    while (commaPos != std::string::npos) {
+        commaPos = memberString.find(",", currentPos);
+        uint32_t childID = std::stoi(memberString.substr(currentPos, commaPos - currentPos));
+        out->push_back(childID);
+        currentPos = commaPos + 1;
+    }
+}
+
+void parseList(std::string memberString, float* out) {
+    size_t currentPos = 0;
+    size_t commaPos = 0;
+    int currentIndex = 0;
+
+    while (commaPos != std::string::npos) {
+        commaPos = memberString.find(",", currentPos);
+        out[currentIndex] = std::stof(memberString.substr(currentPos, commaPos - currentPos));
+        currentPos = commaPos + 1;
+        currentIndex++;
+    }
+}
+
 bool findLastScene(std::string* outScene) {
     std::string path = "../data/scenes/";
 
@@ -13,9 +39,6 @@ bool findLastScene(std::string* outScene) {
     }
 
     for (const auto& file : std::filesystem::directory_iterator(path)) {
-        /* if (std::filesystem::is_regular_file(file) && file.path().extension() == ".scene") {
-            *outScene = file.path().string();
-        } */
         if (file.path().extension() == ".scene") {
             *outScene = file.path().string();
             return true;
@@ -146,27 +169,17 @@ void createComponentBlocks(Scene* scene, std::vector<Token>* tokens, std::vector
     while (tokens->at(currentIndex).type != TokenType::EndOfFile) {
         currentIndex = buildComponentBlock(currentIndex, tokens, components);
     }
+}
 
+void logComponentBlocks(std::vector<ComponentBlock>* components) {
     std::ofstream outStream("../data/scenes/help.txt");
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock tokenCheck = components->at(i);
         outStream << tokenCheck.type << std::endl;
         for (auto& pair : tokenCheck.memberValueMap) {
-            outStream << pair.first << " : " << pair.second << std::endl;
+            outStream << pair.first << ": " << pair.second << std::endl;
         }
         outStream << std::endl;
-    }
-}
-
-void logComponentBlocks(std::vector<ComponentBlock>* components) {
-    for (int i = 0; i < components->size(); i++) {
-        ComponentBlock* block = &components->at(i);
-        std::cout << "-------------Component Block----------------" << std::endl;
-        std::cout << block->type << ": " << std::endl;
-
-        for (const auto& pair : block->memberValueMap) {
-            std::cout << "  " << pair.first << ": " << pair.second << std::endl;
-        }
     }
 }
 
@@ -177,8 +190,6 @@ void createEntity(Scene* scene, ComponentBlock block) {
 
     if (block.memberValueMap.count("id") != 0) {
         id = std::stoi(block.memberValueMap["id"]);
-    } else {
-        // id = getEntityID(scene);
     }
 
     if (block.memberValueMap.count("name") != 0) {
@@ -189,7 +200,7 @@ void createEntity(Scene* scene, ComponentBlock block) {
         isActive = block.memberValueMap["isActive"] == "true" ? true : false;
     }
 
-    Entity* entity = getNewEntity(scene, name, id);
+    Entity* entity = getNewEntity(scene, name, id, false);
     entity->id = id;
     entity->isActive = isActive;
 }
@@ -202,6 +213,12 @@ void createTransform(Scene* scene, ComponentBlock block) {
     glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
 
+    std::string memberString;
+    size_t currentPos = 0;
+    size_t commaPos = 0;
+    float floatComps[4];
+    int currentIndex = 0;
+
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
     }
@@ -211,105 +228,36 @@ void createTransform(Scene* scene, ComponentBlock block) {
     }
 
     if (block.memberValueMap.count("childEntityIds")) {
-        std::string idString = block.memberValueMap["childEntityIds"];
+        memberString = block.memberValueMap["childEntityIds"];
 
-        size_t commaPos = idString.find_first_of(",");
-        size_t currentPos = 0;
-
-        if (commaPos == std::string::npos) {
-            if (idString != "None") {
-                uint32_t childID = std::stoi(idString.substr(currentPos, commaPos - 1));
-                childEntityIds.push_back(childID);
-            } else {
-                // std::cout << "big noners" << std::endl;
-            }
-        } else {
-            while (commaPos != std::string::npos) {
-                size_t pos = commaPos - 1;
-                uint32_t childID = std::stoi(idString.substr(currentPos, std::max(commaPos - 1, (size_t)1)));
-                childEntityIds.push_back(childID);
-                currentPos = commaPos + 2;
-                commaPos = idString.find_first_of(",", currentPos);
-            }
-
-            uint32_t childID = std::stoi(idString.substr(currentPos, idString.size() - 1));
+        if (memberString != "None") {
+            parseList(memberString, &childEntityIds);
         }
     }
 
     if (block.memberValueMap.count("localPosition")) {
-        std::string positionString = block.memberValueMap["localPosition"];
-
-        size_t commaPos = positionString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {0.0f, 0.0f, 0.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(positionString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = positionString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 3) {
-                break;
-            }
-        }
-
-        vectorComps[2] = std::stof(positionString.substr(currentPos, positionString.size() - 1));
-
-        localPosition.x = vectorComps[0];
-        localPosition.y = vectorComps[1];
-        localPosition.z = vectorComps[2];
+        memberString = block.memberValueMap["localPosition"];
+        parseList(memberString, floatComps);
+        localPosition.x = floatComps[0];
+        localPosition.y = floatComps[1];
+        localPosition.z = floatComps[2];
     }
 
     if (block.memberValueMap.count("localRotation")) {
-        std::string rotationString = block.memberValueMap["localRotation"];
-
-        size_t commaPos = rotationString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {1.0f, 0.0f, 0.0f, 0.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(rotationString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = rotationString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 4) {
-                break;
-            }
-        }
-
-        vectorComps[3] = std::stof(rotationString.substr(currentPos, rotationString.size() - 1));
-
-        localRotation.w = vectorComps[0];
-        localRotation.x = vectorComps[1];
-        localRotation.y = vectorComps[2];
-        localRotation.z = vectorComps[3];
+        memberString = block.memberValueMap["localRotation"];
+        parseList(memberString, floatComps);
+        localRotation.w = floatComps[0];
+        localRotation.x = floatComps[1];
+        localRotation.y = floatComps[2];
+        localRotation.z = floatComps[3];
     }
 
     if (block.memberValueMap.count("localScale")) {
-        std::string scaleString = block.memberValueMap["localScale"];
-
-        size_t commaPos = scaleString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {1.0f, 1.0f, 1.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(scaleString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = scaleString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 3) {
-                break;
-            }
-        }
-
-        vectorComps[2] = std::stof(scaleString.substr(currentPos, scaleString.size() - 1));
-
-        localScale.x = vectorComps[0];
-        localScale.y = vectorComps[1];
-        localScale.z = vectorComps[2];
+        memberString = block.memberValueMap["localScale"];
+        parseList(memberString, floatComps);
+        localScale.x = floatComps[0];
+        localScale.y = floatComps[1];
+        localScale.z = floatComps[2];
     }
 
     Transform* transform = addTransform(scene, entityID);
@@ -346,6 +294,8 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
     bool isActive = true;
     glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 extent = glm::vec3(3.0f, 0.2f, 3.0f);
+    std::string memberString = block.memberValueMap["childEntityIds"];
+    float floatComps[3];
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
@@ -356,54 +306,19 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
     }
 
     if (block.memberValueMap.count("center")) {
-        std::string centerString = block.memberValueMap["center"];
-
-        size_t commaPos = centerString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {0.0f, 0.0f, 0.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(centerString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = centerString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 3) {
-                break;
-            }
-        }
-
-        vectorComps[2] = std::stof(centerString.substr(currentPos, centerString.size() - 1));
-
-        center.x = vectorComps[0];
-        center.y = vectorComps[1];
-        center.z = vectorComps[2];
+        memberString = block.memberValueMap["center"];
+        parseList(memberString, floatComps);
+        center.x = floatComps[0];
+        center.y = floatComps[1];
+        center.z = floatComps[2];
     }
 
     if (block.memberValueMap.count("extent")) {
-        std::string extentString = block.memberValueMap["extent"];
-
-        size_t commaPos = extentString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {0.0f, 0.0f, 0.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(extentString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = extentString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 3) {
-                std::cout << "breaking at 3" << std::endl;
-                break;
-            }
-        }
-
-        vectorComps[2] = std::stof(extentString.substr(currentPos, extentString.size() - 1));
-
-        extent.x = vectorComps[0];
-        extent.y = vectorComps[1];
-        extent.z = vectorComps[2];
+        memberString = block.memberValueMap["extent"];
+        parseList(memberString, floatComps);
+        extent.x = floatComps[0];
+        extent.y = floatComps[1];
+        extent.z = floatComps[2];
     }
 
     BoxCollider* collider = addBoxCollider(scene, entityID);
@@ -443,34 +358,29 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
 void createAnimator(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::vector<Animation*> animations;
+    std::string memberString;
+    std::string animationName;
+    size_t currentPos = 0;
+    size_t commaPos = 0;
+    int currentIndex = 0;
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
     }
 
     if (block.memberValueMap.count("animations")) {
-        std::string animationString = block.memberValueMap["animations"];
-
-        size_t commaPos = animationString.find_first_of(",");
-        size_t currentPos = 0;
+        memberString = block.memberValueMap["animations"];
 
         while (commaPos != std::string::npos) {
-            std::string name = animationString.substr(currentPos, commaPos - 1);
-            if (scene->animationMap.count(name)) {
-                animations.push_back(scene->animationMap[name]);
+            commaPos = memberString.find(",", currentPos);
+            animationName = memberString.substr(currentPos, commaPos - currentPos);
+            if (scene->animationMap.count(animationName)) {
+                animations.push_back(scene->animationMap[animationName]);
             } else {
-                std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << name << std::endl;
+                std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << animationName << std::endl;
             }
 
             currentPos = commaPos + 1;
-            commaPos = animationString.find_first_of(",", currentPos);
-        }
-
-        std::string name = animationString.substr(currentPos, animationString.size() - 1);
-        if (scene->animationMap.count(name)) {
-            animations.push_back(scene->animationMap[name]);
-        } else {
-            std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << name << std::endl;
         }
     }
 
@@ -514,6 +424,9 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     float brightness = 1.0f;
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 
+    std::string memberString;
+    float floatComps[3];
+
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
     }
@@ -527,28 +440,11 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     }
 
     if (block.memberValueMap.count("color")) {
-        std::string colorString = block.memberValueMap["color"];
-
-        size_t commaPos = colorString.find_first_of(",");
-        size_t currentPos = 0;
-        std::vector<float> vectorComps = {1.0f, 1.0f, 1.0f};
-        int currentIndex = 0;
-
-        while (commaPos != std::string::npos) {
-            vectorComps[currentIndex] = std::stof(colorString.substr(currentPos, commaPos - 1));
-            currentPos = commaPos + 1;
-            commaPos = colorString.find_first_of(",", currentPos);
-            currentIndex++;
-            if (currentIndex == 3) {
-                break;
-            }
-        }
-
-        vectorComps[2] = std::stof(colorString.substr(currentPos, colorString.size() - 1));
-
-        color.r = vectorComps[0];
-        color.g = vectorComps[1];
-        color.b = vectorComps[2];
+        memberString = block.memberValueMap["color"];
+        parseList(memberString, floatComps);
+        color.r = floatComps[0];
+        color.g = floatComps[1];
+        color.b = floatComps[2];
     }
 
     PointLight* light = addPointLight(scene, entityID);
@@ -649,13 +545,11 @@ void loadScene(Scene* scene, std::string path) {
     createComponents(scene, &components);
 
     for (int i = 0; i < scene->transforms.size(); i++) {
-        // setParent(scene, scene->transforms[i].entityID, scene->transforms[i].parentEntityID);
-        // updateTransformMatrices(scene, &scene->transforms[i]);
-        // setLocalPosition(scene, scene->transforms[i].entityID, scene->transforms[i].localPosition);
+        updateTransformMatrices(scene, &scene->transforms[i]);
     }
 
     if (scene->player != nullptr) {
-        // scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
     }
 }
 
@@ -679,10 +573,11 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
         std::string entityID = std::to_string(transform.entityID);
         std::string parentEntityID = transform.parentEntityID == INVALID_ID ? std::to_string(-1) : std::to_string(transform.parentEntityID);
         std::string childEntityIds = "";
+
         if (transform.childEntityIds.size() > 0) {
             childEntityIds += std::to_string(transform.childEntityIds[0]);
 
-            for (int i = 1; i < transform.childEntityIds.size(); i++) {
+            for (size_t i = 0; i < transform.childEntityIds.size(); i++) {
                 childEntityIds += ", " + std::to_string(transform.childEntityIds[i]);
             }
         } else {

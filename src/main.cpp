@@ -98,6 +98,38 @@ void initializeLights(Scene* scene, unsigned int shader) {
 }
 
 void loadDefaultScene(Scene* scene) {
+    for (int i = 0; i < 10; i++) {
+        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
+        PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
+        setPosition(scene, pointLightEntity->id, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
+        pointLight->color = glm::vec3(1.0f);
+        pointLight->isActive = true;
+        pointLight->brightness = 1.0f;
+    }
+
+    uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
+    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true);
+    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+
+    addAnimator(scene, wrenchEntity, scene->wrench);
+    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
+    getBoxCollider(scene, trashCanEntity)->isActive = false;
+
+    Entity* tcanEnt = getEntity(scene, trashCanEntity);
+    Transform* tcantrans = getTransform(scene, trashCanEntity);
+    tcanEnt->name = "trashcanBase";
+    Entity* lident = getEntity(scene, tcantrans->childEntityIds[0]);
+    lident->name = "trashcanLid";
+
+    RigidBody* rb = addRigidbody(scene, trashCanEntity);
+    rb->mass = 10.0f;
+    rb->linearDrag = 3.0f;
+    rb->friction = 10.0f;
+
+    Player* player = createPlayer(scene);
+    setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
+    setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
+    setLocalPosition(scene, wrenchEntity, scene->wrenchOffset);
 }
 
 int main() {
@@ -141,33 +173,15 @@ int main() {
     scene->textures.push_back(white);
     scene->textures.push_back(blue);
 
-    Model* testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    Model* wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
+    scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    scene->wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
     scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
 
     if (findLastScene(&scenePath)) {
         loadScene(scene, scenePath);
+    } else {
+        loadDefaultScene(scene);
     }
-
-    scene->gravity = -18.81f;
-    scene->sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
-    scene->sun.lookDirection = glm::vec3(0.0f, 0.0f, 0.0f);
-    scene->sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    scene->sun.ambient = glm::vec3(0.21f);
-    scene->sun.diffuse = glm::vec3(0.94f);
-    scene->sun.specular = glm::vec3(0.18f);
-    scene->sun.ambientBrightness = 1.7f;
-    scene->sun.diffuseBrightness = 2.0f;
-    scene->sun.isEnabled = false;
-
-    /* for (int i = 0; i < 10; i++) {
-        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
-        PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
-        setPosition(scene, pointLightEntity->id, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
-        pointLight->color = glm::vec3(1.0f);
-        pointLight->isActive = true;
-        pointLight->brightness = 1.0f;
-    } */
 
     createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
     createDepthPrePassBuffer(scene);
@@ -176,39 +190,13 @@ int main() {
     createFullScreenQuad(scene);
     generateSSAOKernel(scene);
 
-    // scene->lightingShader = loadShader("../src/shaders/litshader.vs", "../src/shaders/litshader.fs");
     scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
     scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
     scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
     scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
     pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
-    // initializeLights(scene, scene->lightingShader);
     initializeLights(scene, scene->lightingShader);
-
-    /* uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
-    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
-    uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
-
-    addAnimator(scene, wrenchEntity, wrench);
-    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
-    getBoxCollider(scene, trashCanEntity)->isActive = false;
-
-    Entity* tcanEnt = getEntity(scene, trashCanEntity);
-    Transform* tcantrans = getTransform(scene, trashCanEntity);
-    tcanEnt->name = "trashcanBase";
-    Entity* lident = getEntity(scene, tcantrans->childEntityIds[0]);
-    lident->name = "trashcanLid";
-
-    RigidBody* rb = addRigidbody(scene, trashCanEntity);
-    rb->mass = 10.0f;
-    rb->linearDrag = 3.0f;
-    rb->friction = 10.0f;
-
-    Player* player = createPlayer(scene);
-    setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
-    setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
-    setLocalPosition(scene, wrenchEntity, scene->wrenchOffset); */
 
     setFlags();
     initializeIMGUI(window);
@@ -237,7 +225,6 @@ int main() {
         glfwSwapBuffers(window);
     }
 
-    // saveScene(scene);
     exitProgram(0);
     return 0;
 }

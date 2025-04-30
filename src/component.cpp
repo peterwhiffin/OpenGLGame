@@ -74,7 +74,7 @@ Transform* addTransform(Scene* scene, uint32_t entityID) {
     return &scene->transforms[index];
 }
 
-Entity* getNewEntity(Scene* scene, std::string name, uint32_t id) {
+Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTransform) {
     Entity entity;
     if (id == -1) {
         entity.id = getEntityID(scene);
@@ -87,7 +87,9 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id) {
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
     scene->entityIndexMap[entity.id] = index;
-    // addTransform(scene, entity.id);
+    if (createTransform) {
+        addTransform(scene, entity.id);
+    }
     return &scene->entities[index];
 }
 

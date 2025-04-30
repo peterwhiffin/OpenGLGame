@@ -92,9 +92,9 @@ void main() {
     float metallic = texture(metallicMap, TexCoords).r * metallicStrength;
     float ao = texture(aoMap, TexCoords).r * aoStrength;
 
-    roughness *= 0.5;
+    // roughness = 0.9;
     metallic = 0.1;
-    ao = 0.0;
+    ao = 1.0;
 
     vec3 N = normal * 2.0 - 1.0;
     N.xy *= normalStrength;

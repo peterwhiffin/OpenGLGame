@@ -214,7 +214,7 @@ struct Player {
 };
 
 struct Scene {
-    std::string name;
+    std::string name = "../data/scenes/default.scene";
     WindowData windowData;
 
     unsigned int litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
@@ -229,7 +229,7 @@ struct Scene {
     float currentFrame = 0.0f;
     float lastFrame = 0.0f;
     float deltaTime;
-    float gravity;
+    float gravity = -18.81f;
     float normalStrength = 1.06f;
     float exposure = 1.0f;
     float bloomThreshold = 0.39f;
@@ -248,6 +248,8 @@ struct Scene {
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 
     Model* trashcanModel;
+    Model* testRoom;
+    Model* wrench;
     Player* player;
 
     DirectionalLight sun;
@@ -279,7 +281,7 @@ struct Scene {
 
 uint32_t getEntityID(Scene* scene);
 Transform* addTransform(Scene* scene, uint32_t entityID);
-Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1);
+Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1, bool createTransform = true);
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
