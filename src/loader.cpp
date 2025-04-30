@@ -275,8 +275,6 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
-            std::cout << mesh->mName.C_Str() << std::endl;
             processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
         }
 

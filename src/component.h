@@ -269,7 +269,6 @@ struct Scene {
 
     std::unordered_map<std::string, Mesh*> meshMap;
     std::unordered_map<std::string, Animation*> animationMap;
-    std::unordered_map<std::string, unsigned int> vaoMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;

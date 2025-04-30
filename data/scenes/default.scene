@@ -2966,7 +2966,7 @@ Transform {
 entityID: 1
 parentEntityID: -1
 childEntityIds: None
-localPosition: 2.000000, 3.000000, 1.000000
+localPosition: 45.599998, 5.600000, 14.700000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -2975,7 +2975,7 @@ Transform {
 entityID: 2
 parentEntityID: -1
 childEntityIds: None
-localPosition: 2.000000, 3.000000, 1.000000
+localPosition: 28.900000, 6.300000, -17.400000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3056,7 +3056,7 @@ Transform {
 entityID: 11
 parentEntityID: 493
 childEntityIds: 12, 13
-localPosition: 0.300000, -0.304816, -0.500000
+localPosition: 0.300000, -0.304806, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7367,7 +7367,7 @@ Transform {
 entityID: 490
 parentEntityID: -1
 childEntityIds: 491
-localPosition: 1.000000, 0.986842, 2.000000
+localPosition: 1.000000, 0.986843, 2.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7385,8 +7385,8 @@ Transform {
 entityID: 492
 parentEntityID: -1
 childEntityIds: 493
-localPosition: -3.076033, 6.085570, -2.675193
-localRotation: 0.286512, 0.000000, -0.958077, 0.000000
+localPosition: 16.302422, 1.300000, 0.277210
+localRotation: 0.880048, 0.000000, -0.474885, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7395,7 +7395,7 @@ entityID: 493
 parentEntityID: 492
 childEntityIds: 11
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.969231, -0.246153, 0.000000, 0.000000
+localRotation: 0.996493, -0.083678, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7403,8 +7403,8 @@ Transform {
 entityID: 494
 parentEntityID: -1
 childEntityIds: None
-localPosition: -3.076033, 6.785570, -2.675193
-localRotation: -0.277696, 0.070526, 0.928598, 0.235834
+localPosition: 16.302422, 2.000000, 0.277210
+localRotation: 0.876962, -0.073640, -0.473219, -0.039737
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -13135,7 +13135,7 @@ extent: 3.000000, 0.200000, 3.000000
 
 BoxCollider {
 entityID: 490
-isActive: false
+isActive: true
 center: 0.016931, -0.074338, -0.014091
 extent: 0.404732, 0.600000, 0.404732
 }
@@ -13149,7 +13149,7 @@ extent: 0.435087, 0.107712, 0.435087
 
 BoxCollider {
 entityID: 492
-isActive: false
+isActive: true
 center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
@@ -13176,14 +13176,14 @@ animations: WrenchHandleAction
 PointLight {
 entityID: 1
 isActive: true
-brightness: 1.000000
+brightness: 55.799999
 color: 1.000000, 1.000000, 1.000000
 }
 
 PointLight {
 entityID: 2
 isActive: true
-brightness: 1.000000
+brightness: 59.299999
 color: 1.000000, 1.000000, 1.000000
 }
 
