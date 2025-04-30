@@ -175,18 +175,18 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations) {
     Animator animator;
     animator.entityID = entityID;
+    animator.animations = animations;
     size_t index = scene->animators.size();
     scene->animators.push_back(animator);
     scene->animatorIndexMap[entityID] = index;
     Animator* animatorPtr = &scene->animators[index];
-    animator.animations = animations;
+    // animatorPtr->animations = animations;
     /*
         for (Animation* animation : del->animations) {
             animatorPtr->animations.push_back(animation);
         } */
 
     mapAnimationChannels(scene, animatorPtr, entityID);
-
     animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
 }
@@ -207,6 +207,9 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
     Entity* entity = getEntity(scene, childEntity);
     setParent(scene, childEntity, parentEntityID);
     entity->name = node->name;
+    Transform* transform = getTransform(scene, childEntity);
+    glm::vec3 newPos = node->transform * glm::vec4(getLocalPosition(scene, childEntity), 1.0f);
+    setLocalPosition(scene, childEntity, newPos);
 
     if (node->mesh != nullptr) {
         MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);

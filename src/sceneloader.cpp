@@ -378,9 +378,12 @@ void createAnimator(Scene* scene, ComponentBlock block) {
                 animations.push_back(scene->animationMap[animationName]);
             } else {
                 std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << animationName << std::endl;
+                for (auto& pair : scene->animationMap) {
+                    std::cout << pair.first << std::endl;
+                }
             }
 
-            currentPos = commaPos + 1;
+            currentPos = commaPos + 2;
         }
     }
 
@@ -577,7 +580,7 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
         if (transform.childEntityIds.size() > 0) {
             childEntityIds += std::to_string(transform.childEntityIds[0]);
 
-            for (size_t i = 0; i < transform.childEntityIds.size(); i++) {
+            for (size_t i = 1; i < transform.childEntityIds.size(); i++) {
                 childEntityIds += ", " + std::to_string(transform.childEntityIds[i]);
             }
         } else {
@@ -651,13 +654,20 @@ void writeAnimators(Scene* scene, std::ofstream& stream) {
     for (Animator& animator : scene->animators) {
         std::string entityID = std::to_string(animator.entityID);
         std::string animations = "";
-        if (animator.animations.size() != 0) {
+
+        if (animator.animations.size() > 0) {
             animations += animator.animations.at(0)->name;
 
-            for (int i = 0; i < animator.animations.size(); i++) {
+            for (size_t i = 1; i < animator.animations.size(); i++) {
                 animations += ", " + animator.animations.at(i)->name;
             }
         }
+
+        stream << "Animator {" << std::endl;
+        stream << "entityID: " << entityID << std::endl;
+        stream << "animations: " << animations << std::endl;
+        stream << "}" << std::endl
+               << std::endl;
     }
 }
 

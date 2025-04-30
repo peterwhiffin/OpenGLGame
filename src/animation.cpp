@@ -4,7 +4,11 @@
 void updateAnimators(Scene* scene) {
     for (int i = 0; i < scene->animators.size(); i++) {
         Animator* animator = &scene->animators[i];
+        /* if (animator->currentAnimation == nullptr) {
+            continue;
+        } */
         animator->playbackTime += scene->deltaTime;
+
         for (AnimationChannel* channel : animator->currentAnimation->channels) {
             if (animator->playbackTime >= channel->positions[animator->nextKeyPosition[channel]].time) {
                 animator->nextKeyPosition[channel]++;

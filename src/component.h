@@ -138,7 +138,7 @@ struct RigidBody {
 struct Animator {
     uint32_t entityID;
     std::vector<Animation*> animations;
-    Animation* currentAnimation;
+    Animation* currentAnimation = nullptr;
     float playbackTime = 0.0f;
     std::unordered_map<AnimationChannel*, uint32_t> channelMap;
     std::unordered_map<AnimationChannel*, int> nextKeyPosition;
@@ -269,6 +269,7 @@ struct Scene {
 
     std::unordered_map<std::string, Mesh*> meshMap;
     std::unordered_map<std::string, Animation*> animationMap;
+    std::unordered_map<std::string, unsigned int> vaoMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
