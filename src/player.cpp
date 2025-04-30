@@ -89,7 +89,7 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
 
 Player* createPlayer(Scene* scene) {
     uint32_t playerEntityID = getNewEntity(scene, "Player")->id;
-    uint32_t cameraTargetEntityID = getNewEntity(scene, "Camera Target")->id;
+    uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->id;
     uint32_t cameraEntityID = getNewEntity(scene, "Camera")->id;
 
     Camera* camera = addCamera(scene, cameraEntityID, 68.0f, (float)scene->windowData.width / scene->windowData.height, 0.01f, 800.0f);
@@ -116,5 +116,6 @@ Player* createPlayer(Scene* scene) {
     setPosition(scene, playerEntityID, glm::vec3(0.0f, 3.0f, 0.0f));
     setLocalPosition(scene, cameraTargetEntityID, glm::vec3(0.0f, 0.7f, 0.0f));
 
+    scene->player = player;
     return player;
 }

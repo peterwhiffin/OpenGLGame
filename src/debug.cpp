@@ -42,6 +42,10 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
             ImGui::DragFloat("brightness", &light->brightness, 0.01f, 0.0f, 1000.0f);
         }
 
+        BoxCollider* collider = getBoxCollider(scene, entityID);
+        if (collider != nullptr) {
+        }
+
         if (transform->parentEntityID != INVALID_ID) {
             entity = getEntity(scene, transform->parentEntityID);
             ImGui::Text("Parent: %s - %i", entity->name, entity->id);

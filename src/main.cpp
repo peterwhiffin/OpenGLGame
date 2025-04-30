@@ -97,6 +97,9 @@ void initializeLights(Scene* scene, unsigned int shader) {
     } */
 }
 
+void loadDefaultScene(Scene* scene) {
+}
+
 int main() {
     unsigned int pickingShader;
     unsigned int pickingFBO, pickingRBO, pickingTexture;
@@ -110,7 +113,8 @@ int main() {
 
     std::string scenePath;
     Scene* scene = new Scene;
-
+    scene->windowData.width = 800;
+    scene->windowData.height = 600;
     GLFWwindow* window = createContext(scene);
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
@@ -136,6 +140,7 @@ int main() {
     scene->textures.push_back(black);
     scene->textures.push_back(white);
     scene->textures.push_back(blue);
+
     Model* testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
     Model* wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
     scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
@@ -143,9 +148,6 @@ int main() {
     if (findLastScene(&scenePath)) {
         loadScene(scene, scenePath);
     }
-
-    scene->windowData.width = 800;
-    scene->windowData.height = 600;
 
     scene->gravity = -18.81f;
     scene->sun.position = glm::vec3(-3.0f, 30.0f, -2.0f);
@@ -184,14 +186,19 @@ int main() {
     // initializeLights(scene, scene->lightingShader);
     initializeLights(scene, scene->lightingShader);
 
-    uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
+    /* uint32_t levelEntity = createEntityFromModel(scene, testRoom->rootNode, INVALID_ID, true);
     uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
     uint32_t wrenchEntity = createEntityFromModel(scene, wrench->rootNode, INVALID_ID, false);
 
     addAnimator(scene, wrenchEntity, wrench);
     setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
     getBoxCollider(scene, trashCanEntity)->isActive = false;
-    getBoxCollider(scene, getTransform(scene, trashCanEntity)->childEntityIds[0])->isActive = false;
+
+    Entity* tcanEnt = getEntity(scene, trashCanEntity);
+    Transform* tcantrans = getTransform(scene, trashCanEntity);
+    tcanEnt->name = "trashcanBase";
+    Entity* lident = getEntity(scene, tcantrans->childEntityIds[0]);
+    lident->name = "trashcanLid";
 
     RigidBody* rb = addRigidbody(scene, trashCanEntity);
     rb->mass = 10.0f;
@@ -201,7 +208,7 @@ int main() {
     Player* player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
     setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
-    setLocalPosition(scene, wrenchEntity, scene->wrenchOffset);
+    setLocalPosition(scene, wrenchEntity, scene->wrenchOffset); */
 
     setFlags();
     initializeIMGUI(window);
@@ -214,23 +221,23 @@ int main() {
         glfwPollEvents();
         updateTime(scene);
         updateInput(window, &input);
-        updatePlayer(scene, window, &input, player);
+        updatePlayer(scene, window, &input, scene->player);
         updateRigidBodies(scene);
         updateAnimators(scene);
-        updateCamera(scene, player);
+        updateCamera(scene, scene->player);
         // drawDepthPrePass(scene);
         drawScene(scene, nodeclicked);
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
 
         if (scene->menuOpen) {
-            drawDebug(scene, nodeFlags, nodeclicked, player);
+            drawDebug(scene, nodeFlags, nodeclicked, scene->player);
         }
 
         glfwSwapBuffers(window);
     }
 
-    saveScene(scene);
+    // saveScene(scene);
     exitProgram(0);
     return 0;
 }

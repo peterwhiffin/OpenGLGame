@@ -29,6 +29,10 @@ MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID) {
 }
 
 BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID) {
+    if (scene->boxColliderIndexMap.count(entityID) == 0) {
+        return nullptr;
+    }
+
     return &scene->boxColliders[scene->boxColliderIndexMap[entityID]];
 }
 
@@ -83,7 +87,7 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id) {
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
     scene->entityIndexMap[entity.id] = index;
-    addTransform(scene, entity.id);
+    // addTransform(scene, entity.id);
     return &scene->entities[index];
 }
 

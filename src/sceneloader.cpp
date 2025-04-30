@@ -54,14 +54,14 @@ void getNextToken(std::ifstream* stream, std::vector<Token>* tokens) {
             tokens->push_back(token);
             break;
         default:
-            if (!std::isalnum(c) && c != ',' && c != '.') {
+            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-') {
                 std::cerr << "ERROR::UNKNOWN_TOKEN" << std::endl;
                 return;
             }
 
             text += c;
 
-            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.') {
+            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-') {
                 c = static_cast<char>(stream->get());
                 text += c;
                 if (c == ',') {
@@ -96,7 +96,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     std::string blockKey;
 
     if (token.type != TokenType::Value) {
-        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << std::endl;
+        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name: " << token.text << std::endl;
         return currentIndex;
     }
 
@@ -104,7 +104,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     token = tokens->at(currentIndex++);
 
     if (token.type != TokenType::BlockOpen) {
-        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected block open" << std::endl;
+        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected block open" << token.text << std::endl;
         return currentIndex;
     }
 
@@ -112,7 +112,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
 
     while (token.type != TokenType::BlockClose && token.type != TokenType::EndOfFile) {
         if (token.type != TokenType::Value) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << token.text << std::endl;
             return currentIndex;
         }
 
@@ -120,14 +120,14 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
         token = tokens->at(currentIndex++);
 
         if (token.type != TokenType::ValueSeparator) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected value separator" << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected value separator" << token.text << std::endl;
             return currentIndex;
         }
 
         token = tokens->at(currentIndex++);
 
         if (token.type != TokenType::Value) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << token.text << std::endl;
             return currentIndex;
         }
 
@@ -145,6 +145,16 @@ void createComponentBlocks(Scene* scene, std::vector<Token>* tokens, std::vector
 
     while (tokens->at(currentIndex).type != TokenType::EndOfFile) {
         currentIndex = buildComponentBlock(currentIndex, tokens, components);
+    }
+
+    std::ofstream outStream("../data/scenes/help.txt");
+    for (int i = 0; i < components->size(); i++) {
+        ComponentBlock tokenCheck = components->at(i);
+        outStream << tokenCheck.type << std::endl;
+        for (auto& pair : tokenCheck.memberValueMap) {
+            outStream << pair.first << " : " << pair.second << std::endl;
+        }
+        outStream << std::endl;
     }
 }
 
@@ -179,7 +189,7 @@ void createEntity(Scene* scene, ComponentBlock block) {
         isActive = block.memberValueMap["isActive"] == "true" ? true : false;
     }
 
-    Entity* entity = getNewEntity(scene, name);
+    Entity* entity = getNewEntity(scene, name, id);
     entity->id = id;
     entity->isActive = isActive;
 }
@@ -206,11 +216,23 @@ void createTransform(Scene* scene, ComponentBlock block) {
         size_t commaPos = idString.find_first_of(",");
         size_t currentPos = 0;
 
-        while (commaPos != std::string::npos) {
-            uint32_t childID = std::stoi(idString.substr(currentPos, commaPos - 1));
-            childEntityIds.push_back(childID);
-            currentPos = commaPos + 1;
-            commaPos = idString.find_first_of(",", currentPos);
+        if (commaPos == std::string::npos) {
+            if (idString != "None") {
+                uint32_t childID = std::stoi(idString.substr(currentPos, commaPos - 1));
+                childEntityIds.push_back(childID);
+            } else {
+                // std::cout << "big noners" << std::endl;
+            }
+        } else {
+            while (commaPos != std::string::npos) {
+                size_t pos = commaPos - 1;
+                uint32_t childID = std::stoi(idString.substr(currentPos, std::max(commaPos - 1, (size_t)1)));
+                childEntityIds.push_back(childID);
+                currentPos = commaPos + 2;
+                commaPos = idString.find_first_of(",", currentPos);
+            }
+
+            uint32_t childID = std::stoi(idString.substr(currentPos, idString.size() - 1));
         }
     }
 
@@ -232,6 +254,8 @@ void createTransform(Scene* scene, ComponentBlock block) {
             }
         }
 
+        vectorComps[2] = std::stof(positionString.substr(currentPos, positionString.size() - 1));
+
         localPosition.x = vectorComps[0];
         localPosition.y = vectorComps[1];
         localPosition.z = vectorComps[2];
@@ -242,7 +266,7 @@ void createTransform(Scene* scene, ComponentBlock block) {
 
         size_t commaPos = rotationString.find_first_of(",");
         size_t currentPos = 0;
-        std::vector<float> vectorComps = {0.0f, 0.0f, 0.0f, 0.0f};
+        std::vector<float> vectorComps = {1.0f, 0.0f, 0.0f, 0.0f};
         int currentIndex = 0;
 
         while (commaPos != std::string::npos) {
@@ -255,6 +279,8 @@ void createTransform(Scene* scene, ComponentBlock block) {
             }
         }
 
+        vectorComps[3] = std::stof(rotationString.substr(currentPos, rotationString.size() - 1));
+
         localRotation.w = vectorComps[0];
         localRotation.x = vectorComps[1];
         localRotation.y = vectorComps[2];
@@ -266,7 +292,7 @@ void createTransform(Scene* scene, ComponentBlock block) {
 
         size_t commaPos = scaleString.find_first_of(",");
         size_t currentPos = 0;
-        std::vector<float> vectorComps = {0.0f, 0.0f, 0.0f};
+        std::vector<float> vectorComps = {1.0f, 1.0f, 1.0f};
         int currentIndex = 0;
 
         while (commaPos != std::string::npos) {
@@ -278,6 +304,8 @@ void createTransform(Scene* scene, ComponentBlock block) {
                 break;
             }
         }
+
+        vectorComps[2] = std::stof(scaleString.substr(currentPos, scaleString.size() - 1));
 
         localScale.x = vectorComps[0];
         localScale.y = vectorComps[1];
@@ -315,16 +343,16 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 
 void createBoxCollider(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
-    bool isActive = false;
+    bool isActive = true;
     glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 extent = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 extent = glm::vec3(3.0f, 0.2f, 3.0f);
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
     }
 
     if (block.memberValueMap.count("isActive")) {
-        isActive = block.memberValueMap["isActive"] == "true" ? true : false;
+        isActive = block.memberValueMap["isActive"] == "true" ? true : true;
     }
 
     if (block.memberValueMap.count("center")) {
@@ -345,6 +373,8 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
             }
         }
 
+        vectorComps[2] = std::stof(centerString.substr(currentPos, centerString.size() - 1));
+
         center.x = vectorComps[0];
         center.y = vectorComps[1];
         center.z = vectorComps[2];
@@ -364,9 +394,12 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
             commaPos = extentString.find_first_of(",", currentPos);
             currentIndex++;
             if (currentIndex == 3) {
+                std::cout << "breaking at 3" << std::endl;
                 break;
             }
         }
+
+        vectorComps[2] = std::stof(extentString.substr(currentPos, extentString.size() - 1));
 
         extent.x = vectorComps[0];
         extent.y = vectorComps[1];
@@ -374,7 +407,7 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
     }
 
     BoxCollider* collider = addBoxCollider(scene, entityID);
-    collider->isActive = isActive;
+    collider->isActive = true;
     collider->center = center;
     collider->extent = extent;
 }
@@ -432,6 +465,13 @@ void createAnimator(Scene* scene, ComponentBlock block) {
             currentPos = commaPos + 1;
             commaPos = animationString.find_first_of(",", currentPos);
         }
+
+        std::string name = animationString.substr(currentPos, animationString.size() - 1);
+        if (scene->animationMap.count(name)) {
+            animations.push_back(scene->animationMap[name]);
+        } else {
+            std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << name << std::endl;
+        }
     }
 
     Animator* animator = addAnimator(scene, entityID, animations);
@@ -464,6 +504,7 @@ void createCamera(Scene* scene, ComponentBlock block) {
         farPlane = std::stof(block.memberValueMap["farPlane"]);
     }
 
+    fov = glm::degrees(fov);
     Camera* camera = addCamera(scene, entityID, fov, aspectRatio, nearPlane, farPlane);
 }
 
@@ -502,6 +543,8 @@ void createPointLights(Scene* scene, ComponentBlock block) {
                 break;
             }
         }
+
+        vectorComps[2] = std::stof(colorString.substr(currentPos, colorString.size() - 1));
 
         color.r = vectorComps[0];
         color.g = vectorComps[1];
@@ -590,6 +633,7 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
         } else if (block.type == "PointLight") {
             createPointLights(scene, block);
         } else if (block.type == "Player") {
+            createPlayer(scene, block);
         }
     }
 }
@@ -605,10 +649,14 @@ void loadScene(Scene* scene, std::string path) {
     createComponents(scene, &components);
 
     for (int i = 0; i < scene->transforms.size(); i++) {
-        updateTransformMatrices(scene, &scene->transforms[i]);
+        // setParent(scene, scene->transforms[i].entityID, scene->transforms[i].parentEntityID);
+        // updateTransformMatrices(scene, &scene->transforms[i]);
+        // setLocalPosition(scene, scene->transforms[i].entityID, scene->transforms[i].localPosition);
     }
 
-    scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+    if (scene->player != nullptr) {
+        // scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+    }
 }
 
 void writeEntities(Scene* scene, std::ofstream& stream) {
@@ -629,14 +677,16 @@ void writeEntities(Scene* scene, std::ofstream& stream) {
 void writeTransforms(Scene* scene, std::ofstream& stream) {
     for (Transform& transform : scene->transforms) {
         std::string entityID = std::to_string(transform.entityID);
-        std::string parentEntityID = std::to_string(transform.parentEntityID);
+        std::string parentEntityID = transform.parentEntityID == INVALID_ID ? std::to_string(-1) : std::to_string(transform.parentEntityID);
         std::string childEntityIds = "";
         if (transform.childEntityIds.size() > 0) {
             childEntityIds += std::to_string(transform.childEntityIds[0]);
 
-            for (int i = 0; i < transform.childEntityIds.size(); i++) {
+            for (int i = 1; i < transform.childEntityIds.size(); i++) {
                 childEntityIds += ", " + std::to_string(transform.childEntityIds[i]);
             }
+        } else {
+            childEntityIds = "None";
         }
 
         std::string localPosition = std::to_string(transform.localPosition.x) + ", " + std::to_string(transform.localPosition.y) + ", " + std::to_string(transform.localPosition.z);
@@ -648,8 +698,8 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
         stream << "parentEntityID: " << parentEntityID << std::endl;
         stream << "childEntityIds: " << childEntityIds << std::endl;
         stream << "localPosition: " << localPosition << std::endl;
-        stream << "localRotationL " << localRotation << std::endl;
-        stream << "localRotationL " << localScale << std::endl;
+        stream << "localRotation: " << localRotation << std::endl;
+        stream << "localScale: " << localScale << std::endl;
         stream << "}" << std::endl
                << std::endl;
     }

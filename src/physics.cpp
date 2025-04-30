@@ -84,6 +84,10 @@ void applyDamping(RigidBody* rigidbody, float damping, float deltaTime) {
 }
 
 bool checkAABB(Scene* scene, BoxCollider* colliderA, BoxCollider* colliderB, glm::vec3* resolutionOut) {
+    Transform* transformA = getTransform(scene, colliderA->entityID);
+    Transform* transformB = getTransform(scene, colliderB->entityID);
+    Entity* entityA = getEntity(scene, colliderA->entityID);
+    Entity* entityB = getEntity(scene, colliderB->entityID);
     glm::vec3 centerA = getPosition(scene, colliderA->entityID) + colliderA->center;
     glm::vec3 centerB = getPosition(scene, colliderB->entityID) + colliderB->center;
     glm::vec3 delta = centerA - centerB;

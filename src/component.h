@@ -9,7 +9,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
-
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 // #include "loader.h"
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
