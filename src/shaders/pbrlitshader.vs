@@ -26,7 +26,7 @@ void main(){
     normal = normalMatrix * aNormal; 
     
     for(int i = 0; i < maxSpotLights; i++){
-        fragPosLightSpace[i] = lightSpaceMatrix[i] * vec4(fragPos, 1.0);
+        fragPosLightSpace[i] = lightSpaceMatrix[i] * model * vec4(aPos, 1.0);
     }
 
     vec3 T = normalize(normalMatrix * aTangent);

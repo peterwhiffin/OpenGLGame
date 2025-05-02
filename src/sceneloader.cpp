@@ -463,6 +463,8 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     float cutoff = 45.0f;
     float outerCutoff = 60.0f;
     glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    unsigned int shadowWidth = 800;
+    unsigned int shadowHeight = 600;
 
     std::string memberString;
     float floatComps[3];
@@ -487,6 +489,14 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
         outerCutoff = std::stof(block.memberValueMap["outerCutoff"]);
     }
 
+    if (block.memberValueMap.count("shadowWidth")) {
+        shadowWidth = std::stof(block.memberValueMap["shadowWidth"]);
+    }
+
+    if (block.memberValueMap.count("shadowHeight")) {
+        shadowHeight = std::stof(block.memberValueMap["shadowHeight"]);
+    }
+
     if (block.memberValueMap.count("color")) {
         memberString = block.memberValueMap["color"];
         parseList(memberString, floatComps);
@@ -501,6 +511,8 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     light->cutoff = cutoff;
     light->outerCutoff = outerCutoff;
     light->color = color;
+    light->shadowWidth = shadowWidth;
+    light->shadowHeight = shadowHeight;
 }
 
 void createPlayer(Scene* scene, ComponentBlock block) {
@@ -745,6 +757,8 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
         std::string cutoff = std::to_string(light.cutoff);
         std::string outerCutoff = std::to_string(light.outerCutoff);
         std::string color = std::to_string(light.color.r) + ", " + std::to_string(light.color.g) + ", " + std::to_string(light.color.b);
+        std::string shadowWidth = std::to_string(light.shadowWidth);
+        std::string shadowHeight = std::to_string(light.shadowHeight);
 
         stream << "SpotLight {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
@@ -753,6 +767,8 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
         stream << "cutoff: " << cutoff << std::endl;
         stream << "outerCutoff: " << outerCutoff << std::endl;
         stream << "color: " << color << std::endl;
+        stream << "shadowWidth: " << shadowWidth << std::endl;
+        stream << "shadowHeight: " << shadowHeight << std::endl;
         stream << "}" << std::endl
                << std::endl;
     }

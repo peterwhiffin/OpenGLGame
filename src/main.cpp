@@ -85,7 +85,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
     int numSpotLights = scene->spotLights.size();
     glUniform1i(glGetUniformLocation(shader, "numPointLights"), numPointLights);
     glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
-    glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), 16);
+    glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), numSpotLights);
 
     for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
@@ -126,6 +126,8 @@ void loadDefaultScene(Scene* scene) {
     spotLight->brightness = 6.0f;
     spotLight->cutoff = 15.5f;
     spotLight->outerCutoff = 55.5f;
+    spotLight->shadowWidth = 800;
+    spotLight->shadowHeight = 600;
 
     uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
     uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true);
@@ -204,6 +206,18 @@ int main() {
     } else {
         loadDefaultScene(scene);
     }
+
+    /* for (int i = 0; i < 4; i++) {
+        Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
+        SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
+        spotLight->isActive = true;
+        spotLight->color = glm::vec3(1.0f);
+        spotLight->brightness = 6.0f;
+        spotLight->cutoff = 15.5f;
+        spotLight->outerCutoff = 55.5f;
+        spotLight->shadowWidth = 800;
+        spotLight->shadowHeight = 600;
+    } */
 
     createPickingFBO(scene);
     createDepthPrePassBuffer(scene);

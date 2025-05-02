@@ -1,60 +1,60 @@
 Entity {
-id: 1
-name: PointLight
+id: 498
+name: SpotLight
 isActive: true
 }
 
 Entity {
-id: 2
-name: PointLight
+id: 487
+name: ceiling.176
 isActive: true
 }
 
 Entity {
-id: 3
-name: PointLight
+id: 488
+name: ceiling.177
 isActive: true
 }
 
 Entity {
-id: 4
-name: PointLight
+id: 492
+name: trashcanLid
 isActive: true
 }
 
 Entity {
-id: 5
-name: PointLight
+id: 491
+name: trashcanBase
 isActive: true
 }
 
 Entity {
-id: 6
-name: PointLight
+id: 494
+name: CameraTarget
 isActive: true
 }
 
 Entity {
-id: 7
-name: PointLight
+id: 495
+name: Camera
 isActive: true
 }
 
 Entity {
-id: 8
-name: PointLight
+id: 493
+name: Player
 isActive: true
 }
 
 Entity {
-id: 9
-name: PointLight
+id: 490
+name: ceiling.179
 isActive: true
 }
 
 Entity {
-id: 10
-name: PointLight
+id: 489
+name: ceiling.178
 isActive: true
 }
 
@@ -2914,146 +2914,92 @@ name: ceiling.175
 isActive: true
 }
 
-Entity {
-id: 487
-name: ceiling.176
-isActive: true
-}
-
-Entity {
-id: 488
-name: ceiling.177
-isActive: true
-}
-
-Entity {
-id: 489
-name: ceiling.178
-isActive: true
-}
-
-Entity {
-id: 490
-name: ceiling.179
-isActive: true
-}
-
-Entity {
-id: 491
-name: trashcanBase
-isActive: true
-}
-
-Entity {
-id: 492
-name: trashcanLid
-isActive: true
-}
-
-Entity {
-id: 493
-name: Player
-isActive: true
-}
-
-Entity {
-id: 494
-name: CameraTarget
-isActive: true
-}
-
-Entity {
-id: 495
-name: Camera
-isActive: true
+Transform {
+entityID: 498
+parentEntityID: -1
+childEntityIds: None
+localPosition: 0.000000, 3.800000, -32.200001
+localRotation: 0.600740, -0.372976, 0.600740, 0.372976
+localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 1
-parentEntityID: -1
+entityID: 487
+parentEntityID: 15
 childEntityIds: None
-localPosition: 2.000000, 3.000000, 1.000000
+localPosition: 30.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 2
-parentEntityID: -1
+entityID: 488
+parentEntityID: 15
 childEntityIds: None
-localPosition: 2.000000, 3.000000, 1.000000
+localPosition: 36.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 3
-parentEntityID: -1
+entityID: 492
+parentEntityID: 491
 childEntityIds: None
-localPosition: 3.000000, 3.000000, 2.000000
+localPosition: 0.000000, 0.000000, 0.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 4
+entityID: 491
 parentEntityID: -1
-childEntityIds: None
-localPosition: 3.000000, 3.000000, 2.000000
+childEntityIds: 492
+localPosition: 0.960866, 0.986843, 2.578260
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 5
+entityID: 494
+parentEntityID: 493
+childEntityIds: 12
+localPosition: 0.000000, 0.700000, 0.000000
+localRotation: 0.998806, -0.048848, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 495
 parentEntityID: -1
+childEntityIds: 11
+localPosition: 2.125939, 2.000000, -2.311680
+localRotation: -0.182086, 0.008905, 0.982068, 0.048029
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 493
+parentEntityID: -1
+childEntityIds: 494
+localPosition: 2.125939, 1.300000, -2.311680
+localRotation: 0.182304, 0.000000, -0.983242, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 490
+parentEntityID: 15
 childEntityIds: None
-localPosition: 4.000000, 3.000000, 3.000000
+localPosition: 48.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 6
-parentEntityID: -1
+entityID: 489
+parentEntityID: 15
 childEntityIds: None
-localPosition: 4.000000, 3.000000, 3.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 7
-parentEntityID: -1
-childEntityIds: None
-localPosition: 5.000000, 3.000000, 4.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 8
-parentEntityID: -1
-childEntityIds: None
-localPosition: 5.000000, 3.000000, 4.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 9
-parentEntityID: -1
-childEntityIds: None
-localPosition: 6.000000, 3.000000, 5.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 10
-parentEntityID: -1
-childEntityIds: None
-localPosition: 6.000000, 3.000000, 5.000000
+localPosition: 42.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3062,7 +3008,7 @@ Transform {
 entityID: 11
 parentEntityID: 495
 childEntityIds: None
-localPosition: 0.100000, 0.100000, -0.300000
+localPosition: 0.000000, 0.000000, -0.400000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3071,7 +3017,7 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.310840, -0.500000
+localPosition: 0.300000, -0.290181, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7339,87 +7285,6 @@ parentEntityID: 15
 childEntityIds: None
 localPosition: 24.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 487
-parentEntityID: 15
-childEntityIds: None
-localPosition: 30.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 488
-parentEntityID: 15
-childEntityIds: None
-localPosition: 36.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 489
-parentEntityID: 15
-childEntityIds: None
-localPosition: 42.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 490
-parentEntityID: 15
-childEntityIds: None
-localPosition: 48.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 491
-parentEntityID: -1
-childEntityIds: 492
-localPosition: 1.000000, 0.986843, 2.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 492
-parentEntityID: 491
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 493
-parentEntityID: -1
-childEntityIds: 494
-localPosition: -31.135534, 1.300000, -10.051444
-localRotation: 0.023541, 0.000000, -0.999723, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 494
-parentEntityID: 493
-childEntityIds: 12
-localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.998081, -0.061919, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 495
-parentEntityID: -1
-childEntityIds: 11
-localPosition: -31.135534, 2.000000, -10.051444
-localRotation: -0.023496, 0.001458, 0.997805, 0.061902
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -13188,89 +13053,32 @@ entityID: 12
 animations: WrenchHandleAction
 }
 
-PointLight {
-entityID: 1
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 2
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 3
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 4
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 5
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 6
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 7
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 8
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 9
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 10
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
 SpotLight {
 entityID: 11
 isActive: true
-brightness: 25.370001
-cutoff: 17.760000
-outerCutoff: 29.770000
+brightness: 21.600000
+cutoff: 16.700001
+outerCutoff: 19.270000
 color: 1.000000, 1.000000, 1.000000
+shadowWidth: 800
+shadowHeight: 600
+}
+
+SpotLight {
+entityID: 498
+isActive: true
+brightness: 99.900002
+cutoff: 23.190001
+outerCutoff: 39.810001
+color: 1.000000, 1.000000, 1.000000
+shadowWidth: 800
+shadowHeight: 600
 }
 
 Camera {
 entityID: 495
 fov: 1.186824
-aspectRatio: 1.333333
+aspectRatio: 1.757805
 nearPlane: 0.010000
 farPlane: 800.000000
 }

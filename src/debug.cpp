@@ -10,7 +10,6 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     }
 
     scene->isPicking = false;
-    std::cout << "is picking" << std::endl;
     unsigned char pixel[3];
     glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
     glReadPixels(pickPosition.x, scene->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
@@ -50,9 +49,14 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
         Transform* transform = getTransform(scene, entityID);
 
         glm::vec3 position = transform->localPosition;
-        ImGui::DragFloat3("Pos", glm::value_ptr(position), 0.1f, -1000.0f, 1000.0f);
+        glm::vec3 rotation = glm::eulerAngles(transform->localRotation);
+        glm::vec3 degrees = glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z));
+        ImGui::DragFloat3("Position", glm::value_ptr(position), 0.1f, -1000.0f, 1000.0f);
+        ImGui::DragFloat3("Rotation", glm::value_ptr(degrees), 0.1f, -1000.0f, 1000.0f);
 
         setLocalPosition(scene, entityID, position);
+        glm::vec3 radians = glm::vec3(glm::radians(degrees.x), glm::radians(degrees.y), glm::radians(degrees.z));
+        setLocalRotation(scene, entityID, glm::quat(radians));
 
         PointLight* light = getPointLight(scene, entityID);
         if (light != nullptr) {
@@ -68,6 +72,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
             ImGui::DragFloat("inner cutoff", &spotLight->cutoff, 0.01f, 0.0f, spotLight->outerCutoff - 0.01f);
             ImGui::DragFloat("outer cutoff", &spotLight->outerCutoff, 0.01f, spotLight->cutoff + 0.01f, 180.0f);
             ImGui::DragFloat("brightness", &spotLight->brightness, 0.01f, 0.0f, 100.0f);
+            ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
         }
 
         if (transform->parentEntityID != INVALID_ID) {
@@ -119,7 +124,6 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     if (ImGui::Button("Save Scene", ImVec2(75, 40))) {
         saveScene(scene);
     }
-    ImGui::Image((ImTextureID)(intptr_t)scene->spotLights[0].depthTex, ImVec2(200, 200));
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
             createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
