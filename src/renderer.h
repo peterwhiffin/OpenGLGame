@@ -14,3 +14,5 @@ void generateSSAOKernel(Scene* scene);
 void createDepthPrePassBuffer(Scene* scene);
 void drawDepthPrePass(Scene* scene);
 void resizeBuffers(Scene* scene);
+void createShadowMapDepthBuffers(Scene* scene);
+void drawShadowMaps(Scene* scene);

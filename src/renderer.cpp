@@ -65,6 +65,9 @@ void drawScene(Scene* scene) {
         glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(spotLight->color * spotLight->brightness));
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
+        glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
+        glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
+        glBindTexture(GL_TEXTURE_2D, spotLight->depthTex);
     }
 
     glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
@@ -132,6 +135,35 @@ void drawDepthPrePass(Scene* scene) {
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void drawShadowMaps(Scene* scene) {
+    for (SpotLight& light : scene->spotLights) {
+        glViewport(0, 0, light.width, light.height);
+        glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        glUseProgram(scene->depthShader);
+        glm::vec3 position = getPosition(scene, light.entityID);
+        glm::mat4 viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
+        glm::mat4 projectionMatrix = glm::perspective(68.0f, (float)light.width / light.height, 0.1f, 800.0f);
+        light.lightSpaceMatrix = projectionMatrix * viewMatrix;
+
+        glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+        for (MeshRenderer& renderer : scene->meshRenderers) {
+            glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
+            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+            glBindVertexArray(renderer.mesh->VAO);
+
+            for (SubMesh& subMesh : renderer.mesh->subMeshes) {
+                glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
+            }
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 void drawFullScreenQuad(Scene* scene) {
@@ -279,6 +311,30 @@ void createDepthPrePassBuffer(Scene* scene) {
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void createShadowMapDepthBuffers(Scene* scene) {
+    for (SpotLight& light : scene->spotLights) {
+        glGenFramebuffers(1, &light.depthFrameBuffer);
+        glGenTextures(1, &light.depthTex);
+        glBindTexture(GL_TEXTURE_2D, light.depthTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light.width, light.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.depthTex, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 void resizeBuffers(Scene* scene) {

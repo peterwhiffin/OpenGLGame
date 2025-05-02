@@ -119,7 +119,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     if (ImGui::Button("Save Scene", ImVec2(75, 40))) {
         saveScene(scene);
     }
-    // ImGui::Image((ImTextureID)(intptr_t)scene->gNormal, ImVec2(200, 200));
+    ImGui::Image((ImTextureID)(intptr_t)scene->spotLights[0].depthTex, ImVec2(200, 200));
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
             createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);

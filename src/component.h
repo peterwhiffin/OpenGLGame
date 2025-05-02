@@ -203,6 +203,11 @@ struct SpotLight {
     float brightness;
     float cutoff;
     float outerCutoff;
+    glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
+    bool enableShadows = true;
+    unsigned int depthFrameBuffer, depthTex;
+    unsigned int width = 800;
+    unsigned int height = 600;
 };
 
 struct WindowData {

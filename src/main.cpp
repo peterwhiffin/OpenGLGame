@@ -85,6 +85,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
     int numSpotLights = scene->spotLights.size();
     glUniform1i(glGetUniformLocation(shader, "numPointLights"), numPointLights);
     glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
+    glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), 16);
 
     for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
@@ -103,6 +104,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
+        glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
         // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), spotLight->isActive);
     }
 }
@@ -205,6 +207,7 @@ int main() {
 
     createPickingFBO(scene);
     createDepthPrePassBuffer(scene);
+    createShadowMapDepthBuffers(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
     createFullScreenQuad(scene);
@@ -234,6 +237,7 @@ int main() {
         updateAnimators(scene);
         updateCamera(scene, scene->player);
         drawDepthPrePass(scene);
+        drawShadowMaps(scene);
         drawPickingScene(scene);
         checkPicker(scene, input.cursorPosition);
         drawScene(scene);

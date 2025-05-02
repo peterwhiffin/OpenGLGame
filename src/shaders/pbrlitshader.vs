@@ -15,11 +15,19 @@ layout (location = 1) out vec3 fragPos;
 layout (location = 2) out vec3 normal;
 layout (location = 3) out mat3 TBN;
 
+uniform int maxSpotLights;
+uniform mat4 lightSpaceMatrix[16];
+out vec4 fragPosLightSpace[16];
+
 void main(){
     fragPos = vec3(model * vec4(aPos, 1.0));
     texCoord = aTexCoord;
     gl_Position = projection * view * vec4(fragPos, 1.0);
     normal = normalMatrix * aNormal; 
+    
+    for(int i = 0; i < maxSpotLights; i++){
+        fragPosLightSpace[i] = lightSpaceMatrix[i] * vec4(fragPos, 1.0);
+    }
 
     vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(normalMatrix * aNormal);

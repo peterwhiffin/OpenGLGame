@@ -24,6 +24,7 @@ struct SpotLight{
 
     float cutOff;
     float outerCutOff;
+    sampler2D shadowMap;
 };
 
 const float PI = 3.14159265359;
@@ -33,6 +34,7 @@ layout (location = 0) in vec2 TexCoords;
 layout (location = 1) in vec3 WorldPos;
 layout (location = 2) in vec3 Normal;
 layout (location = 3) in mat3 TBN;
+in vec4 fragPosLightSpace[16];
 
 layout (binding = 0) uniform sampler2D albedoMap;
 layout (binding = 1) uniform sampler2D roughnessMap;
@@ -54,13 +56,48 @@ layout (location = 15) uniform float bloomThreshold;
 // lights
 // layout (location = 40) uniform DirectionalLight dirLight; 
 layout (location = 48) uniform PointLight pointLights[16];
-uniform SpotLight spotLights[4];
+uniform SpotLight spotLights[16];
 
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BloomColor;
 
 int kernelSize = 64;
 
+float ShadowCalculation(int index, vec3 N)
+{
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace[index].xyz / fragPosLightSpace[index].w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(spotLights[index].shadowMap, projCoords.xy).r; 
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // calculate bias (based on depth map resolution and slope)
+    vec3 normal = normalize(N);
+    vec3 lightDir = normalize(spotLights[index].position - WorldPos);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    // check whether current frag pos is in shadow
+    // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    // PCF
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(spotLights[index].shadowMap, 0);
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(spotLights[index].shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+    
+    // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+    return shadow;
+}  
 
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -142,7 +179,7 @@ for(int i = 0; i < numSpotLights; ++i) {
          float intensity = smoothstep(spotLights[i].outerCutOff, spotLights[i].cutOff, theta);
 
         radiance *= intensity;
-        
+        radiance *=  1.0 - ShadowCalculation(i, N); 
         // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
