@@ -11,32 +11,32 @@ isActive: true
 }
 
 Entity {
-id: 3
-name: PointLight
+id: 494
+name: Camera
 isActive: true
 }
 
 Entity {
-id: 4
-name: PointLight
+id: 488
+name: ceiling.178
 isActive: true
 }
 
 Entity {
-id: 5
-name: PointLight
+id: 492
+name: Player
 isActive: true
 }
 
 Entity {
-id: 6
-name: PointLight
+id: 493
+name: CameraTarget
 isActive: true
 }
 
 Entity {
-id: 7
-name: PointLight
+id: 487
+name: ceiling.177
 isActive: true
 }
 
@@ -47,8 +47,8 @@ isActive: true
 }
 
 Entity {
-id: 9
-name: PointLight
+id: 489
+name: ceiling.179
 isActive: true
 }
 
@@ -73,7 +73,7 @@ isActive: true
 Entity {
 id: 13
 name: WrenchWheel
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -133,7 +133,7 @@ isActive: true
 Entity {
 id: 23
 name: Floor1.008
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -169,13 +169,13 @@ isActive: true
 Entity {
 id: 29
 name: Floor1.014
-isActive: false
+isActive: true
 }
 
 Entity {
 id: 30
 name: Floor1.015
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -301,7 +301,7 @@ isActive: true
 Entity {
 id: 51
 name: Floor1.036
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -415,7 +415,7 @@ isActive: true
 Entity {
 id: 70
 name: Floor1.055
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -475,7 +475,7 @@ isActive: true
 Entity {
 id: 80
 name: Floor1.065
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -487,13 +487,13 @@ isActive: true
 Entity {
 id: 82
 name: Floor1.067
-isActive: true
+isActive: false
 }
 
 Entity {
 id: 83
 name: Floor1.068
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -619,7 +619,7 @@ isActive: true
 Entity {
 id: 104
 name: Floor1.089
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -661,7 +661,7 @@ isActive: true
 Entity {
 id: 111
 name: Floor1.096
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -679,7 +679,7 @@ isActive: true
 Entity {
 id: 114
 name: Floor1.099
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -691,7 +691,7 @@ isActive: true
 Entity {
 id: 116
 name: Floor1.101
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -739,7 +739,7 @@ isActive: true
 Entity {
 id: 124
 name: Floor1.109
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -829,7 +829,7 @@ isActive: true
 Entity {
 id: 139
 name: Floor1.124
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -901,7 +901,7 @@ isActive: true
 Entity {
 id: 151
 name: Floor1.136
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1003,19 +1003,19 @@ isActive: true
 Entity {
 id: 168
 name: Floor1.153
-isActive: false
+isActive: true
 }
 
 Entity {
 id: 169
 name: Floor1.154
-isActive: true
+isActive: false
 }
 
 Entity {
 id: 170
 name: Floor1.155
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1069,7 +1069,7 @@ isActive: true
 Entity {
 id: 179
 name: Floor1.164
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1147,7 +1147,7 @@ isActive: true
 Entity {
 id: 192
 name: Floor1.177
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1183,7 +1183,7 @@ isActive: true
 Entity {
 id: 198
 name: InteriorWall1
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1255,7 +1255,7 @@ isActive: true
 Entity {
 id: 210
 name: InteriorWall1.012
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1357,13 +1357,13 @@ isActive: true
 Entity {
 id: 227
 name: InteriorWall1.029
-isActive: true
+isActive: false
 }
 
 Entity {
 id: 228
 name: InteriorWall1.030
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1399,7 +1399,7 @@ isActive: true
 Entity {
 id: 234
 name: InteriorWall1.036
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1471,7 +1471,7 @@ isActive: true
 Entity {
 id: 246
 name: InteriorWall1.048
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1501,7 +1501,7 @@ isActive: true
 Entity {
 id: 251
 name: InteriorWall1.053
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1537,7 +1537,7 @@ isActive: true
 Entity {
 id: 257
 name: InteriorWall1.059
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1567,7 +1567,7 @@ isActive: true
 Entity {
 id: 262
 name: InteriorWall1.064
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1633,7 +1633,7 @@ isActive: true
 Entity {
 id: 273
 name: InteriorWall1.075
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1735,7 +1735,7 @@ isActive: true
 Entity {
 id: 290
 name: InteriorWall1.092
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1801,7 +1801,7 @@ isActive: true
 Entity {
 id: 301
 name: InteriorWall1.103
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1921,7 +1921,7 @@ isActive: true
 Entity {
 id: 321
 name: ceiling.011
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -1957,7 +1957,7 @@ isActive: true
 Entity {
 id: 327
 name: ceiling.017
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1969,7 +1969,7 @@ isActive: true
 Entity {
 id: 329
 name: ceiling.019
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -1987,7 +1987,7 @@ isActive: true
 Entity {
 id: 332
 name: ceiling.022
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2131,7 +2131,7 @@ isActive: true
 Entity {
 id: 356
 name: ceiling.046
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2221,7 +2221,7 @@ isActive: true
 Entity {
 id: 371
 name: ceiling.061
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2245,7 +2245,7 @@ isActive: true
 Entity {
 id: 375
 name: ceiling.065
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2269,19 +2269,19 @@ isActive: true
 Entity {
 id: 379
 name: ceiling.069
-isActive: true
+isActive: false
 }
 
 Entity {
 id: 380
 name: ceiling.070
-isActive: true
+isActive: false
 }
 
 Entity {
 id: 381
 name: ceiling.071
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2419,7 +2419,7 @@ isActive: true
 Entity {
 id: 404
 name: ceiling.094
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2449,7 +2449,7 @@ isActive: true
 Entity {
 id: 409
 name: ceiling.099
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2521,7 +2521,7 @@ isActive: true
 Entity {
 id: 421
 name: ceiling.111
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2563,7 +2563,7 @@ isActive: true
 Entity {
 id: 428
 name: ceiling.118
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2575,7 +2575,7 @@ isActive: true
 Entity {
 id: 430
 name: ceiling.120
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2599,7 +2599,7 @@ isActive: true
 Entity {
 id: 434
 name: ceiling.124
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2701,13 +2701,13 @@ isActive: true
 Entity {
 id: 451
 name: ceiling.141
-isActive: false
+isActive: true
 }
 
 Entity {
 id: 452
 name: ceiling.142
-isActive: false
+isActive: true
 }
 
 Entity {
@@ -2785,13 +2785,13 @@ isActive: true
 Entity {
 id: 465
 name: ceiling.155
-isActive: false
+isActive: true
 }
 
 Entity {
 id: 466
 name: ceiling.156
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2881,7 +2881,7 @@ isActive: true
 Entity {
 id: 481
 name: ceiling.171
-isActive: true
+isActive: false
 }
 
 Entity {
@@ -2914,59 +2914,11 @@ name: ceiling.176
 isActive: true
 }
 
-Entity {
-id: 487
-name: ceiling.177
-isActive: true
-}
-
-Entity {
-id: 488
-name: ceiling.178
-isActive: true
-}
-
-Entity {
-id: 489
-name: ceiling.179
-isActive: true
-}
-
-Entity {
-id: 490
-name: trashcanBase
-isActive: true
-}
-
-Entity {
-id: 491
-name: trashcanLid
-isActive: true
-}
-
-Entity {
-id: 492
-name: Player
-isActive: true
-}
-
-Entity {
-id: 493
-name: CameraTarget
-isActive: true
-}
-
-Entity {
-id: 494
-name: Camera
-isActive: true
-}
-
 Transform {
 entityID: 1
 parentEntityID: -1
 childEntityIds: None
-localPosition: 45.599998, 5.600000, 14.700000
+localPosition: 39.200001, 3.000000, 13.300000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -2975,52 +2927,52 @@ Transform {
 entityID: 2
 parentEntityID: -1
 childEntityIds: None
-localPosition: 28.900000, 6.300000, -17.400000
+localPosition: 40.000000, 3.000000, -27.299999
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 3
+entityID: 494
 parentEntityID: -1
 childEntityIds: None
-localPosition: 3.000000, 3.000000, 2.000000
+localPosition: 21.001225, 2.000000, -6.543559
+localRotation: 0.797002, -0.096447, -0.591909, -0.071628
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 488
+parentEntityID: 14
+childEntityIds: None
+localPosition: 42.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 4
+entityID: 492
 parentEntityID: -1
-childEntityIds: None
-localPosition: 3.000000, 3.000000, 2.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+childEntityIds: 493
+localPosition: 21.001225, 1.300000, -6.543559
+localRotation: 0.802816, 0.000000, -0.596227, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 5
-parentEntityID: -1
-childEntityIds: None
-localPosition: 4.000000, 3.000000, 3.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+entityID: 493
+parentEntityID: 492
+childEntityIds: 11
+localPosition: 0.000000, 0.700000, 0.000000
+localRotation: 0.992757, -0.120136, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 6
-parentEntityID: -1
+entityID: 487
+parentEntityID: 14
 childEntityIds: None
-localPosition: 4.000000, 3.000000, 3.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 7
-parentEntityID: -1
-childEntityIds: None
-localPosition: 5.000000, 3.000000, 4.000000
+localPosition: 36.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3029,16 +2981,16 @@ Transform {
 entityID: 8
 parentEntityID: -1
 childEntityIds: None
-localPosition: 5.000000, 3.000000, 4.000000
+localPosition: -38.000000, 3.000000, 4.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 9
-parentEntityID: -1
+entityID: 489
+parentEntityID: 14
 childEntityIds: None
-localPosition: 6.000000, 3.000000, 5.000000
+localPosition: 48.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3056,7 +3008,7 @@ Transform {
 entityID: 11
 parentEntityID: 493
 childEntityIds: 12, 13
-localPosition: 0.300000, -0.304806, -0.500000
+localPosition: 0.300000, -0.288691, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7336,78 +7288,6 @@ localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
-Transform {
-entityID: 487
-parentEntityID: 14
-childEntityIds: None
-localPosition: 36.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 488
-parentEntityID: 14
-childEntityIds: None
-localPosition: 42.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 489
-parentEntityID: 14
-childEntityIds: None
-localPosition: 48.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 490
-parentEntityID: -1
-childEntityIds: 491
-localPosition: 1.000000, 0.986843, 2.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 491
-parentEntityID: 490
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 492
-parentEntityID: -1
-childEntityIds: 493
-localPosition: 16.302422, 1.300000, 0.277210
-localRotation: 0.880048, 0.000000, -0.474885, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 493
-parentEntityID: 492
-childEntityIds: 11
-localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.996493, -0.083678, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 494
-parentEntityID: -1
-childEntityIds: None
-localPosition: 16.302422, 2.000000, 0.277210
-localRotation: 0.876962, -0.073640, -0.473219, -0.039737
-localScale: 1.000000, 1.000000, 1.000000
-}
-
 MeshRenderer {
 entityID: 11
 mesh: Wrench
@@ -9796,16 +9676,6 @@ mesh: ceiling.178
 MeshRenderer {
 entityID: 489
 mesh: ceiling.179
-}
-
-MeshRenderer {
-entityID: 490
-mesh: TrashcanBase
-}
-
-MeshRenderer {
-entityID: 491
-mesh: TrashcanLid
 }
 
 BoxCollider {
@@ -13134,31 +13004,10 @@ extent: 3.000000, 0.200000, 3.000000
 }
 
 BoxCollider {
-entityID: 490
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 491
-isActive: true
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
-BoxCollider {
 entityID: 492
-isActive: true
+isActive: false
 center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
-}
-
-Rigidbody {
-entityID: 490
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
 }
 
 Rigidbody {
@@ -13176,70 +13025,28 @@ animations: WrenchHandleAction
 PointLight {
 entityID: 1
 isActive: true
-brightness: 55.799999
+brightness: 30.500000
 color: 1.000000, 1.000000, 1.000000
 }
 
 PointLight {
 entityID: 2
 isActive: true
-brightness: 59.299999
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 3
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 4
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 5
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 6
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 7
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 8
-isActive: true
-brightness: 1.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 9
-isActive: true
-brightness: 1.000000
+brightness: 62.400002
 color: 1.000000, 1.000000, 1.000000
 }
 
 PointLight {
 entityID: 10
 isActive: true
-brightness: 1.000000
+brightness: 47.900002
+color: 1.000000, 1.000000, 1.000000
+}
+
+PointLight {
+entityID: 8
+isActive: true
+brightness: 32.599998
 color: 1.000000, 1.000000, 1.000000
 }
 

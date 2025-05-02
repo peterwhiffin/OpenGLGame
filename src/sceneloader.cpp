@@ -201,7 +201,7 @@ void createEntity(Scene* scene, ComponentBlock block) {
     }
 
     Entity* entity = getNewEntity(scene, name, id, false);
-    entity->id = id;
+    entity->entityID = id;
     entity->isActive = isActive;
 }
 
@@ -558,7 +558,7 @@ void loadScene(Scene* scene, std::string path) {
 
 void writeEntities(Scene* scene, std::ofstream& stream) {
     for (Entity& entity : scene->entities) {
-        std::string id = std::to_string(entity.id);
+        std::string id = std::to_string(entity.entityID);
         std::string name = entity.name;
         std::string isActive = entity.isActive ? "true" : "false";
 

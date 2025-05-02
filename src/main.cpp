@@ -28,6 +28,8 @@ void onScreenChanged(GLFWwindow* window, int width, int height) {
     for (int i = 0; i < scene->cameras.size(); i++) {
         scene->cameras[i]->aspectRatio = (float)width / height;
     }
+
+    resizeBuffers(scene);
 }
 
 GLFWwindow* createContext(Scene* scene) {
@@ -90,18 +92,13 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
         glUniform1ui(glGetUniformLocation(shader, (base + ".isActive").c_str()), pointLight->isActive);
     }
-
-    /* glUseProgram(scene->ssaoShader);
-    for (int i = 0; i < scene->ssaoKernel.size(); i++) {
-        glUniform3fv(glGetUniformLocation(shader, ("u_kernel[" + std::to_string(i) + "]").c_str()), 1, glm::value_ptr(scene->ssaoKernel[i]));
-    } */
 }
 
 void loadDefaultScene(Scene* scene) {
     for (int i = 0; i < 10; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
-        PointLight* pointLight = addPointLight(scene, pointLightEntity->id);
-        setPosition(scene, pointLightEntity->id, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
+        PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
+        setPosition(scene, pointLightEntity->entityID, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
         pointLight->color = glm::vec3(1.0f);
         pointLight->isActive = true;
         pointLight->brightness = 1.0f;
@@ -138,7 +135,6 @@ int main() {
     unsigned int whiteTexture;
     unsigned int blackTexture;
     unsigned int blueTexture;
-    unsigned int nodeclicked = INVALID_ID;
     unsigned char whitePixel[4] = {255, 255, 255, 255};
     unsigned char blackPixel[4] = {0, 0, 0, 255};
     unsigned char bluePixel[4] = {0, 0, 255, 255};
@@ -183,7 +179,7 @@ int main() {
         loadDefaultScene(scene);
     }
 
-    createPickingFBO(scene, &pickingFBO, &pickingRBO, &pickingTexture);
+    createPickingFBO(scene);
     createDepthPrePassBuffer(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
@@ -194,7 +190,7 @@ int main() {
     scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
     scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
     scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
-    pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
+    scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
     initializeLights(scene, scene->lightingShader);
 
@@ -213,13 +209,15 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene, scene->player);
-        // drawDepthPrePass(scene);
-        drawScene(scene, nodeclicked);
+        drawDepthPrePass(scene);
+        drawPickingScene(scene);
+        checkPicker(scene, input.cursorPosition);
+        drawScene(scene);
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
 
         if (scene->menuOpen) {
-            drawDebug(scene, nodeFlags, nodeclicked, scene->player);
+            drawDebug(scene, nodeFlags, scene->player);
         }
 
         glfwSwapBuffers(window);

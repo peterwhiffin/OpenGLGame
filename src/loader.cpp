@@ -181,8 +181,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
 }
 
 void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
-    SubMesh* subMesh = new SubMesh();
-    parentMesh->subMeshes.push_back(subMesh);
+    SubMesh subMesh;
 
     size_t baseVertex = parentMesh->vertices.size();
 
@@ -206,7 +205,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         parentMesh->vertices.push_back(vertex);
     }
 
-    subMesh->indexOffset = parentMesh->indices.size();
+    subMesh.indexOffset = parentMesh->indices.size();
 
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
@@ -216,7 +215,7 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         }
     }
 
-    subMesh->indexCount = parentMesh->indices.size() - subMesh->indexOffset;
+    subMesh.indexCount = parentMesh->indices.size() - subMesh.indexOffset;
 
     aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
     Material newMaterial;
@@ -247,7 +246,8 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
         newMaterial.shader = shader;
     }
 
-    subMesh->material = newMaterial;
+    subMesh.material = newMaterial;
+    parentMesh->subMeshes.push_back(subMesh);
 }
 
 ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm::mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
@@ -266,7 +266,6 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
             }
         }
     }
-
     if (node->mNumMeshes != 0) {
         childNode->mesh = new Mesh();
         childNode->mesh->min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
@@ -284,7 +283,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
         model->meshes.push_back(childNode->mesh);
 
         for (int i = 0; i < childNode->mesh->subMeshes.size(); i++) {
-            model->materials.push_back(&childNode->mesh->subMeshes[i]->material);
+            model->materials.push_back(&childNode->mesh->subMeshes[i].material);
         }
 
         createMeshBuffers(childNode->mesh);

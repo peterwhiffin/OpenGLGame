@@ -1,5 +1,6 @@
 #include "component.h"
 #include "transform.h"
+#include "shader.h"
 
 uint32_t getEntityID(Scene* scene) {
     uint32_t newID = scene->nextEntityID++;
@@ -77,18 +78,18 @@ Transform* addTransform(Scene* scene, uint32_t entityID) {
 Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTransform) {
     Entity entity;
     if (id == -1) {
-        entity.id = getEntityID(scene);
+        entity.entityID = getEntityID(scene);
     } else {
         registerEntityID(scene, id);
-        entity.id = id;
+        entity.entityID = id;
     }
 
     entity.name = name;
     size_t index = scene->entities.size();
     scene->entities.push_back(entity);
-    scene->entityIndexMap[entity.id] = index;
+    scene->entityIndexMap[entity.entityID] = index;
     if (createTransform) {
-        addTransform(scene, entity.id);
+        addTransform(scene, entity.entityID);
     }
     return &scene->entities[index];
 }
@@ -131,6 +132,34 @@ PointLight* addPointLight(Scene* scene, uint32_t entityID) {
     return &scene->pointLights[index];
 }
 
+void destroyEntity(Scene* scene, uint32_t entityID) {
+    size_t indexToRemove = scene->entityIndexMap[entityID];
+    size_t lastIndex = scene->entityIndexMap.size() - 1;
+
+    Transform* transform = getTransform(scene, entityID);
+    if (transform->parentEntityID != INVALID_ID) {
+        Transform* parent = getTransform(scene, transform->parentEntityID);
+        parent->childEntityIds.erase(std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID), parent->childEntityIds.end());
+    }
+
+    for (size_t i = 0; i < transform->childEntityIds.size(); i++) {
+        destroyEntity(scene, transform->childEntityIds[i]);
+    }
+
+    destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
+    destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
+    destroyComponent(scene->boxColliders, scene->boxColliderIndexMap, entityID);
+    destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
+    destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
+
+    if (destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID)) {
+        glUseProgram(scene->lightingShader);
+        glUniform1i(uniform_location::kNumPointLights, scene->pointLights.size());
+    }
+
+    destroyComponent(scene->entities, scene->entityIndexMap, entityID);
+}
+
 void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
     size_t entityIndex = scene->entityIndexMap[entityID];
     Entity* entity = &scene->entities[entityIndex];
@@ -141,7 +170,7 @@ void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
     for (Animation* animation : animator->animations) {
         for (AnimationChannel* channel : animation->channels) {
             if (entity->name == channel->name) {
-                animator->channelMap[channel] = entity->id;
+                animator->channelMap[channel] = entity->entityID;
                 animator->nextKeyPosition[channel] = 0;
                 animator->nextKeyRotation[channel] = 0;
                 animator->nextKeyScale[channel] = 0;
@@ -180,11 +209,6 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
     scene->animators.push_back(animator);
     scene->animatorIndexMap[entityID] = index;
     Animator* animatorPtr = &scene->animators[index];
-    // animatorPtr->animations = animations;
-    /*
-        for (Animation* animation : del->animations) {
-            animatorPtr->animations.push_back(animation);
-        } */
 
     mapAnimationChannels(scene, animatorPtr, entityID);
     animatorPtr->currentAnimation = animatorPtr->animations[0];
@@ -203,7 +227,7 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio,
 }
 
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
-    uint32_t childEntity = getNewEntity(scene, node->name)->id;
+    uint32_t childEntity = getNewEntity(scene, node->name)->entityID;
     Entity* entity = getEntity(scene, childEntity);
     setParent(scene, childEntity, parentEntityID);
     entity->name = node->name;

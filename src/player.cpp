@@ -29,6 +29,20 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     }
 
     if (scene->menuOpen) {
+        if (input->fire) {
+            if (scene->canPick) {
+                scene->isPicking = true;
+                scene->canPick = false;
+            }
+        } else {
+            scene->isPicking = false;
+            scene->canPick = true;
+        }
+    } else {
+        scene->nodeClicked = INVALID_ID;
+    }
+
+    if (scene->menuOpen) {
         return;
     }
 
@@ -88,9 +102,9 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
 }
 
 Player* createPlayer(Scene* scene) {
-    uint32_t playerEntityID = getNewEntity(scene, "Player")->id;
-    uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->id;
-    uint32_t cameraEntityID = getNewEntity(scene, "Camera")->id;
+    uint32_t playerEntityID = getNewEntity(scene, "Player")->entityID;
+    uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->entityID;
+    uint32_t cameraEntityID = getNewEntity(scene, "Camera")->entityID;
 
     Camera* camera = addCamera(scene, cameraEntityID, 68.0f, (float)scene->windowData.width / scene->windowData.height, 0.01f, 800.0f);
     Player* player = new Player();

@@ -4,30 +4,46 @@
 #include "player.h"
 #include "sceneloader.h"
 
-void checkPicker(Scene* scene, glm::dvec2 pickPosition, uint32_t nodeClicked) {
+void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
+    if (!scene->isPicking) {
+        return;
+    }
+
+    scene->isPicking = false;
+    std::cout << "is picking" << std::endl;
     unsigned char pixel[3];
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
     glReadPixels(pickPosition.x, scene->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
     uint32_t id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
-    nodeClicked = INVALID_ID;
+    scene->nodeClicked = INVALID_ID;
+    /*
+        for (int i = 0; i < scene->entities.size(); i++) {
+            if (scene->entities[i].entityID == id) {
+                nodeClicked = id;
+            }
+        } */
 
-    for (int i = 0; i < scene->entities.size(); i++) {
-        if (scene->entities[i].id == id) {
-            nodeClicked = id;
-        }
+    // std::cout << "ID: " << id << std::endl;
+
+    if (scene->entityIndexMap.count(id)) {
+        // std::cout << "id found" << std::endl;
+        scene->nodeClicked = id;
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, uint32_t node_clicked) {
+void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags) {
     Entity* entity = getEntity(scene, entityID);
 
     ImGui::PushID(entityID);
     std::stringstream ss;
-    ss << entity->name << " - " << entity->id;
+    ss << entity->name << " - " << entity->entityID;
     std::string title = ss.str();
     bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
 
     if (ImGui::IsItemClicked()) {
-        node_clicked = entity->id;
+        scene->nodeClicked = entity->entityID;
     }
 
     if (node_open) {
@@ -49,12 +65,16 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
 
         if (transform->parentEntityID != INVALID_ID) {
             entity = getEntity(scene, transform->parentEntityID);
-            ImGui::Text("Parent: %s - %i", entity->name, entity->id);
+            ImGui::Text("Parent: %s - %i", entity->name, entity->entityID);
+        }
+
+        if (ImGui::Button("Delete Entity", ImVec2(55, 35))) {
+            destroyEntity(scene, entityID);
         }
         // ImGui::Text("MeshRenderer: %s", scene->renderers[it->second].mesh->name);
 
         for (uint32_t childEntityID : transform->childEntityIds) {
-            createImGuiEntityTree(scene, childEntityID, node_flags, node_clicked);
+            createImGuiEntityTree(scene, childEntityID, node_flags);
         }
 
         ImGui::TreePop();
@@ -63,7 +83,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
     ImGui::PopID();
 }
 
-void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicked, Player* player) {
+void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -95,15 +115,15 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, uint32_t nodeClicke
     // ImGui::Image((ImTextureID)(intptr_t)scene->gNormal, ImVec2(200, 200));
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags, nodeClicked);
+            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
         }
     }
 
     ImGui::End();
 }
 
-void drawDebug(Scene* scene, ImGuiTreeNodeFlags nodeFlags, uint32_t nodeClicked, Player* player) {
-    buildImGui(scene, nodeFlags, nodeClicked, player);
+void drawDebug(Scene* scene, ImGuiTreeNodeFlags nodeFlags, Player* player) {
+    buildImGui(scene, nodeFlags, player);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

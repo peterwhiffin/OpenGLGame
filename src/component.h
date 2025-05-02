@@ -1,4 +1,5 @@
 #pragma once
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
 #include <glm/glm.hpp>
@@ -9,11 +10,10 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
-// #include "loader.h"
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
+
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -24,6 +24,11 @@ struct Vertex {
 struct Texture {
     std::string path;
     unsigned int id;
+};
+
+struct Shader {
+    uint32_t id;
+    std::string name;
 };
 
 struct Material {
@@ -44,7 +49,7 @@ struct Mesh {
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    std::vector<SubMesh*> subMeshes;
+    std::vector<SubMesh> subMeshes;
     glm::vec3 center;
     glm::vec3 extent;
     glm::vec3 min;
@@ -99,7 +104,7 @@ struct Model {
     ModelNode* rootNode;
 };
 struct Entity {
-    uint32_t id;
+    uint32_t entityID;
     std::string name;
     bool isActive;
 };
@@ -217,10 +222,11 @@ struct Scene {
     std::string name = "../data/scenes/default.scene";
     WindowData windowData;
 
-    unsigned int litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
+    unsigned int pickingFBO, pickingRBO, pickingTex, litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
     unsigned int blurFrameBuffer[2], blurTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader;
+    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader, pickingShader;
+    uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;
     float frameTime = 0.0f;
@@ -243,6 +249,8 @@ struct Scene {
     bool menuCanOpen = true;
     bool useDeferred = false;
     bool horizontalBlur = true;
+    bool isPicking = false;
+    bool canPick = true;
 
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
@@ -257,6 +265,7 @@ struct Scene {
     std::vector<Model*> models;
     std::vector<glm::vec3> ssaoKernel;
     std::vector<glm::vec3> ssaoNoise;
+
     std::vector<PointLight> pointLights;
     std::vector<Texture> textures;
     std::vector<Entity> entities;
@@ -291,6 +300,8 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
 
+void destroyEntity(Scene* scene, uint32_t entityID);
+
 Entity* getEntity(Scene* scene, uint32_t entityID);
 Transform* getTransform(Scene* scene, uint32_t entityID);
 MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID);
@@ -299,3 +310,23 @@ RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
 Animator* getAnimator(Scene* scene, uint32_t entityID);
 PointLight* getPointLight(Scene* scene, uint32_t entityID);
 Camera* getCamera(Scene* scene, uint32_t entityID);
+
+template <typename Component>
+bool destroyComponent(std::vector<Component>& components, std::unordered_map<uint32_t, size_t>& indexMap, uint32_t entityID) {
+    if (!indexMap.count(entityID)) {
+        return false;
+    }
+
+    size_t indexToRemove = indexMap[entityID];
+    size_t lastIndex = indexMap.size() - 1;
+
+    if (indexToRemove != lastIndex) {
+        uint32_t lastID = components[lastIndex].entityID;
+        std::swap(components[lastIndex], components[indexToRemove]);
+        indexMap[lastID] = indexToRemove;
+    }
+
+    components.pop_back();
+    indexMap.erase(entityID);
+    return true;
+}
