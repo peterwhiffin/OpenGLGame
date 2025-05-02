@@ -76,21 +76,34 @@ void updateTime(Scene* scene) {
 
 void initializeLights(Scene* scene, unsigned int shader) {
     glUseProgram(shader);
-    glUniform3fv(glGetUniformLocation(shader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
+    /* glUniform3fv(glGetUniformLocation(shader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
     glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
     glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
-    glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular));
+    glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular)); */
 
-    int numLights = scene->pointLights.size();
-    glUniform1i(glGetUniformLocation(shader, "numPointLights"), numLights);
+    int numPointLights = scene->pointLights.size();
+    int numSpotLights = scene->spotLights.size();
+    glUniform1i(glGetUniformLocation(shader, "numPointLights"), numPointLights);
+    glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
 
-    for (int i = 0; i < numLights; i++) {
+    for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
         glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
         glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(pointLight->color));
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
-        glUniform1ui(glGetUniformLocation(shader, (base + ".isActive").c_str()), pointLight->isActive);
+        // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), pointLight->isActive);
+    }
+
+    for (int i = 0; i < numSpotLights; i++) {
+        SpotLight* spotLight = &scene->spotLights[i];
+        std::string base = "spotLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(spotLight->color));
+        glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
+        glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
+        glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
+        // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), spotLight->isActive);
     }
 }
 
@@ -103,6 +116,14 @@ void loadDefaultScene(Scene* scene) {
         pointLight->isActive = true;
         pointLight->brightness = 1.0f;
     }
+
+    Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
+    SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
+    spotLight->isActive = true;
+    spotLight->color = glm::vec3(1.0f);
+    spotLight->brightness = 6.0f;
+    spotLight->cutoff = 15.5f;
+    spotLight->outerCutoff = 55.5f;
 
     uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
     uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true);
@@ -125,8 +146,11 @@ void loadDefaultScene(Scene* scene) {
 
     Player* player = createPlayer(scene);
     setParent(scene, wrenchEntity, player->cameraController->cameraTargetEntityID);
+    setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchEntity, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
     setLocalPosition(scene, wrenchEntity, scene->wrenchOffset);
+    setLocalRotation(scene, spotLightEntity->entityID, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(0.0f), 0.0f)));
+    setLocalPosition(scene, spotLightEntity->entityID, glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
 int main() {

@@ -53,6 +53,14 @@ PointLight* getPointLight(Scene* scene, uint32_t entityID) {
     return &scene->pointLights[scene->pointLightIndexMap[entityID]];
 }
 
+SpotLight* getSpotLight(Scene* scene, uint32_t entityID) {
+    if (scene->spotLightIndexMap.count(entityID) == 0) {
+        return nullptr;
+    }
+
+    return &scene->spotLights[scene->spotLightIndexMap[entityID]];
+}
+
 Camera* getCamera(Scene* scene, uint32_t entityID) {
     Camera* foundCamera = nullptr;
 
@@ -132,6 +140,15 @@ PointLight* addPointLight(Scene* scene, uint32_t entityID) {
     return &scene->pointLights[index];
 }
 
+SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
+    SpotLight spotLight;
+    spotLight.entityID = entityID;
+    size_t index = scene->spotLights.size();
+    scene->spotLights.push_back(spotLight);
+    scene->spotLightIndexMap[entityID] = index;
+    return &scene->spotLights[index];
+}
+
 void destroyEntity(Scene* scene, uint32_t entityID) {
     size_t indexToRemove = scene->entityIndexMap[entityID];
     size_t lastIndex = scene->entityIndexMap.size() - 1;
@@ -157,6 +174,10 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
         glUniform1i(uniform_location::kNumPointLights, scene->pointLights.size());
     }
 
+    if (destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID)) {
+        glUseProgram(scene->lightingShader);
+        glUniform1i(uniform_location::kNumSpotLights, scene->spotLights.size());
+    }
     destroyComponent(scene->entities, scene->entityIndexMap, entityID);
 }
 

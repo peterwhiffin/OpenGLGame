@@ -456,6 +456,53 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     light->color = color;
 }
 
+void createSpotLights(Scene* scene, ComponentBlock block) {
+    uint32_t entityID = INVALID_ID;
+    bool isActive = false;
+    float brightness = 1.0f;
+    float cutoff = 45.0f;
+    float outerCutoff = 60.0f;
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    std::string memberString;
+    float floatComps[3];
+
+    if (block.memberValueMap.count("entityID")) {
+        entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
+
+    if (block.memberValueMap.count("isActive")) {
+        isActive = block.memberValueMap["isActive"] == "true" ? true : false;
+    }
+
+    if (block.memberValueMap.count("brightness")) {
+        brightness = std::stof(block.memberValueMap["brightness"]);
+    }
+
+    if (block.memberValueMap.count("cutoff")) {
+        cutoff = std::stof(block.memberValueMap["cutoff"]);
+    }
+
+    if (block.memberValueMap.count("outerCutoff")) {
+        outerCutoff = std::stof(block.memberValueMap["outerCutoff"]);
+    }
+
+    if (block.memberValueMap.count("color")) {
+        memberString = block.memberValueMap["color"];
+        parseList(memberString, floatComps);
+        color.r = floatComps[0];
+        color.g = floatComps[1];
+        color.b = floatComps[2];
+    }
+
+    SpotLight* light = addSpotLight(scene, entityID);
+    light->isActive = isActive;
+    light->brightness = brightness;
+    light->cutoff = cutoff;
+    light->outerCutoff = outerCutoff;
+    light->color = color;
+}
+
 void createPlayer(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     float jumpHeight = 10.0f;
@@ -531,6 +578,8 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createCamera(scene, block);
         } else if (block.type == "PointLight") {
             createPointLights(scene, block);
+        } else if (block.type == "SpotLight") {
+            createSpotLights(scene, block);
         } else if (block.type == "Player") {
             createPlayer(scene, block);
         }
@@ -688,6 +737,27 @@ void writePointLights(Scene* scene, std::ofstream& stream) {
     }
 }
 
+void writeSpotLights(Scene* scene, std::ofstream& stream) {
+    for (SpotLight& light : scene->spotLights) {
+        std::string entityID = std::to_string(light.entityID);
+        std::string isActive = light.isActive ? "true" : "false";
+        std::string brightness = std::to_string(light.brightness);
+        std::string cutoff = std::to_string(light.cutoff);
+        std::string outerCutoff = std::to_string(light.outerCutoff);
+        std::string color = std::to_string(light.color.r) + ", " + std::to_string(light.color.g) + ", " + std::to_string(light.color.b);
+
+        stream << "SpotLight {" << std::endl;
+        stream << "entityID: " << entityID << std::endl;
+        stream << "isActive: " << isActive << std::endl;
+        stream << "brightness: " << brightness << std::endl;
+        stream << "cutoff: " << cutoff << std::endl;
+        stream << "outerCutoff: " << outerCutoff << std::endl;
+        stream << "color: " << color << std::endl;
+        stream << "}" << std::endl
+               << std::endl;
+    }
+}
+
 void writePlayer(Scene* scene, std::ofstream& stream) {
     std::string entityID = std::to_string(scene->player->entityID);
     std::string jumpHeight = std::to_string(scene->player->jumpHeight);
@@ -739,6 +809,7 @@ void saveScene(Scene* scene) {
     writeRigidbodies(scene, stream);
     writeAnimators(scene, stream);
     writePointLights(scene, stream);
+    writeSpotLights(scene, stream);
     writeCameras(scene, stream);
     writePlayer(scene, stream);
 }

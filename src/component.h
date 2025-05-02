@@ -172,12 +172,6 @@ struct CameraController {
     float moveSpeed = 10;
 };
 
-struct SpotLight {
-    uint32_t entityID;
-    float range;
-    float radius;
-};
-
 struct DirectionalLight {
     uint32_t entityID;
     glm::vec3 position;
@@ -200,6 +194,15 @@ struct PointLight {
     bool isActive;
     float brightness;
     glm::vec3 color;
+};
+
+struct SpotLight {
+    uint32_t entityID;
+    bool isActive;
+    glm::vec3 color;
+    float brightness;
+    float cutoff;
+    float outerCutoff;
 };
 
 struct WindowData {
@@ -267,6 +270,7 @@ struct Scene {
     std::vector<glm::vec3> ssaoNoise;
 
     std::vector<PointLight> pointLights;
+    std::vector<SpotLight> spotLights;
     std::vector<Texture> textures;
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
@@ -286,6 +290,7 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
+    std::unordered_map<uint32_t, size_t> spotLightIndexMap;
 };
 
 uint32_t getEntityID(Scene* scene);
@@ -299,6 +304,7 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
+SpotLight* addSpotLight(Scene* scene, uint32_t entityID);
 
 void destroyEntity(Scene* scene, uint32_t entityID);
 
@@ -309,6 +315,7 @@ BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
 Animator* getAnimator(Scene* scene, uint32_t entityID);
 PointLight* getPointLight(Scene* scene, uint32_t entityID);
+SpotLight* getSpotLight(Scene* scene, uint32_t entityID);
 Camera* getCamera(Scene* scene, uint32_t entityID);
 
 template <typename Component>

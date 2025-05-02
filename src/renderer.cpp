@@ -57,6 +57,16 @@ void drawScene(Scene* scene) {
         glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(pointLight->color * pointLight->brightness));
     }
 
+    for (int i = 0; i < scene->spotLights.size(); i++) {
+        SpotLight* spotLight = &scene->spotLights[i];
+        std::string locationBase = "spotLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".direction").c_str()), 1, glm::value_ptr(forward(scene, spotLight->entityID)));
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(spotLight->color * spotLight->brightness));
+        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
+        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
+    }
+
     glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
 
     glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
@@ -74,6 +84,8 @@ void drawScene(Scene* scene) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
+        glm::vec3 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
+        glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(baseColor));
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
         glBindVertexArray(renderer.mesh->VAO);
@@ -83,9 +95,7 @@ void drawScene(Scene* scene) {
             // glm::vec4 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : subMesh.material.baseColor;
             // glm::vec4 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-            glm::vec3 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
             // glUseProgram(shader);
-            glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(baseColor));
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureRoughnessUnit);
@@ -148,8 +158,6 @@ void drawFullScreenQuad(Scene* scene) {
     glBindTexture(GL_TEXTURE_2D, scene->blurTex[scene->horizontalBlur]);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, scene->depthTex);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, scene->pickingTex);
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

@@ -63,6 +63,13 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
         if (collider != nullptr) {
         }
 
+        SpotLight* spotLight = getSpotLight(scene, entityID);
+        if (spotLight != nullptr) {
+            ImGui::DragFloat("inner cutoff", &spotLight->cutoff, 0.01f, 0.0f, spotLight->outerCutoff - 0.01f);
+            ImGui::DragFloat("outer cutoff", &spotLight->outerCutoff, 0.01f, spotLight->cutoff + 0.01f, 180.0f);
+            ImGui::DragFloat("brightness", &spotLight->brightness, 0.01f, 0.0f, 100.0f);
+        }
+
         if (transform->parentEntityID != INVALID_ID) {
             entity = getEntity(scene, transform->parentEntityID);
             ImGui::Text("Parent: %s - %i", entity->name, entity->entityID);

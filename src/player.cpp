@@ -38,12 +38,10 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
             scene->isPicking = false;
             scene->canPick = true;
         }
+
+        return;
     } else {
         scene->nodeClicked = INVALID_ID;
-    }
-
-    if (scene->menuOpen) {
-        return;
     }
 
     if (input->spawn) {

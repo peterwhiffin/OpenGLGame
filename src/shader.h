@@ -23,12 +23,14 @@ constexpr unsigned int kMetallicStrength = 11;
 constexpr unsigned int kAOStrength = 12;
 constexpr unsigned int kNormalStrength = 13;
 constexpr unsigned int kNumPointLights = 14;
+constexpr unsigned int kNumSpotLights = 16;
 constexpr unsigned int kBloomThreshold = 15;
 constexpr unsigned int kAORadius = 30;
 constexpr unsigned int kAOBias = 31;
 constexpr unsigned int kAOAmount = 5;
 constexpr unsigned int kDirectionalLight = 40;
 constexpr unsigned int kPointLight = 48;
+constexpr unsigned int kSpotLight = 116;
 constexpr unsigned int kSSAOKernel = 132;
 // pbr uniforms
 

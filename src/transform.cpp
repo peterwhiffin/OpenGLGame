@@ -54,7 +54,8 @@ glm::vec3 up(Scene* scene, uint32_t entityID) {
 
 glm::vec3 forward(Scene* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
-    return QuaternionByVector3(transform->localRotation, glm::vec3(0.0f, 0.0f, -1.0f));
+    // return QuaternionByVector3(transform->localRotation, glm::vec3(0.0f, 0.0f, -1.0f));
+    return QuaternionByVector3(getRotation(scene, entityID), glm::vec3(0.0f, 0.0f, -1.0f));
 }
 
 glm::vec3 positionFromMatrix(glm::mat4& matrix) {
