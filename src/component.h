@@ -154,6 +154,7 @@ struct Animator {
 struct Camera {
     uint32_t entityID;
     float fov;
+    float fovRadians;
     float aspectRatio;
     float nearPlane;
     float farPlane;
@@ -237,6 +238,7 @@ struct Scene {
     unsigned int fullscreenVAO, fullscreenVBO;
     unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader, pickingShader;
     unsigned int shadowMaskTex;
+    unsigned int gBuffer, gPosition, gNormal, rboDepth;
     uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;
@@ -255,6 +257,7 @@ struct Scene {
     float AORadius = 0.5f;
     float AOBias = 0.025f;
     float AOAmount = 1.0f;
+    float AOPower = 2.0f;
 
     bool menuOpen = false;
     bool menuCanOpen = true;

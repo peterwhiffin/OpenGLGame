@@ -41,6 +41,7 @@ layout (binding = 1) uniform sampler2D roughnessMap;
 layout (binding = 2) uniform sampler2D metallicMap;
 layout (binding = 3) uniform sampler2D aoMap;
 layout (binding = 4) uniform sampler2D normalMap;
+layout (binding = 5) uniform sampler2D SSAOTex;
 
 // material parameters
 layout (location = 8) uniform vec3 camPos; 
@@ -233,7 +234,7 @@ for(int i = 0; i < numSpotLights; ++i) {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }     
   
-    vec3 ambient = vec3(0.005) * albedo * ao;
+    vec3 ambient = vec3(0.045) * albedo * ao;
     vec3 color = ambient + Lo;
 	
     FragColor = vec4(color * baseColor, 1.0);

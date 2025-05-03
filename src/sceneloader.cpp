@@ -417,7 +417,6 @@ void createCamera(Scene* scene, ComponentBlock block) {
         farPlane = std::stof(block.memberValueMap["farPlane"]);
     }
 
-    fov = glm::degrees(fov);
     Camera* camera = addCamera(scene, entityID, fov, aspectRatio, nearPlane, farPlane);
 }
 

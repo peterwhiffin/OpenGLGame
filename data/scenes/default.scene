@@ -2914,120 +2914,6 @@ name: ceiling.175
 isActive: true
 }
 
-Entity {
-id: 506
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 507
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 5
-name: SpotLight
-isActive: false
-}
-
-Entity {
-id: 6
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 7
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 8
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 9
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 10
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 491
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 492
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 496
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 497
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 499
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 500
-name: SpotLight
-isActive: true
-}
-
-Entity {
-id: 501
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 502
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 503
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 504
-name: PointLight
-isActive: true
-}
-
-Entity {
-id: 505
-name: PointLight
-isActive: true
-}
-
 Transform {
 entityID: 498
 parentEntityID: -1
@@ -3078,7 +2964,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.986141, -0.165908, 0.000000, 0.000000
+localRotation: 0.999534, -0.030539, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3086,8 +2972,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: 0.855445, 2.000000, -7.532089
-localRotation: 0.438463, -0.073767, 0.883303, 0.148606
+localPosition: 1.490000, 2.000000, 5.508591
+localRotation: 0.955346, -0.029189, 0.293908, 0.008980
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3095,8 +2981,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: 0.855445, 1.300000, -7.532089
-localRotation: 0.444625, 0.000000, 0.895717, 0.000000
+localPosition: 1.490000, 1.300000, 5.508591
+localRotation: -0.955792, 0.000000, -0.294045, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3131,7 +3017,7 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.290978, -0.500000
+localPosition: 0.300000, -0.285278, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7399,177 +7285,6 @@ parentEntityID: 15
 childEntityIds: None
 localPosition: 24.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 506
-parentEntityID: -1
-childEntityIds: None
-localPosition: -7.200000, 5.700000, -19.799999
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 507
-parentEntityID: -1
-childEntityIds: None
-localPosition: 16.700001, 6.900000, -4.300000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 5
-parentEntityID: -1
-childEntityIds: None
-localPosition: -0.200000, 12.500000, 20.400000
-localRotation: 0.737826, -0.674910, 0.007727, 0.007068
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 6
-parentEntityID: -1
-childEntityIds: None
-localPosition: -5.000000, 12.400000, -1.500000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 7
-parentEntityID: -1
-childEntityIds: None
-localPosition: -25.100000, 8.100000, -0.200000
-localRotation: 0.706939, -0.706939, -0.015425, 0.015425
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 8
-parentEntityID: -1
-childEntityIds: None
-localPosition: -16.299999, 11.700000, -0.700000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 9
-parentEntityID: -1
-childEntityIds: None
-localPosition: 0.000000, 6.500000, 14.300000
-localRotation: 0.746336, 0.212556, 0.606595, -0.172757
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 10
-parentEntityID: -1
-childEntityIds: None
-localPosition: -45.299999, 9.900000, -0.900000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 491
-parentEntityID: -1
-childEntityIds: None
-localPosition: 45.700001, 10.400000, -34.799999
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 492
-parentEntityID: -1
-childEntityIds: None
-localPosition: 19.299999, 7.500000, 0.000000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 496
-parentEntityID: -1
-childEntityIds: None
-localPosition: -49.400002, 9.100000, -37.700001
-localRotation: 0.651856, -0.651856, 0.274015, -0.274015
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 497
-parentEntityID: -1
-childEntityIds: None
-localPosition: 8.800000, 11.300000, -8.900000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 499
-parentEntityID: -1
-childEntityIds: None
-localPosition: -1.400000, 10.300000, -6.000000
-localRotation: 0.707107, -0.707107, -0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 500
-parentEntityID: -1
-childEntityIds: None
-localPosition: 0.000000, 8.000000, 9.000000
-localRotation: 0.513137, 0.021620, 0.834542, 0.199407
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 501
-parentEntityID: -1
-childEntityIds: None
-localPosition: 41.799999, 6.100000, 14.200000
-localRotation: 0.999976, 0.000000, -0.006981, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 502
-parentEntityID: -1
-childEntityIds: None
-localPosition: 46.400002, 4.600000, -36.400002
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 503
-parentEntityID: -1
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 504
-parentEntityID: -1
-childEntityIds: None
-localPosition: -53.000000, 6.000000, 9.500000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 505
-parentEntityID: -1
-childEntityIds: None
-localPosition: -34.099998, 4.700000, -24.900000
-localRotation: 0.999634, 0.000000, -0.000000, -0.027049
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -13307,55 +13022,6 @@ entityID: 12
 animations: WrenchHandleAction
 }
 
-PointLight {
-entityID: 501
-isActive: true
-brightness: 11.400000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 502
-isActive: true
-brightness: 18.700001
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 503
-isActive: true
-brightness: 4.000000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 504
-isActive: true
-brightness: 22.500000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 505
-isActive: true
-brightness: 20.100000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 506
-isActive: true
-brightness: 25.900000
-color: 1.000000, 1.000000, 1.000000
-}
-
-PointLight {
-entityID: 507
-isActive: true
-brightness: 32.599998
-color: 1.000000, 1.000000, 1.000000
-}
-
 SpotLight {
 entityID: 11
 isActive: true
@@ -13400,141 +13066,9 @@ shadowWidth: 4096
 shadowHeight: 4096
 }
 
-SpotLight {
-entityID: 5
-isActive: true
-brightness: 15.100000
-cutoff: 15.500000
-outerCutoff: 17.700001
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 6
-isActive: true
-brightness: 20.400000
-cutoff: 15.500000
-outerCutoff: 28.510000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 7
-isActive: true
-brightness: 6.200000
-cutoff: 15.500000
-outerCutoff: 27.600000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 8
-isActive: true
-brightness: 12.300000
-cutoff: 8.500000
-outerCutoff: 30.600000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 9
-isActive: true
-brightness: 28.900000
-cutoff: 15.500000
-outerCutoff: 29.500000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 10
-isActive: true
-brightness: 39.599998
-cutoff: 2.800000
-outerCutoff: 55.299999
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 491
-isActive: true
-brightness: 19.299999
-cutoff: 15.500000
-outerCutoff: 20.010000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 492
-isActive: true
-brightness: 17.200001
-cutoff: 5.900000
-outerCutoff: 29.700001
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 496
-isActive: true
-brightness: 20.400000
-cutoff: 15.500000
-outerCutoff: 29.299999
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 497
-isActive: true
-brightness: 12.800000
-cutoff: 15.500000
-outerCutoff: 33.000000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 499
-isActive: true
-brightness: 30.879999
-cutoff: 16.059999
-outerCutoff: 25.700001
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
-SpotLight {
-entityID: 500
-isActive: true
-brightness: 12.900000
-cutoff: 15.500000
-outerCutoff: 28.500000
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
-}
-
 Camera {
 entityID: 495
-fov: 1.186824
+fov: 68.000000
 aspectRatio: 1.333333
 nearPlane: 0.010000
 farPlane: 800.000000

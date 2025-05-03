@@ -28,6 +28,9 @@ void onScreenChanged(GLFWwindow* window, int width, int height) {
     scene->windowData.width = width;
     scene->windowData.height = height;
 
+    glUseProgram(scene->ssaoShader);
+    glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
+
     for (int i = 0; i < scene->cameras.size(); i++) {
         scene->cameras[i]->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
     }
@@ -110,6 +113,9 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
         // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), spotLight->isActive);
     }
+
+    glUseProgram(scene->ssaoShader);
+    glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
 }
 
 void loadDefaultScene(Scene* scene) {
@@ -230,8 +236,14 @@ int main() {
         spotLight->color = glm::vec3(1.0f);
         spotLight->brightness = 4.0f;
     } */
+
+    scene->ssaoShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOshader.fs");
+    scene->ssaoBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
+
     createPickingFBO(scene);
-    // createDepthPrePassBuffer(scene);
+    createDepthPrePassBuffer(scene);
+    createSSAOBuffers(scene);
+    createSSAOBuffer(scene);
     createShadowMapDepthBuffers(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
@@ -261,7 +273,8 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene);
-        // drawDepthPrePass(scene);
+        drawDepthPrePass(scene);
+        drawSSAO(scene);
         drawShadowMaps(scene);
         drawPickingScene(scene);
         checkPicker(scene, input.cursorPosition);

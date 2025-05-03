@@ -120,6 +120,9 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
     ImGui::DragFloat("Bloom Amount", &scene->bloomAmount, 0.01f, 0, 100.0f);
     ImGui::DragFloat("Ambient", &scene->ambient, 0.01f, 0, 100.0f);
+    ImGui::DragFloat("SSAO radius", &scene->AORadius, 0.01f, 0.0f, 90.0f);
+    ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
+    ImGui::DragFloat("SSAO power", &scene->AOPower, 0.01f, 0.0f, 50.0f);
 
     if (ImGui::Button("Save Scene", ImVec2(75, 40))) {
         saveScene(scene);

@@ -240,7 +240,8 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio,
     Camera* camera = new Camera();
     scene->cameras.push_back(camera);
     camera->entityID = entityID;
-    camera->fov = glm::radians(fov);
+    camera->fov = fov;
+    camera->fovRadians = glm::radians(fov);
     camera->aspectRatio = aspectRatio;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;

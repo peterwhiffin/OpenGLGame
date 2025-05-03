@@ -11,5 +11,5 @@ void updateCamera(Scene* scene) {
 
     glm::vec3 position = getPosition(scene, cameraID);
     camera->viewMatrix = glm::lookAt(position, position + forward(scene, cameraID), up(scene, cameraID));
-    camera->projectionMatrix = glm::perspective(camera->fov, camera->aspectRatio, camera->nearPlane, camera->farPlane);
+    camera->projectionMatrix = glm::perspective(camera->fovRadians, camera->aspectRatio, camera->nearPlane, camera->farPlane);
 }

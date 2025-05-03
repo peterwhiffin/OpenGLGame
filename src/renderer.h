@@ -16,3 +16,6 @@ void drawDepthPrePass(Scene* scene);
 void resizeBuffers(Scene* scene);
 void createShadowMapDepthBuffers(Scene* scene);
 void drawShadowMaps(Scene* scene);
+void createSSAOBuffer(Scene* scene);
+void drawSSAO(Scene* scene);
+void createSSAOBuffers(Scene* scene);
