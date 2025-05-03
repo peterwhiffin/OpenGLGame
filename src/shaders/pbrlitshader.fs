@@ -78,22 +78,22 @@ float ShadowCalculation(int index, vec3 N)
     vec3 normal = normalize(Normal);
     // vec3 lightDir = normalize(spotLights[index].position - WorldPos);
     vec3 lightDir = normalize(-spotLights[index].direction);
-    float bias = max(0.03 * (1.0 - dot(normal, lightDir)), 0.005);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     // check whether current frag pos is in shadow
-    // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    //  float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     // PCF
-     float shadow = 0.0;
+      float shadow = 0.0;
      vec2 texelSize = 1.0 / textureSize(spotLights[index].shadowMap, 0);
     for(int x = -1; x <= 1; ++x)
-    {
+    { 
         for(int y = -1; y <= 1; ++y)
         {
             float pcfDepth = texture(spotLights[index].shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
-    shadow /= 9.0; 
-    
+    shadow /= 9; 
+     
     //  float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
      if(projCoords.z > 1.0)
@@ -165,10 +165,6 @@ void main() {
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    float shadow = 0.0;
-
-    float count = 0;
-    float maxIntensity = 0.0;
     
 for(int i = 0; i < numSpotLights; ++i) {
         // calculate per-light radiance
@@ -179,19 +175,19 @@ for(int i = 0; i < numSpotLights; ++i) {
         vec3 radiance     = spotLights[i].color * attenuation * spotLights[i].brightness;        
 
 
-        // float theta = dot(L, normalize(-spotLights[i].direction));
         float theta = dot(L, normalize(-spotLights[i].direction));
         float epsilon = spotLights[i].cutOff - spotLights[i].outerCutOff;
-        float intensity = clamp(((theta - spotLights[i].outerCutOff) / epsilon) * spotLights[i].brightness, 0.0, 1.0);
+        // float intensity = clamp(((theta - spotLights[i].outerCutOff) / epsilon), 0.0, 1.0);
         float intensityRadiance = smoothstep(spotLights[i].outerCutOff, spotLights[i].cutOff, theta) * spotLights[i].brightness;
 
-
-        maxIntensity = max(maxIntensity, intensity);
         radiance *= intensityRadiance;
-        // radiance *=  1.0 - ShadowCalculation(i, N); 
-        shadow += ShadowCalculation(i, N) * maxIntensity;
 
-
+        float shadowCalc = ShadowCalculation(i, N);
+        
+        if(spotLights[i].brightness == 0){
+            shadowCalc = 0.0;
+        }
+        
         // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
@@ -207,10 +203,9 @@ for(int i = 0; i < numSpotLights; ++i) {
         //  specular *= intensity;    
         // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);                
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadowCalc); 
     }
-    
-    shadow = min(shadow, 1.0); 
+
 
       for(int i = 0; i < numPointLights; ++i) {
         // calculate per-light radiance
@@ -246,11 +241,8 @@ for(int i = 0; i < numSpotLights; ++i) {
     float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 
     if(brightness > bloomThreshold){
-        BloomColor = vec4(FragColor.rgb, shadow);
+        BloomColor = vec4(FragColor.rgb, 1.0);
     } else {
-        BloomColor = vec4(0.0, 0.0, 0.0, shadow);
+        BloomColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
-
-    // ShadowMask = shadow; 
-    // FragColor = vec4(baseColor * color, 1.0);
 }  

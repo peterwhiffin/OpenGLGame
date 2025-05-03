@@ -21,12 +21,15 @@ void exitProgram(int code) {
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
     Scene* scene = (Scene*)glfwGetWindowUserPointer(window);
+    scene->windowData.viewportWidth = 800;
+    scene->windowData.viewportHeight = 600;
+
     glViewport(0, 0, width, height);
     scene->windowData.width = width;
     scene->windowData.height = height;
 
     for (int i = 0; i < scene->cameras.size(); i++) {
-        scene->cameras[i]->aspectRatio = (float)width / height;
+        scene->cameras[i]->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
     }
 
     resizeBuffers(scene);
@@ -171,6 +174,8 @@ int main() {
     Scene* scene = new Scene;
     scene->windowData.width = 800;
     scene->windowData.height = 600;
+    scene->windowData.viewportWidth = 800;
+    scene->windowData.viewportHeight = 600;
     GLFWwindow* window = createContext(scene);
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
@@ -207,7 +212,7 @@ int main() {
         loadDefaultScene(scene);
     }
 
-    /* for (int i = 0; i < 4; i++) {
+    /* for (int i = 0; i < 12; i++) {
         Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
         SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
         spotLight->isActive = true;
@@ -215,12 +220,18 @@ int main() {
         spotLight->brightness = 6.0f;
         spotLight->cutoff = 15.5f;
         spotLight->outerCutoff = 55.5f;
-        spotLight->shadowWidth = 800;
-        spotLight->shadowHeight = 600;
+        spotLight->shadowWidth = 1024;
+        spotLight->shadowHeight = 1024;
+    }
+    for (int i = 0; i < 7; i++) {
+        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
+        PointLight* spotLight = addPointLight(scene, pointLightEntity->entityID);
+        spotLight->isActive = true;
+        spotLight->color = glm::vec3(1.0f);
+        spotLight->brightness = 4.0f;
     } */
-
     createPickingFBO(scene);
-    createDepthPrePassBuffer(scene);
+    // createDepthPrePassBuffer(scene);
     createShadowMapDepthBuffers(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
@@ -249,8 +260,8 @@ int main() {
         updatePlayer(scene, window, &input, scene->player);
         updateRigidBodies(scene);
         updateAnimators(scene);
-        updateCamera(scene, scene->player);
-        drawDepthPrePass(scene);
+        updateCamera(scene);
+        // drawDepthPrePass(scene);
         drawShadowMaps(scene);
         drawPickingScene(scene);
         checkPicker(scene, input.cursorPosition);

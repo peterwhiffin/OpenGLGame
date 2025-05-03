@@ -7,7 +7,7 @@ void drawPickingScene(Scene* scene) {
     Camera* camera = scene->cameras[0];
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
-    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -40,7 +40,7 @@ void drawScene(Scene* scene) {
     Camera* camera = scene->cameras[0];
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFrameBuffer);
-    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glClearColor(0.34, 0.34, 0.8, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -118,7 +118,7 @@ void drawScene(Scene* scene) {
 void drawDepthPrePass(Scene* scene) {
     Camera* camera = scene->cameras[0];
     glBindFramebuffer(GL_FRAMEBUFFER, scene->depthBuffer);
-    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(scene->depthShader);
@@ -147,7 +147,7 @@ void drawShadowMaps(Scene* scene) {
         glUseProgram(scene->depthShader);
         glm::vec3 position = getPosition(scene, light.entityID);
         glm::mat4 viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
-        glm::mat4 projectionMatrix = glm::perspective(glm::radians(light.outerCutoff * 2.0f), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
+        glm::mat4 projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
         light.lightSpaceMatrix = projectionMatrix * viewMatrix;
 
         glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -162,21 +162,16 @@ void drawShadowMaps(Scene* scene) {
                 glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
             }
         }
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
 
 void drawFullScreenQuad(Scene* scene) {
-    unsigned int width = scene->windowData.width;
-    unsigned int height = scene->windowData.height;
-
     unsigned char r = scene->nodeClicked & 0xFF;
     unsigned char g = (scene->nodeClicked >> 8) & 0xFF;
     unsigned char b = (scene->nodeClicked >> 16) & 0xFF;
     glm::vec3 idColor = glm::vec3(r, g, b) / 255.0f;
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->postProcessShader);
@@ -326,8 +321,8 @@ void createShadowMapDepthBuffers(Scene* scene) {
         glGenTextures(1, &light.depthTex);
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light.shadowWidth, light.shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         float borderColor[] = {1.0, 1.0, 1.0, 1.0};  // depth=1.0 means "far away"
@@ -346,8 +341,8 @@ void createShadowMapDepthBuffers(Scene* scene) {
 }
 
 void resizeBuffers(Scene* scene) {
-    uint32_t width = scene->windowData.width;
-    uint32_t height = scene->windowData.height;
+    uint32_t width = scene->windowData.viewportWidth;
+    uint32_t height = scene->windowData.viewportHeight;
     unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFrameBuffer);
@@ -372,23 +367,12 @@ void resizeBuffers(Scene* scene) {
     for (unsigned int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[i]);
         glBindTexture(GL_TEXTURE_2D, scene->blurTex[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->blurTex[i], 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             std::cerr << "ERROR::FRAMEBUFFER:: Blur framebuffer is not complete!" << std::endl;
         }
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->depthBuffer);
-    glBindTexture(GL_TEXTURE_2D, scene->depthTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, scene->windowData.width, scene->windowData.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, scene->depthTex, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
@@ -411,6 +395,7 @@ void drawBlurPass(Scene* scene) {
     glUseProgram(scene->blurShader);
     glActiveTexture(GL_TEXTURE0);
 
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[1]);
     glUniform1i(uniform_location::kBHorizontal, true);
     glBindTexture(GL_TEXTURE_2D, scene->bloomTex);

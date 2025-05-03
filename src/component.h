@@ -211,8 +211,10 @@ struct SpotLight {
 };
 
 struct WindowData {
-    unsigned int width;
-    unsigned int height;
+    unsigned int width = 800;
+    unsigned int height = 600;
+    unsigned int viewportWidth = 800;
+    unsigned int viewportHeight = 600;
 };
 
 struct Player {
