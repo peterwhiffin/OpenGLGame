@@ -2919,7 +2919,7 @@ entityID: 498
 parentEntityID: -1
 childEntityIds: None
 localPosition: 0.000000, 3.800000, -32.200001
-localRotation: 0.600740, -0.372976, 0.600740, 0.372976
+localRotation: 0.600895, -0.373055, 0.600601, 0.372873
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2964,7 +2964,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.998806, -0.048848, 0.000000, 0.000000
+localRotation: 0.916014, -0.401147, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2972,8 +2972,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: 2.125939, 2.000000, -2.311680
-localRotation: -0.182086, 0.008905, 0.982068, 0.048029
+localPosition: -1.550119, 2.000000, -31.618704
+localRotation: 0.646033, -0.282915, 0.649402, 0.284390
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2981,8 +2981,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: 2.125939, 1.300000, -2.311680
-localRotation: 0.182304, 0.000000, -0.983242, 0.000000
+localPosition: -1.550119, 1.300000, -31.618704
+localRotation: -0.705266, 0.000000, -0.708943, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3008,7 +3008,7 @@ Transform {
 entityID: 11
 parentEntityID: 495
 childEntityIds: None
-localPosition: 0.000000, 0.000000, -0.400000
+localPosition: 0.000000, 0.000000, 1.500000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -3017,7 +3017,7 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.290181, -0.500000
+localPosition: 0.300000, -0.311454, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -13056,7 +13056,7 @@ animations: WrenchHandleAction
 SpotLight {
 entityID: 11
 isActive: true
-brightness: 21.600000
+brightness: 0.000000
 cutoff: 16.700001
 outerCutoff: 19.270000
 color: 1.000000, 1.000000, 1.000000
@@ -13067,7 +13067,7 @@ shadowHeight: 600
 SpotLight {
 entityID: 498
 isActive: true
-brightness: 99.900002
+brightness: 10.000000
 cutoff: 23.190001
 outerCutoff: 39.810001
 color: 1.000000, 1.000000, 1.000000

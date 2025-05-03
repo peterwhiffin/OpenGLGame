@@ -234,6 +234,7 @@ struct Scene {
     unsigned int blurFrameBuffer[2], blurTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
     unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader, pickingShader;
+    unsigned int shadowMaskTex;
     uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;

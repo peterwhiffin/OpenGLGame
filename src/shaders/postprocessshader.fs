@@ -15,19 +15,26 @@ layout (location = 6) uniform vec3 pickingID;
 
 void main(){
     vec3 forwardColor = texture(forwardBuffer, texCoord).rgb;
-    vec3 bloomColor = texture(bloomImage, texCoord).rgb;
+    vec4 bloomColor = texture(bloomImage, texCoord);
     float depth = texture(depthTex, texCoord).r;
-
 
     
 
+    forwardColor *= 1.0 - bloomColor.a;
     //forwardColor *= aoColor;
-    forwardColor += bloomColor * bloomAmount; 
+    forwardColor += bloomColor.rgb * bloomAmount; 
+    
+    
+    
+    
+      
+    
+
     
     // vec3 mapped = forwardColor / (forwardColor + vec3(1.0));
     vec3 mapped = vec3(1.0) - exp(-forwardColor * exposure);
     mapped = pow(mapped, vec3(1.0 / 2.2));
-
     FragColor = vec4(mapped, 1.0);
     // FragColor = vec4(id, 1.0);
+    //FragColor = vec4(vec3(shadow), 1.0);
 }

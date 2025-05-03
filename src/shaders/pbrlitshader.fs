@@ -63,6 +63,7 @@ layout (location = 1) out vec4 BloomColor;
 
 int kernelSize = 64;
 
+
 float ShadowCalculation(int index, vec3 N)
 {
     // perform perspective divide
@@ -164,24 +165,33 @@ void main() {
 	           
     // reflectance equation
     vec3 Lo = vec3(0.0);
+    float shadow = 0.0;
 
+    float count = 0;
+    float maxIntensity = 0.0;
+    
 for(int i = 0; i < numSpotLights; ++i) {
         // calculate per-light radiance
         vec3 L = normalize(spotLights[i].position - WorldPos);
         vec3 H = normalize(V + L);
         float distance    = length(spotLights[i].position - WorldPos);
-        float attenuation = 1.0 / (distance * distance);
-        vec3 radiance     = spotLights[i].color * attenuation;        
+        float attenuation = (1.0 / (distance * distance));
+        vec3 radiance     = spotLights[i].color * attenuation * spotLights[i].brightness;        
 
 
         // float theta = dot(L, normalize(-spotLights[i].direction));
         float theta = dot(L, normalize(-spotLights[i].direction));
         float epsilon = spotLights[i].cutOff - spotLights[i].outerCutOff;
-        //  float intensity = clamp((theta - spotLights[i].outerCutOff) / epsilon, 0.0, 1.0);
-         float intensity = smoothstep(spotLights[i].outerCutOff, spotLights[i].cutOff, theta);
+        float intensity = clamp(((theta - spotLights[i].outerCutOff) / epsilon) * spotLights[i].brightness, 0.0, 1.0);
+        float intensityRadiance = smoothstep(spotLights[i].outerCutOff, spotLights[i].cutOff, theta) * spotLights[i].brightness;
 
-        radiance *= intensity;
-        radiance *=  1.0 - ShadowCalculation(i, N); 
+
+        maxIntensity = max(maxIntensity, intensity);
+        radiance *= intensityRadiance;
+        // radiance *=  1.0 - ShadowCalculation(i, N); 
+        shadow += ShadowCalculation(i, N) * maxIntensity;
+
+
         // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
@@ -199,6 +209,8 @@ for(int i = 0; i < numSpotLights; ++i) {
         float NdotL = max(dot(N, L), 0.0);                
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }
+    
+    shadow = min(shadow, 1.0); 
 
       for(int i = 0; i < numPointLights; ++i) {
         // calculate per-light radiance
@@ -234,10 +246,11 @@ for(int i = 0; i < numSpotLights; ++i) {
     float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 
     if(brightness > bloomThreshold){
-        BloomColor = vec4(FragColor.rgb, 1.0);
+        BloomColor = vec4(FragColor.rgb, shadow);
     } else {
-        BloomColor = vec4(0.0, 0.0, 0.0, 1.0);
+        BloomColor = vec4(0.0, 0.0, 0.0, shadow);
     }
-    
+
+    // ShadowMask = shadow; 
     // FragColor = vec4(baseColor * color, 1.0);
 }  

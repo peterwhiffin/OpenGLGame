@@ -62,7 +62,8 @@ void drawScene(Scene* scene) {
         std::string locationBase = "spotLights[" + std::to_string(i) + "]";
         glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
         glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".direction").c_str()), 1, glm::value_ptr(forward(scene, spotLight->entityID)));
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(spotLight->color * spotLight->brightness));
+        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(spotLight->color));
+        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
         glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
@@ -237,17 +238,17 @@ void createBlurBuffers(Scene* scene) {
     for (unsigned int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFrameBuffer[i]);
         glBindTexture(GL_TEXTURE_2D, scene->blurTex[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        /*         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); */
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
         float borderColor[] = {1.0, 1.0, 1.0, 1.0};  // depth=1.0 means "far away"
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); */
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->blurTex[i], 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -327,9 +328,10 @@ void createShadowMapDepthBuffers(Scene* scene) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light.shadowWidth, light.shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = {1.0, 1.0, 1.0, 1.0};  // depth=1.0 means "far away"
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
         glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.depthTex, 0);
         glDrawBuffer(GL_NONE);
