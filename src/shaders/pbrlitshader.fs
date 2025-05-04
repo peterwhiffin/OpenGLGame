@@ -65,40 +65,49 @@ layout (location = 3) out vec3 ViewNormal;
 in vec3 gPosition;
 in vec3 gNormal;
 
+/* const float kernel[3][3] = float[3][3](
+    float[](1.0, 2.0, 1.0),
+    float[](2.0, 4.0, 2.0),
+    float[](1.0, 2.0, 1.0)
+); */
+
+const float kernel[5][5] = float[5][5](
+    float[](1, 4, 7, 4, 1),
+    float[](4, 16, 26, 16, 4),
+    float[](7, 26, 41, 26, 7),
+    float[](4, 16, 26, 16, 4),
+    float[](1, 4, 7, 4, 1)
+);
+
 float ShadowCalculation(int index, vec3 N)
 {
-    // perform perspective divide
     vec3 projCoords = fragPosLightSpace[index].xyz / fragPosLightSpace[index].w;
-    // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
-    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     float closestDepth = texture(spotLights[index].shadowMap, projCoords.xy).r; 
-    // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
-    // calculate bias (based on depth map resolution and slope)
     vec3 normal = normalize(Normal);
-    // vec3 lightDir = normalize(spotLights[index].position - WorldPos);
     vec3 lightDir = normalize(-spotLights[index].direction);
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    // check whether current frag pos is in shadow
-    //  float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-    // PCF
-      float shadow = 0.0;
-     vec2 texelSize = 1.0 / textureSize(spotLights[index].shadowMap, 0);
-    for(int x = -1; x <= 1; ++x)
-    { 
-        for(int y = -1; y <= 1; ++y)
-        {
-            float pcfDepth = texture(spotLights[index].shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
-        }    
+
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(spotLights[index].shadowMap, 0);
+
+    float weightSum = 0.0;
+
+    for (int x = -2; x <= 2; ++x) {
+        for (int y = -2; y <= 2; ++y) {
+            float pcfDepth = texture(spotLights[index].shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            float weight = kernel[x + 2][y + 2];
+            shadow += (currentDepth - bias > pcfDepth ? 1.0 : 0.0) * weight;
+            weightSum += weight;
+        }
     }
-    shadow /= 9; 
-     
-    //  float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
-    // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
-     if(projCoords.z > 1.0)
+
+    shadow /= weightSum;
+
+    if(projCoords.z > 1.0){
         shadow = 0.0;
+    }
  
     return shadow;
 }  
@@ -119,7 +128,6 @@ float DistributionGGX(vec3 N, vec3 H, float roughness) {
 
 float GeometrySchlickGGX(float NdotV, float roughness) {
     float r = (roughness + 1.0);
-    // float k = (r*r) / 8.0;
     float k = (r*r) * 0.125;
 
     float num   = NdotV;
@@ -150,7 +158,6 @@ void main() {
 
     ViewPosition = gPosition;
     ViewNormal = gNormal;
-    // roughness = 0.9;
     metallic = 0.1;
     ao = 1.0;
 
@@ -159,39 +166,32 @@ void main() {
     N = normalize(N);
     N = TBN * N;
 
-    // N = normalize(Normal);
-
     vec3 V = normalize(camPos - WorldPos);
 
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
 	           
-    // reflectance equation
     vec3 Lo = vec3(0.0);
     
 for(int i = 0; i < numSpotLights; ++i) {
-        // calculate per-light radiance
+        if(spotLights[i].brightness == 0){
+            continue;
+        }
+
         vec3 L = normalize(spotLights[i].position - WorldPos);
         vec3 H = normalize(V + L);
         float distance    = length(spotLights[i].position - WorldPos);
         float attenuation = (1.0 / (distance * distance));
         vec3 radiance     = spotLights[i].color * attenuation * spotLights[i].brightness;        
 
-
         float theta = dot(L, normalize(-spotLights[i].direction));
         float epsilon = spotLights[i].cutOff - spotLights[i].outerCutOff;
-        // float intensity = clamp(((theta - spotLights[i].outerCutOff) / epsilon), 0.0, 1.0);
         float intensityRadiance = smoothstep(spotLights[i].outerCutOff, spotLights[i].cutOff, theta) * spotLights[i].brightness;
 
         radiance *= intensityRadiance;
 
         float shadowCalc = ShadowCalculation(i, N);
         
-        if(spotLights[i].brightness == 0){
-            shadowCalc = 0.0;
-        }
-        
-        // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
@@ -203,22 +203,18 @@ for(int i = 0; i < numSpotLights; ++i) {
         vec3 numerator    = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
         vec3 specular     = numerator / denominator;  
-        //  specular *= intensity;    
-        // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);                
         Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadowCalc); 
     }
 
 
       for(int i = 0; i < numPointLights; ++i) {
-        // calculate per-light radiance
         vec3 L = normalize(pointLights[i].position - WorldPos);
         vec3 H = normalize(V + L);
         float distance    = length(pointLights[i].position - WorldPos);
         float attenuation = 1.0 / (distance * distance);
         vec3 radiance     = pointLights[i].color * attenuation;        
         
-        // cook-torrance brdf
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
@@ -231,7 +227,6 @@ for(int i = 0; i < numSpotLights; ++i) {
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
         vec3 specular     = numerator / denominator;  
             
-        // add to outgoing radiance Lo
         float NdotL = max(dot(N, L), 0.0);                
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }     

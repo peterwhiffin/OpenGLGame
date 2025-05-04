@@ -13029,8 +13029,8 @@ brightness: 0.000000
 cutoff: 6.500000
 outerCutoff: 8.910000
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
+shadowWidth: 1024
+shadowHeight: 1024
 }
 
 SpotLight {
@@ -13040,8 +13040,8 @@ brightness: 9.900000
 cutoff: 23.190001
 outerCutoff: 40.009998
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
+shadowWidth: 1024
+shadowHeight: 1024
 }
 
 SpotLight {
@@ -13051,8 +13051,8 @@ brightness: 13.100000
 cutoff: 1.100000
 outerCutoff: 38.209999
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
+shadowWidth: 1024
+shadowHeight: 1024
 }
 
 SpotLight {
@@ -13062,8 +13062,8 @@ brightness: 22.920000
 cutoff: 0.900000
 outerCutoff: 7.360000
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 4096
-shadowHeight: 4096
+shadowWidth: 1024 
+shadowHeight: 1024
 }
 
 Camera {

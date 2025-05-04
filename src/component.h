@@ -206,7 +206,7 @@ struct SpotLight {
     float outerCutoff;
     glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
     bool enableShadows = true;
-    unsigned int depthFrameBuffer, depthTex;
+    unsigned int depthFrameBuffer, blurDepthFrameBuffer, depthTex, blurDepthTex;
     unsigned int shadowWidth = 800;
     unsigned int shadowHeight = 600;
 };
@@ -237,7 +237,7 @@ struct Scene {
     unsigned int pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
     unsigned int blurFBO[2], blurSwapTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader;
+    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
     uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;

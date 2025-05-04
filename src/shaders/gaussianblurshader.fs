@@ -10,7 +10,7 @@ layout (location = 4) uniform float weight[5] = float[] (0.227027, 0.1945946, 0.
 
 void main()
 {             
-     vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
+      vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
     vec4 result = texture(image, TexCoords) * weight[0]; // current fragment's contribution
     if(horizontal)
     {
@@ -29,8 +29,8 @@ void main()
         }
     }
 
-    FragColor = result; 
-/* 
+    FragColor = result;  
+ /* 
     vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
     vec4 result = texture(image, TexCoords); // current fragment's contribution
     result.rgb *= weight[0];
@@ -51,6 +51,6 @@ void main()
         }
     }
 
-    FragColor = vec4(result.rgb, result.a); */
+    FragColor = vec4(result.rgb, result.a);  */
 
 }

@@ -3,6 +3,8 @@
 #include "shader.h"
 #include "renderer.h"
 
+#define M_PI 3.14159265358979323846
+
 void setFlags() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -67,6 +69,14 @@ void drawShadowMaps(Scene* scene) {
                 glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
             }
         }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(scene->shadowBlurShader);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, light.depthTex);
+        glBindVertexArray(scene->fullscreenVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
 
@@ -98,7 +108,7 @@ void drawScene(Scene* scene) {
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
         glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
-        glBindTexture(GL_TEXTURE_2D, spotLight->depthTex);
+        glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
     }
 
     glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
@@ -168,7 +178,6 @@ void drawBlurPass(Scene* scene) {
     int amount = 10;
     glUseProgram(scene->blurShader);
     glActiveTexture(GL_TEXTURE0);
-
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[1]);
     glUniform1i(uniform_location::kBHorizontal, true);
@@ -247,6 +256,22 @@ void createShadowMapDepthBuffers(Scene* scene) {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light.depthTex, 0);
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+        }
+
+        glGenFramebuffers(1, &light.blurDepthFrameBuffer);
+        glGenTextures(1, &light.blurDepthTex);
+        glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
+        glBindTexture(GL_TEXTURE_2D, light.blurDepthTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, light.shadowWidth, light.shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light.blurDepthTex, 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
@@ -438,22 +463,44 @@ void createFullScreenQuad(Scene* scene) {
     glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
+float ourLerp(float a, float b, float f) {
+    return a + f * (b - a);
+}
+
 void generateSSAOKernel(Scene* scene) {
-    std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator;
 
-    for (unsigned int i = 0; i < 64; i++) {
-        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-        sample = glm::normalize(sample);
-        sample *= randomFloats(generator);
-        float scale = (float)i / 64.0f;
-        scale = 0.1f + (scale * scale) * (1.0f - 0.1f);
+    scene->ssaoKernel.clear();
+    scene->ssaoNoise.clear();
+
+    for (unsigned int i = 0; i < 32; i++) {
+        // Cosine-weighted hemisphere sampling
+        float xi1 = randomFloats(generator);
+        float xi2 = randomFloats(generator);
+
+        float theta = acos(sqrt(1.0f - xi1));  // inverse CDF for cosine-weighted
+        float phi = 2.0f * M_PI * xi2;
+
+        glm::vec3 sample;
+        sample.x = sin(theta) * cos(phi);
+        sample.y = sin(theta) * sin(phi);
+        sample.z = cos(theta);
+
+        // Apply random scaling to bring samples closer to origin
+        float scale = static_cast<float>(i) / 32.0f;
+        // Stronger bias toward center → scale^3 instead of scale^2
+        scale = ourLerp(0.05f, 1.0f, scale * scale * scale);
         sample *= scale;
+
         scene->ssaoKernel.push_back(sample);
     }
 
+    // noise texture (same as before)
     for (unsigned int i = 0; i < 16; i++) {
-        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);  // rotate around z-axis (in tangent space)
+        glm::vec3 noise(randomFloats(generator) * 2.0f - 1.0f,
+                        randomFloats(generator) * 2.0f - 1.0f,
+                        0.0f);  // rotate around z-axis (in tangent space)
         scene->ssaoNoise.push_back(noise);
     }
 
@@ -467,8 +514,9 @@ void generateSSAOKernel(Scene* scene) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glUseProgram(scene->ssaoShader);
-    for (unsigned int i = 0; i < 64; i++) {
-        glUniform3fv(glGetUniformLocation(scene->ssaoShader, ("samples[" + std::to_string(i) + "]").c_str()), 1, glm::value_ptr(scene->ssaoKernel[i]));
+    for (unsigned int i = 0; i < 32; i++) {
+        glUniform3fv(glGetUniformLocation(scene->ssaoShader, ("samples[" + std::to_string(i) + "]").c_str()),
+                     1, glm::value_ptr(scene->ssaoKernel[i]));
     }
 }
 

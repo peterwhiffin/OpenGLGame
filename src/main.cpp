@@ -22,8 +22,8 @@ void exitProgram(Scene* scene, int code) {
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
     Scene* scene = (Scene*)glfwGetWindowUserPointer(window);
-    scene->windowData.viewportWidth = 800;
-    scene->windowData.viewportHeight = 600;
+    scene->windowData.viewportWidth = width;
+    scene->windowData.viewportHeight = height;
 
     glViewport(0, 0, width, height);
     scene->windowData.width = width;
@@ -115,9 +115,9 @@ void initializeLights(Scene* scene, unsigned int shader) {
 
     glUseProgram(scene->ssaoShader);
     glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
-    scene->AORadius = 0.4f;
-    scene->AOBias = 0.147f;
-    scene->AOPower = 6.2f;
+    scene->AORadius = 0.19f;
+    scene->AOBias = 0.031f;
+    scene->AOPower = 2.01f;
 }
 
 void loadDefaultScene(Scene* scene) {
@@ -243,6 +243,7 @@ int main() {
     scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
     scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
     scene->ssaoShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOshader.fs");
+    scene->shadowBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
     scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
     scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
 
@@ -271,8 +272,8 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene);
-        drawPickingScene(scene);
-        checkPicker(scene, input.cursorPosition);
+        // drawPickingScene(scene);
+        // checkPicker(scene, input.cursorPosition);
         drawShadowMaps(scene);
         drawScene(scene);
         drawSSAO(scene);
