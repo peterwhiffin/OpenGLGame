@@ -233,12 +233,11 @@ struct Scene {
     std::string name = "../data/scenes/default.scene";
     WindowData windowData;
 
-    unsigned int pickingFBO, pickingRBO, pickingTex, litFrameBuffer, litColorTex, bloomTex, ssaoFrameBufferRaw, ssaoFrameBufferBlur, ssaoColorBlur, ssaoColorTexRaw, depthBuffer, depthTex, forwardDepth, ssaoNoiseTex;
-    unsigned int blurFrameBuffer[2], blurTex[2];
+    unsigned int pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
+    unsigned int pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
+    unsigned int blurFBO[2], blurSwapTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, ssaoBlurShader, pickingShader;
-    unsigned int shadowMaskTex;
-    unsigned int gBuffer, gPosition, gNormal, rboDepth;
+    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader;
     uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;

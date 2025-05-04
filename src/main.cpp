@@ -11,7 +11,8 @@
 #include "debug.h"
 #include "sceneloader.h"
 
-void exitProgram(int code) {
+void exitProgram(Scene* scene, int code) {
+    deleteBuffers(scene);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -49,14 +50,14 @@ GLFWwindow* createContext(Scene* scene) {
 
     if (window == NULL) {
         std::cout << "Failed to create window" << std::endl;
-        exitProgram(-1);
+        exitProgram(scene, -1);
     }
 
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to load GLAD" << std::endl;
-        exitProgram(-1);
+        exitProgram(scene, -1);
     }
 
     glfwSetFramebufferSizeCallback(window, onScreenChanged);
@@ -99,7 +100,6 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
         glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(pointLight->color));
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
-        // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), pointLight->isActive);
     }
 
     for (int i = 0; i < numSpotLights; i++) {
@@ -111,11 +111,13 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
         glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
-        // glUniform1ui(glGetUniformLocation(shader, (base + ".isEnabled").c_str()), spotLight->isActive);
     }
 
     glUseProgram(scene->ssaoShader);
     glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
+    scene->AORadius = 0.4f;
+    scene->AOBias = 0.147f;
+    scene->AOPower = 6.2f;
 }
 
 void loadDefaultScene(Scene* scene) {
@@ -237,24 +239,20 @@ int main() {
         spotLight->brightness = 4.0f;
     } */
 
+    scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
+    scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
+    scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
     scene->ssaoShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOshader.fs");
-    scene->ssaoBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
+    scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
+    scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
 
     createPickingFBO(scene);
-    createDepthPrePassBuffer(scene);
-    createSSAOBuffers(scene);
     createSSAOBuffer(scene);
     createShadowMapDepthBuffers(scene);
     createForwardBuffer(scene);
     createBlurBuffers(scene);
     createFullScreenQuad(scene);
     generateSSAOKernel(scene);
-
-    scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
-    scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
-    scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
-    scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
-    scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
 
     initializeLights(scene, scene->lightingShader);
 
@@ -273,12 +271,11 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene);
-        drawDepthPrePass(scene);
-        drawSSAO(scene);
-        drawShadowMaps(scene);
         drawPickingScene(scene);
         checkPicker(scene, input.cursorPosition);
+        drawShadowMaps(scene);
         drawScene(scene);
+        drawSSAO(scene);
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
 
@@ -289,6 +286,6 @@ int main() {
         glfwSwapBuffers(window);
     }
 
-    exitProgram(0);
+    exitProgram(scene, 0);
     return 0;
 }

@@ -1,12 +1,13 @@
 #version 460 core
 
-out float FragColor;
+out vec4 FragColor;
 
 in vec2 TexCoords;
 
 layout (binding = 0) uniform sampler2D gPosition;
 layout (binding = 1) uniform sampler2D gNormal;
 layout (binding = 2) uniform sampler2D texNoise;
+layout (binding = 3) uniform sampler2D bloomTex;
 
 uniform vec3 samples[64];
 
@@ -23,6 +24,7 @@ layout (location = 9) uniform float power;
 
 void main()
 {
+    vec4 color = texture(bloomTex, TexCoords);
     // get input for SSAO algorithm
     vec3 fragPos = texture(gPosition, TexCoords).xyz;
     vec3 normal = normalize(texture(gNormal, TexCoords).rgb);
@@ -36,8 +38,12 @@ void main()
     for(int i = 0; i < kernelSize; ++i)
     {
         // get sample position
-        vec3 samplePos = TBN * samples[i]; // from tangent to view-space
-        samplePos = fragPos + samplePos * radius; 
+        vec3 AsamplePos = TBN * samples[i]; // from tangent to view-space
+        vec3 samplePos = fragPos + AsamplePos * radius; 
+        float test = dot(AsamplePos, samplePos);
+        if(test < 0.15){
+            continue;
+        }
         
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
@@ -49,10 +55,15 @@ void main()
         float sampleDepth = texture(gPosition, offset.xy).z; // get depth value of kernel sample
         
         // range check & accumulate
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+        // float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+        
+
+        float rangeCheck= abs(fragPos.z - sampleDepth) < radius ? 1.0 : 0.0;
+
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;           
     }
     occlusion = 1.0 - (occlusion / kernelSize);
-    
-    FragColor = pow(occlusion, power);
+
+    color.a = pow(occlusion, power);
+    FragColor = color;
 }

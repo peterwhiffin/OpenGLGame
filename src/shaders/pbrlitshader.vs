@@ -18,8 +18,12 @@ layout (location = 3) out mat3 TBN;
 uniform int maxSpotLights;
 uniform mat4 lightSpaceMatrix[16];
 out vec4 fragPosLightSpace[16];
+out vec3 gPosition;
+out vec3 gNormal;
 
 void main(){
+    gPosition = (view * model * vec4(aPos, 1.0)).xyz;
+    gNormal = transpose(inverse(mat3(view * model))) * aNormal;
     fragPos = vec3(model * vec4(aPos, 1.0));
     texCoord = aTexCoord;
     gl_Position = projection * view * vec4(fragPos, 1.0);

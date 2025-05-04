@@ -41,7 +41,6 @@ layout (binding = 1) uniform sampler2D roughnessMap;
 layout (binding = 2) uniform sampler2D metallicMap;
 layout (binding = 3) uniform sampler2D aoMap;
 layout (binding = 4) uniform sampler2D normalMap;
-layout (binding = 5) uniform sampler2D SSAOTex;
 
 // material parameters
 layout (location = 8) uniform vec3 camPos; 
@@ -58,12 +57,13 @@ layout (location = 15) uniform float bloomThreshold;
 // layout (location = 40) uniform DirectionalLight dirLight; 
 layout (location = 48) uniform PointLight pointLights[16];
 uniform SpotLight spotLights[16];
-
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BloomColor;
+layout (location = 2) out vec3 ViewPosition;
+layout (location = 3) out vec3 ViewNormal;
 
-int kernelSize = 64;
-
+in vec3 gPosition;
+in vec3 gNormal;
 
 float ShadowCalculation(int index, vec3 N)
 {
@@ -148,6 +148,8 @@ void main() {
     float metallic = texture(metallicMap, TexCoords).r * metallicStrength;
     float ao = texture(aoMap, TexCoords).r * aoStrength;
 
+    ViewPosition = gPosition;
+    ViewNormal = gNormal;
     // roughness = 0.9;
     metallic = 0.1;
     ao = 1.0;
