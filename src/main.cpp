@@ -91,9 +91,13 @@ void initializeLights(Scene* scene, unsigned int shader) {
     int numPointLights = scene->pointLights.size();
     int numSpotLights = scene->spotLights.size();
     glUniform1i(glGetUniformLocation(shader, "numPointLights"), numPointLights);
-    glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
-    glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), numSpotLights);
+    scene->litData.numSpotLights = numSpotLights;
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 1152, &scene->litData);
+    // glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
+    // glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), numSpotLights);
 
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
     for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
@@ -115,9 +119,9 @@ void initializeLights(Scene* scene, unsigned int shader) {
 
     glUseProgram(scene->ssaoShader);
     glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
-    scene->AORadius = 0.19f;
-    scene->AOBias = 0.031f;
-    scene->AOPower = 2.01f;
+    scene->AORadius = 0.06f;
+    scene->AOBias = 0.04f;
+    scene->AOPower = 2.02f;
 }
 
 void loadDefaultScene(Scene* scene) {
@@ -257,6 +261,17 @@ int main() {
 
     initializeLights(scene, scene->lightingShader);
 
+    glGenBuffers(1, &scene->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene->matricesUBO);
+
+    glGenBuffers(1, &scene->litDataUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
+    glBufferData(GL_UNIFORM_BUFFER, 1152, NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, scene->litDataUBO);
+
+    std::cout << "size: " << sizeof(litShaderData) << std::endl;
     setFlags();
     initializeIMGUI(window);
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -272,6 +287,9 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene);
+        glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
+
         // drawPickingScene(scene);
         // checkPicker(scene, input.cursorPosition);
         drawShadowMaps(scene);

@@ -13,7 +13,6 @@ out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 Normal;
 
-
 void main()
 {
     vec4 viewPos = view * model * vec4(aPos, 1.0);

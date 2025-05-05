@@ -33,7 +33,7 @@ constexpr unsigned int kPointLight = 48;
 constexpr unsigned int kSpotLight = 116;
 constexpr unsigned int kSSAOKernel = 132;
 // pbr uniforms
-
+constexpr GLint kerder = 12;
 constexpr unsigned int kInvProjectionMatrix = 5;
 // post-process uniforms
 constexpr unsigned int kPExposure = 3;

@@ -19,24 +19,22 @@ void drawPickingScene(Scene* scene) {
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    glUseProgram(scene->pickingShader);
     for (MeshRenderer& renderer : scene->meshRenderers) {
         Transform* transform = getTransform(scene, renderer.entityID);
 
         glm::mat4 model = transform->worldTransform;
         glBindVertexArray(renderer.mesh->VAO);
+        unsigned char r = renderer.entityID & 0xFF;
+        unsigned char g = (renderer.entityID >> 8) & 0xFF;
+        unsigned char b = (renderer.entityID >> 16) & 0xFF;
+        glm::vec3 idColor = glm::vec3(r, g, b) / 255.0f;
+        glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(idColor));
 
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
-            unsigned char r = renderer.entityID & 0xFF;
-            unsigned char g = (renderer.entityID >> 8) & 0xFF;
-            unsigned char b = (renderer.entityID >> 16) & 0xFF;
-            glm::vec3 idColor = glm::vec3(r, g, b) / 255.0f;
-
-            glUseProgram(scene->pickingShader);
-            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
-            glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
-            glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(idColor));
+            // glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
+            // glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
 
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
@@ -46,6 +44,7 @@ void drawPickingScene(Scene* scene) {
 }
 
 void drawShadowMaps(Scene* scene) {
+    uint32_t i = 0;
     for (SpotLight& light : scene->spotLights) {
         glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
         glViewport(0, 0, light.shadowWidth, light.shadowHeight);
@@ -55,8 +54,8 @@ void drawShadowMaps(Scene* scene) {
         glm::vec3 position = getPosition(scene, light.entityID);
         glm::mat4 viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
         glm::mat4 projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
-        light.lightSpaceMatrix = projectionMatrix * viewMatrix;
-
+        // light.lightSpaceMatrix = projectionMatrix * viewMatrix;
+        scene->litData.lightSpaceMatrix[i] = projectionMatrix * viewMatrix;
         glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
         glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
@@ -77,6 +76,7 @@ void drawShadowMaps(Scene* scene) {
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
         glBindVertexArray(scene->fullscreenVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        i++;
     }
 }
 
@@ -89,6 +89,8 @@ void drawScene(Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(scene->lightingShader);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
 
     for (int i = 0; i < scene->pointLights.size(); i++) {
         PointLight* pointLight = &scene->pointLights[i];
@@ -106,15 +108,15 @@ void drawScene(Scene* scene) {
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
-        glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
+        // glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
         glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
     }
 
     glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
 
-    glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
-    glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
+    // glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
+    // glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
     glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
 
     glUniform1f(uniform_location::kNormalStrength, scene->normalStrength);
@@ -122,15 +124,20 @@ void drawScene(Scene* scene) {
     glUniform1f(uniform_location::kRoughnessStrength, 1.0f);
     glUniform1f(uniform_location::kAOStrength, 1.0f);
 
+    glBufferSubData(GL_UNIFORM_BUFFER, 112, 1024, &scene->litData.lightSpaceMatrix);
+
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
         glm::vec3 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
         glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(baseColor));
-        glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        scene->litData.normalMatrix = normalMatrix;
+        scene->litData.model = model;
+        // glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+        // glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, 48, &scene->litData.normalMatrix);
+        glBufferSubData(GL_UNIFORM_BUFFER, 48, 64, &scene->litData.model);
         glBindVertexArray(renderer.mesh->VAO);
-
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
             unsigned int shader = subMesh.material.shader;
 
@@ -164,7 +171,7 @@ void drawSSAO(Scene* scene) {
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, scene->bloomSSAOTex);
 
-    glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(scene->cameras[0]->projectionMatrix));
+    glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(scene->matricesUBOData.projection));
     glUniform1f(6, scene->AORadius);
     glUniform1f(7, scene->AOBias);
     glUniform1f(9, scene->AOPower);

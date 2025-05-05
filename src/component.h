@@ -158,8 +158,21 @@ struct Camera {
     float aspectRatio;
     float nearPlane;
     float farPlane;
-    glm::mat4 projectionMatrix;
-    glm::mat4 viewMatrix;
+    // glm::mat4 projectionMatrix;
+    // glm::mat4 viewMatrix;
+};
+
+struct alignas(16) litShaderData {
+    // base alignment  //aligned offset
+    glm::mat3x4 normalMatrix;  // 0 - 48
+    glm::mat4 model;           // 48 - 112
+    int numSpotLights;         // 112 - 116
+    int padding[3];            // 116 - 128
+};
+
+struct alignas(16) lightMatrices {
+    // base alignment  //aligned offset
+    glm::mat4 lightSpaceMatrix[16];  // 0 - 1024
 };
 
 struct CameraController {
@@ -229,6 +242,11 @@ struct Player {
     float groundCheckDistance = 0.2f;
 };
 
+struct GlobalUBO {
+    glm::mat4 view = glm::mat4(1.0);
+    glm::mat4 projection = glm::mat4(1.0);
+};
+
 struct Scene {
     std::string name = "../data/scenes/default.scene";
     WindowData windowData;
@@ -265,6 +283,10 @@ struct Scene {
     bool isPicking = false;
     bool canPick = true;
 
+    unsigned int matricesUBO;
+    unsigned int litDataUBO;
+    GlobalUBO matricesUBOData;
+    litShaderData litData;
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
 

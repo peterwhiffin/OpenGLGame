@@ -50,7 +50,7 @@ layout (location = 11) uniform float roughnessStrength;
 layout (location = 12) uniform float aoStrength;
 layout (location = 13) uniform float normalStrength;
 layout (location = 14) uniform int numPointLights;
-//  layout (location = 16) uniform int numSpotLights;
+layout (location = 16) uniform int numSpotLights;
 layout (location = 15) uniform float bloomThreshold;
 
 // lights
@@ -62,29 +62,22 @@ layout (location = 1) out vec4 BloomColor;
 layout (location = 2) out vec3 ViewPosition;
 layout (location = 3) out vec3 ViewNormal;
 
-layout (std140, binding = 1) uniform lighting{
-    mat3 normalMatrix;
-    mat4 model;
-    mat4 lightSpaceMatrix[16];
-    int numSpotLights;
-}; 
-
 in vec3 gPosition;
 in vec3 gNormal;
 
-/*  const float kernel[3][3] = float[3][3](
+ const float kernel[3][3] = float[3][3](
     float[](1.0, 2.0, 1.0),
     float[](2.0, 4.0, 2.0),
     float[](1.0, 2.0, 1.0)
-); */ 
+); 
 
-const float kernel[5][5] = float[5][5](
+/* const float kernel[5][5] = float[5][5](
     float[](1, 4, 7, 4, 1),
     float[](4, 16, 26, 16, 4),
     float[](7, 26, 41, 26, 7),
     float[](4, 16, 26, 16, 4),
     float[](1, 4, 7, 4, 1)
-);  
+); */
 
 float ShadowCalculation(int index, vec3 N)
 {

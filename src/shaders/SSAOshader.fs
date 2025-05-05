@@ -35,13 +35,13 @@ void main()
         // get sample position
         vec3 AsamplePos = TBN * samples[i]; // from tangent to view-space
         float NdotRay = dot(normal, normalize(AsamplePos));
-        if(NdotRay < 0.4){
+        if(NdotRay < 0.5){
             continue;
         }
 
-        float scale = abs(fragPos.z) / 80.0;  // Reference depth is something like 100.0f (tune it based on your scene)
+        float scale = abs(fragPos.z) / 1.0;  // Reference depth is something like 100.0f (tune it based on your scene)
 
-        scale = clamp(scale, 0.5, 2.0); // Prevent it from scaling too drastically
+        scale = clamp(scale, 0.2, 2.9); // Prevent it from scaling too drastically
 
         vec3 samplePos = fragPos + AsamplePos * radius * scale;
  
