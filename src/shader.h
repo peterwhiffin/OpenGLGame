@@ -48,7 +48,7 @@ constexpr unsigned int kTextureAOUnit = 3;
 constexpr unsigned int kTextureNormalUnit = 4;
 constexpr unsigned int kTextureSSAOUnit = 5;
 constexpr unsigned int kTextureNoiseUnit = 6;
-constexpr unsigned int kTextureShadowMapUnit = 7;
+constexpr unsigned int kTextureShadowMapUnit = 5;
 
 constexpr unsigned int kTextureSSAONoiseUnit = 0;
 constexpr unsigned int kTextureDepthUnit = 1;

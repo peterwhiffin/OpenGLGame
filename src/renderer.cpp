@@ -44,7 +44,6 @@ void drawPickingScene(Scene* scene) {
 }
 
 void drawShadowMaps(Scene* scene) {
-    uint32_t i = 0;
     for (SpotLight& light : scene->spotLights) {
         glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
         glViewport(0, 0, light.shadowWidth, light.shadowHeight);
@@ -54,14 +53,13 @@ void drawShadowMaps(Scene* scene) {
         glm::vec3 position = getPosition(scene, light.entityID);
         glm::mat4 viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
         glm::mat4 projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
-        // light.lightSpaceMatrix = projectionMatrix * viewMatrix;
-        scene->litData.lightSpaceMatrix[i] = projectionMatrix * viewMatrix;
-        glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-        glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+        glm::mat4 viewProjection = projectionMatrix * viewMatrix;
+        light.lightSpaceMatrix = viewProjection;
+        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(viewProjection));
 
         for (MeshRenderer& renderer : scene->meshRenderers) {
             glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
-            glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
             glBindVertexArray(renderer.mesh->VAO);
 
             for (SubMesh& subMesh : renderer.mesh->subMeshes) {
@@ -76,7 +74,6 @@ void drawShadowMaps(Scene* scene) {
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
         glBindVertexArray(scene->fullscreenVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        i++;
     }
 }
 
@@ -90,54 +87,41 @@ void drawScene(Scene* scene) {
 
     glUseProgram(scene->lightingShader);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
-
     for (int i = 0; i < scene->pointLights.size(); i++) {
         PointLight* pointLight = &scene->pointLights[i];
-        std::string locationBase = "pointLights[" + std::to_string(i) + "]";
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(pointLight->color * pointLight->brightness));
+        glUniform3fv(36, 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(36, 1, glm::value_ptr(pointLight->color * pointLight->brightness));
     }
 
     for (int i = 0; i < scene->spotLights.size(); i++) {
         SpotLight* spotLight = &scene->spotLights[i];
-        std::string locationBase = "spotLights[" + std::to_string(i) + "]";
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".direction").c_str()), 1, glm::value_ptr(forward(scene, spotLight->entityID)));
-        glUniform3fv(glGetUniformLocation(scene->lightingShader, (locationBase + ".color").c_str()), 1, glm::value_ptr(spotLight->color));
-        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".brightness").c_str()), spotLight->brightness);
-        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
-        glUniform1f(glGetUniformLocation(scene->lightingShader, (locationBase + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
-        // glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, ("lightSpaceMatrix[" + std::to_string(i) + "]").c_str()), 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
+        glUniform3fv(120 + 0 + (i * 7), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
+        glUniform3fv(120 + 1 + (i * 7), 1, glm::value_ptr(forward(scene, spotLight->entityID)));
+        glUniform3fv(120 + 2 + (i * 7), 1, glm::value_ptr(spotLight->color));
+        glUniform1f(120 + 3 + (i * 7), spotLight->brightness);
+        glUniform1f(120 + 4 + (i * 7), glm::cos(glm::radians(spotLight->cutoff)));
+        glUniform1f(120 + 5 + (i * 7), glm::cos(glm::radians(spotLight->outerCutoff)));
+        glUniformMatrix4fv(15 + i, 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
         glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
     }
 
-    glUniform1f(uniform_location::kBloomThreshold, scene->bloomThreshold);
-
-    // glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
-    // glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
-    glUniform3fv(uniform_location::kViewPos, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
-
-    glUniform1f(uniform_location::kNormalStrength, scene->normalStrength);
-    glUniform1f(uniform_location::kMetallicStrength, 1.0f);
-    glUniform1f(uniform_location::kRoughnessStrength, 1.0f);
-    glUniform1f(uniform_location::kAOStrength, 1.0f);
-
-    glBufferSubData(GL_UNIFORM_BUFFER, 112, 1024, &scene->litData.lightSpaceMatrix);
+    glUniform3fv(8, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
+    glUniform1f(9, scene->bloomThreshold);
+    glUniform1f(13, scene->normalStrength);
+    glUniform1f(10, 1.0f);
+    glUniform1f(11, 1.0f);
+    glUniform1f(12, 1.0f);
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
         glm::vec3 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
-        glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(baseColor));
-        scene->litData.normalMatrix = normalMatrix;
-        scene->litData.model = model;
-        // glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, glm::value_ptr(model));
-        // glUniformMatrix3fv(uniform_location::kNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, 48, &scene->litData.normalMatrix);
-        glBufferSubData(GL_UNIFORM_BUFFER, 48, 64, &scene->litData.model);
+        glUniform3fv(14, 1, glm::value_ptr(baseColor));
+        glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMatrix));
         glBindVertexArray(renderer.mesh->VAO);
+
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
             unsigned int shader = subMesh.material.shader;
 

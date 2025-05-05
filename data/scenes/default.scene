@@ -2914,12 +2914,60 @@ name: ceiling.175
 isActive: true
 }
 
+Entity {
+id: 3
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 4
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 5
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 6
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 7
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 8
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 9
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 10
+name: TrashcanLid
+isActive: true
+}
+
 Transform {
 entityID: 498
 parentEntityID: -1
 childEntityIds: None
-localPosition: 0.000000, 9.600000, -35.400002
-localRotation: 0.600749, -0.372962, 0.600749, 0.372962
+localPosition: 0.000000, 3.000000, -23.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2964,7 +3012,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.999534, -0.030539, 0.000000, 0.000000
+localRotation: 0.999680, -0.025304, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2972,8 +3020,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: 1.490000, 2.000000, 5.508591
-localRotation: 0.955346, -0.029189, 0.293908, 0.008980
+localPosition: 4.422210, 2.000000, -6.725490
+localRotation: 0.572684, -0.014496, 0.819386, 0.020740
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2981,8 +3029,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: 1.490000, 1.300000, 5.508591
-localRotation: -0.955792, 0.000000, -0.294045, 0.000000
+localPosition: 4.422210, 1.300000, -6.725490
+localRotation: -0.572868, 0.000000, -0.819648, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3017,7 +3065,7 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.285278, -0.500000
+localPosition: 0.300000, -0.282342, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7288,6 +7336,78 @@ localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
+Transform {
+entityID: 3
+parentEntityID: -1
+childEntityIds: 4
+localPosition: -1.405608, 1.074338, -0.674648
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 4
+parentEntityID: 3
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 5
+parentEntityID: -1
+childEntityIds: 6
+localPosition: -1.405608, 1.074338, -1.510226
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 6
+parentEntityID: 5
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 7
+parentEntityID: -1
+childEntityIds: 8
+localPosition: -1.405608, 1.074338, 0.134817
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 8
+parentEntityID: 7
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 9
+parentEntityID: -1
+childEntityIds: 10
+localPosition: -1.405608, 1.074338, -2.321918
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 10
+parentEntityID: 9
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
 MeshRenderer {
 entityID: 12
 mesh: Wrench
@@ -9676,6 +9796,46 @@ mesh: ceiling.178
 MeshRenderer {
 entityID: 490
 mesh: ceiling.179
+}
+
+MeshRenderer {
+entityID: 3
+mesh: TrashcanBase
+}
+
+MeshRenderer {
+entityID: 4
+mesh: TrashcanLid
+}
+
+MeshRenderer {
+entityID: 5
+mesh: TrashcanBase
+}
+
+MeshRenderer {
+entityID: 6
+mesh: TrashcanLid
+}
+
+MeshRenderer {
+entityID: 7
+mesh: TrashcanBase
+}
+
+MeshRenderer {
+entityID: 8
+mesh: TrashcanLid
+}
+
+MeshRenderer {
+entityID: 9
+mesh: TrashcanBase
+}
+
+MeshRenderer {
+entityID: 10
+mesh: TrashcanLid
 }
 
 BoxCollider {
@@ -13010,11 +13170,95 @@ center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
 
+BoxCollider {
+entityID: 3
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 4
+isActive: false
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
+BoxCollider {
+entityID: 5
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 6
+isActive: false
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
+BoxCollider {
+entityID: 7
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 8
+isActive: false
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
+BoxCollider {
+entityID: 9
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 10
+isActive: false
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
 Rigidbody {
 entityID: 493
 linearDrag: 0.000000
 mass: 20.000000
 friction: 0.000000
+}
+
+Rigidbody {
+entityID: 3
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
+}
+
+Rigidbody {
+entityID: 5
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
+}
+
+Rigidbody {
+entityID: 7
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
+}
+
+Rigidbody {
+entityID: 9
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
 }
 
 Animator {
@@ -13036,9 +13280,9 @@ shadowHeight: 1024
 SpotLight {
 entityID: 498
 isActive: true
-brightness: 9.900000
-cutoff: 23.190001
-outerCutoff: 40.009998
+brightness: 30.799999
+cutoff: 1.100000
+outerCutoff: 20.299999
 color: 1.000000, 1.000000, 1.000000
 shadowWidth: 1024
 shadowHeight: 1024
@@ -13062,7 +13306,7 @@ brightness: 22.920000
 cutoff: 0.900000
 outerCutoff: 7.360000
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 1024 
+shadowWidth: 1024
 shadowHeight: 1024
 }
 

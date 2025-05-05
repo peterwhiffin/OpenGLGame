@@ -83,21 +83,11 @@ void updateTime(Scene* scene) {
 
 void initializeLights(Scene* scene, unsigned int shader) {
     glUseProgram(shader);
-    /* glUniform3fv(glGetUniformLocation(shader, "dirLight.position"), 1, glm::value_ptr(scene->sun.position));
-    glUniform3fv(glGetUniformLocation(shader, "dirLight.ambient"), 1, glm::value_ptr(scene->sun.ambient));
-    glUniform3fv(glGetUniformLocation(shader, "dirLight.diffuse"), 1, glm::value_ptr(scene->sun.diffuse));
-    glUniform3fv(glGetUniformLocation(shader, "dirLight.specular"), 1, glm::value_ptr(scene->sun.specular)); */
-
     int numPointLights = scene->pointLights.size();
     int numSpotLights = scene->spotLights.size();
-    glUniform1i(glGetUniformLocation(shader, "numPointLights"), numPointLights);
-    scene->litData.numSpotLights = numSpotLights;
-    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 1152, &scene->litData);
-    // glUniform1i(glGetUniformLocation(shader, "numSpotLights"), numSpotLights);
-    // glUniform1i(glGetUniformLocation(shader, "maxSpotLights"), numSpotLights);
+    glUniform1i(6, numSpotLights);
+    glUniform1i(7, numPointLights);
 
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
     for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
@@ -114,7 +104,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
-        glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
+        // glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
     }
 
     glUseProgram(scene->ssaoShader);
@@ -265,13 +255,8 @@ int main() {
     glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
 
-    glGenBuffers(1, &scene->litDataUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, scene->litDataUBO);
-    glBufferData(GL_UNIFORM_BUFFER, 1152, NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, scene->litDataUBO);
-
-    std::cout << "size: " << sizeof(litShaderData) << std::endl;
     setFlags();
     initializeIMGUI(window);
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -287,7 +272,6 @@ int main() {
         updateRigidBodies(scene);
         updateAnimators(scene);
         updateCamera(scene);
-        glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
 
         // drawPickingScene(scene);

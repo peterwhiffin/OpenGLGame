@@ -5,46 +5,41 @@ layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal;
 layout (location = 3) in vec3 aTangent;
 
-//  layout (location = 4) uniform mat4 model;
-// layout (location = 5) uniform mat4 view;
-// layout (location = 6) uniform mat4 projection;
-//  layout (location = 7) uniform mat3 normalMatrix;
+layout (location = 4) uniform mat4 model;
+layout (location = 5) uniform mat3 normalMatrix;
+layout (location = 6) uniform int numSpotLights;
+layout (location = 7) uniform int numPointLights;
+layout (location = 15) uniform mat4 lightSpaceMatrix[16];
 
-layout (location = 0) out vec2 texCoord;
-layout (location = 1) out vec3 fragPos;
-layout (location = 2) out vec3 normal;
-layout (location = 3) out mat3 TBN;
-
-layout (std140, binding = 0) uniform matrices{
+layout (std140, binding = 0) uniform global{
     mat4 view;
     mat4 projection;
 };
 
-layout (std140, binding = 1) uniform lighting{
-    mat3 normalMatrix;
-    mat4 model;
-    int numSpotLights;
-}; 
-
-layout (std140, binding = 2) uniform lightMatrix{
-    mat4 lightSpaceMatrix[16];
-};
-
-// uniform int maxSpotLights;
-out vec4 fragPosLightSpace[16];
-out vec3 gPosition;
-out vec3 gNormal;
+out VertToFrag{
+    vec2 texCoord;
+    vec3 fragPos;
+    vec3 normal;
+    mat3 TBN;
+    vec3 gPosition;
+    vec3 gNormal;
+    vec4 fragPosLightSpace[16];
+    flat int numSpotLights;
+    flat int numPointLights;
+} toFrag;
 
 void main(){
-    gPosition = (view * model * vec4(aPos, 1.0)).xyz;
-    gNormal = transpose(inverse(mat3(view * model))) * aNormal;
-    fragPos = vec3(model * vec4(aPos, 1.0));
-    texCoord = aTexCoord;
-    gl_Position = projection * view * vec4(fragPos, 1.0);
-    normal = normalMatrix * aNormal; 
-    
+    toFrag.gPosition = (view * model * vec4(aPos, 1.0)).xyz;
+    toFrag.gNormal = transpose(inverse(mat3(view * model))) * aNormal;
+    toFrag.fragPos = vec3(model * vec4(aPos, 1.0));
+    toFrag.texCoord = aTexCoord;
+    gl_Position = projection * view * vec4(toFrag.fragPos, 1.0);
+    toFrag.normal = normalMatrix * aNormal; 
+    toFrag.numSpotLights = numSpotLights; 
+    toFrag.numPointLights = numPointLights;
+
     for(int i = 0; i < numSpotLights; i++){
-        fragPosLightSpace[i] = lightSpaceMatrix[i] * model * vec4(aPos, 1.0);
+        toFrag.fragPosLightSpace[i] = lightSpaceMatrix[i] * model * vec4(aPos, 1.0);
     }
 
     vec3 T = normalize(normalMatrix * aTangent);
@@ -56,5 +51,5 @@ void main(){
         T = T * -1.0f;
     }
 
-    TBN = mat3(T, B, N);
+    toFrag.TBN = mat3(T, B, N);
 }

@@ -169,15 +169,16 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
     destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
 
-    if (destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID)) {
-        glUseProgram(scene->lightingShader);
-        glUniform1i(uniform_location::kNumPointLights, scene->pointLights.size());
-    }
-
     if (destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID)) {
         glUseProgram(scene->lightingShader);
-        glUniform1i(uniform_location::kNumSpotLights, scene->spotLights.size());
+        glUniform1i(6, scene->spotLights.size());
     }
+
+    if (destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID)) {
+        glUseProgram(scene->lightingShader);
+        glUniform1i(7, scene->pointLights.size());
+    }
+
     destroyComponent(scene->entities, scene->entityIndexMap, entityID);
 }
 
