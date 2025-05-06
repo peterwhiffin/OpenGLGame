@@ -2914,6 +2914,30 @@ name: ceiling.175
 isActive: true
 }
 
+Entity {
+id: 3
+name: PointLight
+isActive: false
+}
+
+Entity {
+id: 9
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 10
+name: TrashcanLid
+isActive: false
+}
+
+Entity {
+id: 4
+name: PointLight
+isActive: false
+}
+
 Transform {
 entityID: 498
 parentEntityID: -1
@@ -2964,7 +2988,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.999976, -0.006982, 0.000000, 0.000000
+localRotation: 0.929134, 0.369744, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2972,8 +2996,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: -2.298044, 2.000000, -10.975100
-localRotation: 0.114895, -0.000802, 0.993353, 0.006935
+localPosition: -3.145916, 2.000000, -7.501670
+localRotation: 0.597824, 0.237901, 0.711264, -0.283044
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2981,8 +3005,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: -2.298044, 1.300000, -10.975100
-localRotation: -0.114898, 0.000000, -0.993377, 0.000000
+localPosition: -3.145916, 1.300000, -7.501670
+localRotation: 0.643421, -0.000000, 0.765513, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3017,8 +3041,8 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.274540, -0.500000
-localRotation: -0.000000, -0.000000, 1.000000, -0.000000
+localPosition: 0.300000, -0.309976, -0.500000
+localRotation: 0.000000, 0.000000, 1.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7288,6 +7312,42 @@ localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
+Transform {
+entityID: 3
+parentEntityID: -1
+childEntityIds: None
+localPosition: 0.000000, 6.400000, 12.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 9
+parentEntityID: -1
+childEntityIds: 10
+localPosition: -4.694059, 0.986843, -7.697357
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 10
+parentEntityID: 9
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 4
+parentEntityID: -1
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
 MeshRenderer {
 entityID: 12
 mesh: Wrench
@@ -10154,6 +10214,18 @@ MeshRenderer {
 entityID: 490
 mesh: ceiling.179
 materials: floorMat
+}
+
+MeshRenderer {
+entityID: 9
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 10
+mesh: TrashcanLid
+materials: Trashcan
 }
 
 BoxCollider {
@@ -13488,6 +13560,20 @@ center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
 
+BoxCollider {
+entityID: 9
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 10
+isActive: true
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
 Rigidbody {
 entityID: 493
 linearDrag: 0.000000
@@ -13495,9 +13581,30 @@ mass: 20.000000
 friction: 0.000000
 }
 
+Rigidbody {
+entityID: 9
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
+}
+
 Animator {
 entityID: 12
 animations: WrenchHandleAction
+}
+
+PointLight {
+entityID: 3
+isActive: true
+brightness: 36.299999
+color: 1.000000, 1.000000, 1.000000
+}
+
+PointLight {
+entityID: 4
+isActive: true
+brightness: 4.000000
+color: 1.000000, 1.000000, 1.000000
 }
 
 SpotLight {
@@ -13560,5 +13667,55 @@ cameraControllerEntityID: 493
 cameraControllerCameraTargetEntityID: 494
 cameraControllerCameraEntityID: 495
 cameraControllerSensitivity: 0.300000
+}
+
+Material {
+name: default
+textures: white, white, black, white, blue
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 1.000000
+metalness: 1.000000
+aoStrength: 1.000000
+normalStrength: 1.000000
+}
+
+Material {
+name: Trashcan
+textures: TrashDiffuse.png, white, white, white, white
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 0.700000
+metalness: 0.500000
+aoStrength: 1.000000
+normalStrength: 0.000000
+}
+
+Material {
+name: floorMat
+textures: concrete.png, concreteRoughness.png, white, white, concreteNormal.png
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 1.000000
+metalness: 0.000000
+aoStrength: 1.000000
+normalStrength: 1.000000
+}
+
+Material {
+name: Material.003
+textures: concretewalls.png, concretewallsRoughness.png, white, white, concretewallsNormal.png
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 1.000000
+metalness: 0.000000
+aoStrength: 1.000000
+normalStrength: 1.000000
+}
+
+Material {
+name: Wrench
+textures: wrench.png, white, white, white, wrenchNormal.png
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 0.550000
+metalness: 1.000000
+aoStrength: 1.000000
+normalStrength: 1.000000
 }
 

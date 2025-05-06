@@ -132,7 +132,7 @@ unsigned int loadTextureFromFile(const char* path, bool gamma, bool isNormal, GL
     return textureID;
 }
 
-Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool whiteIsDefault, bool gamma) {
+Texture loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool whiteIsDefault, bool gamma) {
     Texture newTexture;
     newTexture.path = "default";
     newTexture.name = "white";
@@ -178,6 +178,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
         newTexture.name = fullPath.substr(offset + 1, fullPath.length() - offset);
         newTexture.id = loadTextureFromFile(fullPath.data(), gamma, isNormal, filter);
         allTextures->push_back(newTexture);
+        gameScene->textureMap[newTexture.name] = newTexture;
     }
 
     return newTexture;
@@ -231,11 +232,11 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
             newMaterial = gameScene->materialMap[name];
         } else {
             newMaterial = new Material();
-            Texture albedoTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
-            Texture roughnessTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
-            Texture metallicTexture = loadTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
-            Texture aoTexture = loadTexture(material, aiTextureType_AMBIENT_OCCLUSION, directory, allTextures, whiteIsDefault, true);
-            Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
+            Texture albedoTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
+            Texture roughnessTexture = loadTexture(gameScene, material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
+            Texture metallicTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
+            Texture aoTexture = loadTexture(gameScene, material, aiTextureType_AMBIENT_OCCLUSION, directory, allTextures, whiteIsDefault, true);
+            Texture normalTexture = loadTexture(gameScene, material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
 
             material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
 

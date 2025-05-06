@@ -33,7 +33,7 @@ struct Shader {
 };
 
 struct Material {
-    unsigned int shader;
+    GLint shader;  // this will probably need to be a shader struct eventually
     std::string name;
     std::vector<Texture> textures;
     glm::vec4 baseColor;
@@ -305,6 +305,7 @@ struct Scene {
     std::unordered_map<std::string, Mesh*> meshMap;
     std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<std::string, Material*> materialMap;
+    std::unordered_map<std::string, Texture> textureMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;

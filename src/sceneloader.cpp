@@ -299,6 +299,10 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
             if (scene->materialMap.count(materialName)) {
                 materials.push_back(scene->materialMap[materialName]);
             } else {
+                Material* material = new Material();
+                *material = *scene->materialMap["default"];
+                scene->materialMap[materialName] = material;
+                materials.push_back(material);
                 std::cerr << "ERROR::MISSING_MATERIAL::No material in map with name: " << materialName << std::endl;
                 for (auto& pair : scene->materialMap) {
                     std::cout << pair.first << std::endl;
@@ -318,6 +322,87 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
             meshRenderer->mesh->subMeshes[i].material = meshRenderer->materials[i];
         }
     }
+}
+
+void createMaterial(Scene* scene, ComponentBlock block) {
+    std::string name = "default";
+    std::vector<Texture> textures;
+    glm::vec4 baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    float roughness = 0.5f;
+    float metalness = 0.0f;
+    float aoStrength = 1.0f;
+    float normalStrength = 1.0f;
+    std::string memberString = "";
+    std::string textureName = "white";
+    size_t currentPos = 0;
+    size_t commaPos = 0;
+    float floatComps[4];
+
+    if (block.memberValueMap.count("name")) {
+        name = block.memberValueMap["name"];
+    }
+
+    if (block.memberValueMap.count("textures")) {
+        memberString = block.memberValueMap["textures"];
+
+        while (commaPos != std::string::npos) {
+            commaPos = memberString.find(",", currentPos);
+            textureName = memberString.substr(currentPos, commaPos - currentPos);
+            if (scene->textureMap.count(textureName)) {
+                textures.push_back(scene->textureMap[textureName]);
+            } else {
+                textures.push_back(scene->textureMap["white"]);
+                std::cerr << "ERROR::MISSING_TEXTURE::No texture in map with name: " << textureName << std::endl;
+                for (auto& pair : scene->textureMap) {
+                    std::cout << pair.first << std::endl;
+                }
+            }
+
+            currentPos = commaPos + 2;
+        }
+    }
+
+    if (block.memberValueMap.count("baseColor")) {
+        memberString = block.memberValueMap["baseColor"];
+        parseList(memberString, floatComps);
+        baseColor.r = floatComps[0];
+        baseColor.g = floatComps[1];
+        baseColor.b = floatComps[2];
+        baseColor.a = floatComps[3];
+    }
+
+    if (block.memberValueMap.count("roughness")) {
+        roughness = std::stof(block.memberValueMap["roughness"]);
+    }
+
+    if (block.memberValueMap.count("metalness")) {
+        metalness = std::stof(block.memberValueMap["metalness"]);
+    }
+
+    if (block.memberValueMap.count("aoStrength")) {
+        aoStrength = std::stof(block.memberValueMap["aoStrength"]);
+    }
+
+    if (block.memberValueMap.count("normalStrength")) {
+        normalStrength = std::stof(block.memberValueMap["normalStrength"]);
+    }
+
+    Material* material;
+
+    if (scene->materialMap.count(name)) {
+        material = scene->materialMap[name];
+    } else {
+        material = new Material();
+    }
+
+    material->name = name;
+    material->shader = scene->lightingShader;
+    material->textures = textures;
+    material->baseColor = baseColor;
+    material->roughness = roughness;
+    material->metalness = metalness;
+    material->aoStrength = aoStrength;
+    material->normalStrength = normalStrength;
 }
 
 void createBoxCollider(Scene* scene, ComponentBlock block) {
@@ -620,6 +705,8 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createSpotLights(scene, block);
         } else if (block.type == "Player") {
             createPlayer(scene, block);
+        } else if (block.type == "Material") {
+            createMaterial(scene, block);
         }
     }
 }
@@ -685,6 +772,40 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
         stream << "localPosition: " << localPosition << std::endl;
         stream << "localRotation: " << localRotation << std::endl;
         stream << "localScale: " << localScale << std::endl;
+        stream << "}" << std::endl
+               << std::endl;
+    }
+}
+
+void writeMaterials(Scene* scene, std::ofstream& stream) {
+    for (auto& pair : scene->materialMap) {
+        Material* material = pair.second;
+        std::string name = material->name;
+        std::string textures = "";
+        std::string baseColor = std::to_string(material->baseColor.r) + ", " + std::to_string(material->baseColor.g) + ", " + std::to_string(material->baseColor.b) + ", " + std::to_string(material->baseColor.a);
+        std::string roughness = std::to_string(material->roughness);
+        std::string metalness = std::to_string(material->metalness);
+        std::string aoStrength = std::to_string(material->aoStrength);
+        std::string normalStrength = std::to_string(material->normalStrength);
+
+        if (material->textures.size() > 0) {
+            textures += material->textures[0].name;
+        } else {
+            textures += "white";
+        }
+
+        for (int i = 1; i < 5; i++) {
+            textures += ", " + material->textures[i].name;
+        }
+
+        stream << "Material {" << std::endl;
+        stream << "name: " << name << std::endl;
+        stream << "textures: " << textures << std::endl;
+        stream << "baseColor: " << baseColor << std::endl;
+        stream << "roughness: " << roughness << std::endl;
+        stream << "metalness: " << metalness << std::endl;
+        stream << "aoStrength: " << aoStrength << std::endl;
+        stream << "normalStrength: " << normalStrength << std::endl;
         stream << "}" << std::endl
                << std::endl;
     }
@@ -861,4 +982,5 @@ void saveScene(Scene* scene) {
     writeSpotLights(scene, stream);
     writeCameras(scene, stream);
     writePlayer(scene, stream);
+    writeMaterials(scene, stream);
 }

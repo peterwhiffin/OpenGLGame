@@ -215,6 +215,9 @@ int main() {
     scene->textures.push_back(black);
     scene->textures.push_back(white);
     scene->textures.push_back(blue);
+    scene->textureMap[white.name] = white;
+    scene->textureMap[black.name] = black;
+    scene->textureMap[blue.name] = blue;
 
     Material* defaultMaterial = new Material();
     defaultMaterial->textures.push_back(white);
