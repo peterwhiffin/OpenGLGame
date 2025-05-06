@@ -179,6 +179,15 @@ int main() {
     scene->windowData.viewportWidth = 800;
     scene->windowData.viewportHeight = 600;
     GLFWwindow* window = createContext(scene);
+
+    scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
+    scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
+    scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
+    scene->ssaoShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOshader.fs");
+    scene->shadowBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
+    scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
+    scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
+
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
     glGenTextures(1, &blueTexture);
@@ -197,12 +206,26 @@ int main() {
     black.id = blackTexture;
     blue.id = blueTexture;
     white.path = "white";
+    white.name = "white";
     black.path = "black";
+    black.name = "black";
     blue.path = "blue";
+    blue.name = "blue";
 
     scene->textures.push_back(black);
     scene->textures.push_back(white);
     scene->textures.push_back(blue);
+
+    Material* defaultMaterial = new Material();
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(black);
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(blue);
+    defaultMaterial->baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    defaultMaterial->shader = scene->lightingShader;
+    defaultMaterial->name = "default";
+    scene->materialMap["default"] = defaultMaterial;
 
     scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
     scene->wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
@@ -225,21 +248,14 @@ int main() {
         spotLight->shadowWidth = 1024;
         spotLight->shadowHeight = 1024;
     }
-    for (int i = 0; i < 7; i++) {
+*/
+    for (int i = 0; i < 1; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* spotLight = addPointLight(scene, pointLightEntity->entityID);
         spotLight->isActive = true;
         spotLight->color = glm::vec3(1.0f);
         spotLight->brightness = 4.0f;
-    } */
-
-    scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
-    scene->depthShader = loadShader("../src/shaders/depthprepassshader.vs", "../src/shaders/depthprepassshader.fs");
-    scene->lightingShader = loadShader("../src/shaders/pbrlitshader.vs", "../src/shaders/pbrlitshader.fs");
-    scene->ssaoShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOshader.fs");
-    scene->shadowBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
-    scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
-    scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
+    }
 
     createPickingFBO(scene);
     createSSAOBuffer(scene);

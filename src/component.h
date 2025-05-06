@@ -23,6 +23,7 @@ struct Vertex {
 
 struct Texture {
     std::string path;
+    std::string name;
     unsigned int id;
 };
 
@@ -36,13 +37,16 @@ struct Material {
     std::string name;
     std::vector<Texture> textures;
     glm::vec4 baseColor;
-    float shininess;
+    float roughness = 1.0f;
+    float metalness = 1.0f;
+    float aoStrength = 1.0f;
+    float normalStrength = 1.0f;
 };
 
 struct SubMesh {
     unsigned int indexOffset;
     unsigned int indexCount;
-    Material material;
+    Material* material;
 };
 
 struct Mesh {
@@ -122,6 +126,7 @@ struct Transform {
 struct MeshRenderer {
     uint32_t entityID;
     Mesh* mesh;
+    std::vector<Material*> materials;
 };
 
 struct BoxCollider {
@@ -288,7 +293,6 @@ struct Scene {
 
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
-    std::vector<Texture> textures;
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
     std::vector<MeshRenderer> meshRenderers;
@@ -297,8 +301,10 @@ struct Scene {
     std::vector<Animator> animators;
     std::vector<Camera*> cameras;
 
+    std::vector<Texture> textures;
     std::unordered_map<std::string, Mesh*> meshMap;
     std::unordered_map<std::string, Animation*> animationMap;
+    std::unordered_map<std::string, Material*> materialMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;

@@ -34,13 +34,13 @@ const float kernel3[3][3] = float[3][3](
     float[](1.0, 2.0, 1.0)
 );  
 
-const float kernel5[5][5] = float[5][5](
+/* const float kernel5[5][5] = float[5][5](
     float[](1, 4, 7, 4, 1),
     float[](4, 16, 26, 16, 4),
     float[](7, 26, 41, 26, 7),
     float[](4, 16, 26, 16, 4),
     float[](1, 4, 7, 4, 1)
-);
+); */
 
 in VertToFrag{
     vec2 texCoord;
@@ -94,10 +94,10 @@ float ShadowCalculation(int index, vec3 N)
 
     // shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
-    for (int x = -2; x <= 2; ++x) {
-        for (int y = -2; y <= 2; ++y) {
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
             float pcfDepth = texture(spotLightShadowMaps[index], projCoords.xy + vec2(x, y) * texelSize).r;
-            float weight = kernel5[x + 2][y + 2];
+            float weight = kernel3[x + 1][y + 1];
             shadow += (currentDepth - bias > pcfDepth ? 1.0 : 0.0) * weight;
             weightSum += weight;
         }
@@ -150,16 +150,16 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
 }  
 
 void main() {		
-    vec3 albedo = texture(albedoMap, fromVert.texCoord).rgb;
+    vec3 albedo = texture(albedoMap, fromVert.texCoord).rgb * baseColor;
     vec3 normal = texture(normalMap, fromVert.texCoord).rgb;
-    float roughness = texture(roughnessMap, fromVert.texCoord).r;
+    float roughness = texture(roughnessMap, fromVert.texCoord).r * roughnessStrength;
     float metallic = texture(metallicMap, fromVert.texCoord).r * metallicStrength;
     float ao = texture(aoMap, fromVert.texCoord).r * aoStrength;
 
     ViewPosition = fromVert.gPosition;
     ViewNormal = fromVert.gNormal;
-    metallic = 0.1;
-    ao = 1.0;
+    // metallic = 0.1;
+    // ao = 1.0;
 
     vec3 N = normal * 2.0 - 1.0;
     N.xy *= normalStrength;
@@ -174,9 +174,9 @@ void main() {
     vec3 Lo = vec3(0.0);
     
 for(int i = 0; i < fromVert.numSpotLights; ++i) {
-        /* if(spotLights[i].brightness == 0){
+         if(spotLights[i].brightness == 0){
             continue;
-        } */
+        } 
 
         vec3 L = normalize(spotLights[i].position - fromVert.fragPos);
         vec3 H = normalize(V + L);
@@ -209,11 +209,15 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
 
 
       for(int i = 0; i < fromVert.numPointLights; ++i) {
+        if(pointLights[i].brightness == 0){
+            continue;
+        }
+
         vec3 L = normalize(pointLights[i].position - fromVert.fragPos);
         vec3 H = normalize(V + L);
         float distance    = length(pointLights[i].position - fromVert.fragPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance     = pointLights[i].color * attenuation;        
+        vec3 radiance     = pointLights[i].color * attenuation * pointLights[i].brightness;        
         
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      

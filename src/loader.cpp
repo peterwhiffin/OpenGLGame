@@ -135,6 +135,7 @@ unsigned int loadTextureFromFile(const char* path, bool gamma, bool isNormal, GL
 Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory, std::vector<Texture>* allTextures, bool whiteIsDefault, bool gamma) {
     Texture newTexture;
     newTexture.path = "default";
+    newTexture.name = "white";
     int defaultTex = whiteIsDefault ? 0 : 1;
     GLint filter = GL_NEAREST;
     bool isNormal = false;
@@ -172,7 +173,9 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
         }
 
         std::string fullPath = *directory + '/' + texPath.C_Str();
+        size_t offset = fullPath.find_last_of('/');
         newTexture.path = texPath.C_Str();
+        newTexture.name = fullPath.substr(offset + 1, fullPath.length() - offset);
         newTexture.id = loadTextureFromFile(fullPath.data(), gamma, isNormal, filter);
         allTextures->push_back(newTexture);
     }
@@ -180,7 +183,7 @@ Texture loadTexture(aiMaterial* mat, aiTextureType type, std::string* directory,
     return newTexture;
 }
 
-void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
+void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const glm::mat4 transform, std::string* directory, std::vector<Texture>* allTextures, unsigned int shader, bool whiteIsDefault) {
     SubMesh subMesh;
 
     size_t baseVertex = parentMesh->vertices.size();
@@ -218,32 +221,36 @@ void processSubMesh(aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const 
     subMesh.indexCount = parentMesh->indices.size() - subMesh.indexOffset;
 
     aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    Material newMaterial;
-    newMaterial.shininess = 32.0f;
+    Material* newMaterial = nullptr;
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        Texture albedoTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
-        Texture roughnessTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
-        Texture metallicTexture = loadTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
-        Texture aoTexture = loadTexture(material, aiTextureType_AMBIENT_OCCLUSION, directory, allTextures, whiteIsDefault, true);
-        Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
+        std::string name = material->GetName().C_Str();
 
-        material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
-        material->Get(AI_MATKEY_SHININESS, newMaterial.shininess);
+        if (gameScene->materialMap.count(name)) {
+            newMaterial = gameScene->materialMap[name];
+        } else {
+            newMaterial = new Material();
+            Texture albedoTexture = loadTexture(material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
+            Texture roughnessTexture = loadTexture(material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
+            Texture metallicTexture = loadTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
+            Texture aoTexture = loadTexture(material, aiTextureType_AMBIENT_OCCLUSION, directory, allTextures, whiteIsDefault, true);
+            Texture normalTexture = loadTexture(material, aiTextureType_NORMALS, directory, allTextures, whiteIsDefault, false);
 
-        newMaterial.shader = shader;
-        newMaterial.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
-        newMaterial.textures.push_back(albedoTexture);
-        newMaterial.textures.push_back(roughnessTexture);
-        newMaterial.textures.push_back(metallicTexture);
-        newMaterial.textures.push_back(aoTexture);
-        newMaterial.textures.push_back(normalTexture);
-        newMaterial.name = material->GetName().C_Str();
+            material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
+
+            newMaterial->shader = shader;
+            newMaterial->baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
+            newMaterial->textures.push_back(albedoTexture);
+            newMaterial->textures.push_back(roughnessTexture);
+            newMaterial->textures.push_back(metallicTexture);
+            newMaterial->textures.push_back(aoTexture);
+            newMaterial->textures.push_back(normalTexture);
+            newMaterial->name = material->GetName().C_Str();
+            gameScene->materialMap[name] = newMaterial;
+        }
     } else {
-        newMaterial.baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        newMaterial.name = "default";
-        newMaterial.shader = shader;
+        newMaterial = gameScene->materialMap["default"];
     }
 
     subMesh.material = newMaterial;
@@ -274,7 +281,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
 
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            processSubMesh(mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
+            processSubMesh(gameScene, mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
         }
 
         childNode->mesh->center = (childNode->mesh->min + childNode->mesh->max) * 0.5f;
@@ -283,7 +290,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
         model->meshes.push_back(childNode->mesh);
 
         for (int i = 0; i < childNode->mesh->subMeshes.size(); i++) {
-            model->materials.push_back(&childNode->mesh->subMeshes[i].material);
+            model->materials.push_back(childNode->mesh->subMeshes[i].material);
         }
 
         createMeshBuffers(childNode->mesh);

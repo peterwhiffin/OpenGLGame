@@ -75,6 +75,14 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
             ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
         }
 
+        MeshRenderer* renderer = getMeshRenderer(scene, entityID);
+        if (renderer != nullptr) {
+            ImGui::DragFloat("roughness", &renderer->mesh->subMeshes[0].material->roughness, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("metalness", &renderer->mesh->subMeshes[0].material->metalness, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("ao strength", &renderer->mesh->subMeshes[0].material->aoStrength, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("normal strength", &renderer->mesh->subMeshes[0].material->normalStrength, 0.01f, 0.0f, 1.0f);
+        }
+
         if (transform->parentEntityID != INVALID_ID) {
             entity = getEntity(scene, transform->parentEntityID);
             ImGui::Text("Parent: %s - %i", entity->name, entity->entityID);

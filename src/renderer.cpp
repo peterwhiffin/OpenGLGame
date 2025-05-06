@@ -89,8 +89,9 @@ void drawScene(Scene* scene) {
 
     for (int i = 0; i < scene->pointLights.size(); i++) {
         PointLight* pointLight = &scene->pointLights[i];
-        glUniform3fv(36, 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(36, 1, glm::value_ptr(pointLight->color * pointLight->brightness));
+        glUniform3fv(36 + 0 + (i * 4), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(36 + 1 + (i * 4), 1, glm::value_ptr(pointLight->color));
+        glUniform1f(36 + 2 + (i * 4), pointLight->brightness);
     }
 
     for (int i = 0; i < scene->spotLights.size(); i++) {
@@ -108,11 +109,6 @@ void drawScene(Scene* scene) {
 
     glUniform3fv(8, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     glUniform1f(9, scene->bloomThreshold);
-    glUniform1f(13, scene->normalStrength);
-    glUniform1f(10, 1.0f);
-    glUniform1f(11, 1.0f);
-    glUniform1f(12, 1.0f);
-
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
@@ -123,18 +119,22 @@ void drawScene(Scene* scene) {
         glBindVertexArray(renderer.mesh->VAO);
 
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
-            unsigned int shader = subMesh.material.shader;
+            // unsigned int shader = subMesh.material.shader;
+            glUniform1f(10, subMesh.material->metalness);
+            glUniform1f(11, subMesh.material->roughness);
+            glUniform1f(12, subMesh.material->aoStrength);
+            glUniform1f(13, subMesh.material->normalStrength);
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[0].id);
+            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureRoughnessUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[1].id);
+            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[1].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureMetallicUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[2].id);
+            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[2].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAOUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[3].id);
+            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[3].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material.textures[4].id);
+            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[4].id);
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
     }
@@ -465,7 +465,7 @@ void generateSSAOKernel(Scene* scene) {
     scene->ssaoKernel.clear();
     scene->ssaoNoise.clear();
 
-    for (unsigned int i = 0; i < 32; i++) {
+    for (unsigned int i = 0; i < 8; i++) {
         // Cosine-weighted hemisphere sampling
         float xi1 = randomFloats(generator);
         float xi2 = randomFloats(generator);
@@ -479,7 +479,7 @@ void generateSSAOKernel(Scene* scene) {
         sample.z = cos(theta);
 
         // Apply random scaling to bring samples closer to origin
-        float scale = static_cast<float>(i) / 32.0f;
+        float scale = static_cast<float>(i) / 8.0f;
         // Stronger bias toward center → scale^3 instead of scale^2
         scale = ourLerp(0.05f, 1.0f, scale * scale * scale);
         sample *= scale;

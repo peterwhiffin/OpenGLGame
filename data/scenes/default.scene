@@ -2914,54 +2914,6 @@ name: ceiling.175
 isActive: true
 }
 
-Entity {
-id: 3
-name: TrashcanBase
-isActive: true
-}
-
-Entity {
-id: 4
-name: TrashcanLid
-isActive: true
-}
-
-Entity {
-id: 5
-name: TrashcanBase
-isActive: true
-}
-
-Entity {
-id: 6
-name: TrashcanLid
-isActive: true
-}
-
-Entity {
-id: 7
-name: TrashcanBase
-isActive: true
-}
-
-Entity {
-id: 8
-name: TrashcanLid
-isActive: true
-}
-
-Entity {
-id: 9
-name: TrashcanBase
-isActive: true
-}
-
-Entity {
-id: 10
-name: TrashcanLid
-isActive: true
-}
-
 Transform {
 entityID: 498
 parentEntityID: -1
@@ -3012,7 +2964,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.999680, -0.025304, 0.000000, 0.000000
+localRotation: 0.999976, -0.006982, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3020,8 +2972,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: 4.422210, 2.000000, -6.725490
-localRotation: 0.572684, -0.014496, 0.819386, 0.020740
+localPosition: -2.298044, 2.000000, -10.975100
+localRotation: 0.114895, -0.000802, 0.993353, 0.006935
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3029,8 +2981,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: 4.422210, 1.300000, -6.725490
-localRotation: -0.572868, 0.000000, -0.819648, 0.000000
+localPosition: -2.298044, 1.300000, -10.975100
+localRotation: -0.114898, 0.000000, -0.993377, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3065,7 +3017,7 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.282342, -0.500000
+localPosition: 0.300000, -0.274540, -0.500000
 localRotation: -0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7336,2506 +7288,2872 @@ localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
-Transform {
-entityID: 3
-parentEntityID: -1
-childEntityIds: 4
-localPosition: -1.405608, 1.074338, -0.674648
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 4
-parentEntityID: 3
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 5
-parentEntityID: -1
-childEntityIds: 6
-localPosition: -1.405608, 1.074338, -1.510226
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 6
-parentEntityID: 5
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 7
-parentEntityID: -1
-childEntityIds: 8
-localPosition: -1.405608, 1.074338, 0.134817
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 8
-parentEntityID: 7
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 9
-parentEntityID: -1
-childEntityIds: 10
-localPosition: -1.405608, 1.074338, -2.321918
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 10
-parentEntityID: 9
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
 MeshRenderer {
 entityID: 12
 mesh: Wrench
+materials: Wrench
 }
 
 MeshRenderer {
 entityID: 13
 mesh: WrenchMouth
+materials: Wrench
 }
 
 MeshRenderer {
 entityID: 14
 mesh: WrenchWheel
+materials: Wrench
 }
 
 MeshRenderer {
 entityID: 16
 mesh: Floor1
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 17
 mesh: Floor1.001
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 18
 mesh: Floor1.002
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 19
 mesh: Floor1.003
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 20
 mesh: Floor1.004
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 21
 mesh: Floor1.005
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 22
 mesh: Floor1.006
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 23
 mesh: Floor1.007
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 24
 mesh: Floor1.008
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 25
 mesh: Floor1.009
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 26
 mesh: Floor1.010
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 27
 mesh: Floor1.011
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 28
 mesh: Floor1.012
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 29
 mesh: Floor1.013
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 30
 mesh: Floor1.014
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 31
 mesh: Floor1.015
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 32
 mesh: Floor1.016
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 33
 mesh: Floor1.017
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 34
 mesh: Floor1.018
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 35
 mesh: Floor1.019
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 36
 mesh: Floor1.020
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 37
 mesh: Floor1.021
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 38
 mesh: Floor1.022
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 39
 mesh: Floor1.023
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 40
 mesh: Floor1.024
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 41
 mesh: Floor1.025
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 42
 mesh: Floor1.026
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 43
 mesh: Floor1.027
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 44
 mesh: Floor1.028
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 45
 mesh: Floor1.029
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 46
 mesh: Floor1.030
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 47
 mesh: Floor1.031
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 48
 mesh: Floor1.032
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 49
 mesh: Floor1.033
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 50
 mesh: Floor1.034
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 51
 mesh: Floor1.035
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 52
 mesh: Floor1.036
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 53
 mesh: Floor1.037
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 54
 mesh: Floor1.038
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 55
 mesh: Floor1.039
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 56
 mesh: Floor1.040
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 57
 mesh: Floor1.041
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 58
 mesh: Floor1.042
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 59
 mesh: Floor1.043
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 60
 mesh: Floor1.044
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 61
 mesh: Floor1.045
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 62
 mesh: Floor1.046
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 63
 mesh: Floor1.047
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 64
 mesh: Floor1.048
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 65
 mesh: Floor1.049
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 66
 mesh: Floor1.050
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 67
 mesh: Floor1.051
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 68
 mesh: Floor1.052
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 69
 mesh: Floor1.053
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 70
 mesh: Floor1.054
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 71
 mesh: Floor1.055
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 72
 mesh: Floor1.056
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 73
 mesh: Floor1.057
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 74
 mesh: Floor1.058
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 75
 mesh: Floor1.059
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 76
 mesh: Floor1.060
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 77
 mesh: Floor1.061
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 78
 mesh: Floor1.062
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 79
 mesh: Floor1.063
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 80
 mesh: Floor1.064
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 81
 mesh: Floor1.065
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 82
 mesh: Floor1.066
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 83
 mesh: Floor1.067
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 84
 mesh: Floor1.068
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 85
 mesh: Floor1.069
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 86
 mesh: Floor1.070
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 87
 mesh: Floor1.071
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 88
 mesh: Floor1.072
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 89
 mesh: Floor1.073
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 90
 mesh: Floor1.074
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 91
 mesh: Floor1.075
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 92
 mesh: Floor1.076
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 93
 mesh: Floor1.077
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 94
 mesh: Floor1.078
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 95
 mesh: Floor1.079
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 96
 mesh: Floor1.080
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 97
 mesh: Floor1.081
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 98
 mesh: Floor1.082
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 99
 mesh: Floor1.083
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 100
 mesh: Floor1.084
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 101
 mesh: Floor1.085
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 102
 mesh: Floor1.086
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 103
 mesh: Floor1.087
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 104
 mesh: Floor1.088
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 105
 mesh: Floor1.089
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 106
 mesh: Floor1.090
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 107
 mesh: Floor1.091
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 108
 mesh: Floor1.092
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 109
 mesh: Floor1.093
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 110
 mesh: Floor1.094
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 111
 mesh: Floor1.095
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 112
 mesh: Floor1.096
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 113
 mesh: Floor1.097
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 114
 mesh: Floor1.098
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 115
 mesh: Floor1.099
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 116
 mesh: Floor1.100
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 117
 mesh: Floor1.101
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 118
 mesh: Floor1.102
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 119
 mesh: Floor1.103
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 120
 mesh: Floor1.104
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 121
 mesh: Floor1.105
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 122
 mesh: Floor1.106
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 123
 mesh: Floor1.107
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 124
 mesh: Floor1.108
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 125
 mesh: Floor1.109
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 126
 mesh: Floor1.110
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 127
 mesh: Floor1.111
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 128
 mesh: Floor1.112
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 129
 mesh: Floor1.113
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 130
 mesh: Floor1.114
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 131
 mesh: Floor1.115
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 132
 mesh: Floor1.116
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 133
 mesh: Floor1.117
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 134
 mesh: Floor1.118
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 135
 mesh: Floor1.119
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 136
 mesh: Floor1.120
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 137
 mesh: Floor1.121
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 138
 mesh: Floor1.122
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 139
 mesh: Floor1.123
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 140
 mesh: Floor1.124
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 141
 mesh: Floor1.125
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 142
 mesh: Floor1.126
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 143
 mesh: Floor1.127
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 144
 mesh: Floor1.128
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 145
 mesh: Floor1.129
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 146
 mesh: Floor1.130
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 147
 mesh: Floor1.131
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 148
 mesh: Floor1.132
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 149
 mesh: Floor1.133
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 150
 mesh: Floor1.134
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 151
 mesh: Floor1.135
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 152
 mesh: Floor1.136
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 153
 mesh: Floor1.137
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 154
 mesh: Floor1.138
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 155
 mesh: Floor1.139
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 156
 mesh: Floor1.140
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 157
 mesh: Floor1.141
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 158
 mesh: Floor1.142
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 159
 mesh: Floor1.143
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 160
 mesh: Floor1.144
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 161
 mesh: Floor1.145
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 162
 mesh: Floor1.146
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 163
 mesh: Floor1.147
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 164
 mesh: Floor1.148
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 165
 mesh: Floor1.149
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 166
 mesh: Floor1.150
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 167
 mesh: Floor1.151
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 168
 mesh: Floor1.152
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 169
 mesh: Floor1.153
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 170
 mesh: Floor1.154
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 171
 mesh: Floor1.155
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 172
 mesh: Floor1.156
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 173
 mesh: Floor1.157
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 174
 mesh: Floor1.158
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 175
 mesh: Floor1.159
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 176
 mesh: Floor1.160
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 177
 mesh: Floor1.161
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 178
 mesh: Floor1.162
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 179
 mesh: Floor1.163
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 180
 mesh: Floor1.164
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 181
 mesh: Floor1.165
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 182
 mesh: Floor1.166
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 183
 mesh: Floor1.167
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 184
 mesh: Floor1.168
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 185
 mesh: Floor1.169
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 186
 mesh: Floor1.170
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 187
 mesh: Floor1.171
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 188
 mesh: Floor1.172
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 189
 mesh: Floor1.173
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 190
 mesh: Floor1.174
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 191
 mesh: Floor1.175
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 192
 mesh: Floor1.176
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 193
 mesh: Floor1.177
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 194
 mesh: Floor1.178
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 195
 mesh: Floor1.179
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 196
 mesh: Floor1.180
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 197
 mesh: Floor1.181
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 198
 mesh: Floor1.182
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 199
 mesh: InteriorWall1
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 200
 mesh: InteriorWall1.001
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 201
 mesh: InteriorWall1.002
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 202
 mesh: InteriorWall1.003
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 203
 mesh: InteriorWall1.004
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 204
 mesh: InteriorWall1.005
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 205
 mesh: InteriorWall1.006
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 206
 mesh: InteriorWall1.007
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 207
 mesh: InteriorWall1.008
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 208
 mesh: InteriorWall1.009
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 209
 mesh: InteriorWall1.010
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 210
 mesh: InteriorWall1.011
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 211
 mesh: InteriorWall1.012
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 212
 mesh: InteriorWall1.013
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 213
 mesh: InteriorWall1.014
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 214
 mesh: InteriorWall1.015
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 215
 mesh: InteriorWall1.016
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 216
 mesh: InteriorWall1.017
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 217
 mesh: InteriorWall1.018
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 218
 mesh: InteriorWall1.019
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 219
 mesh: InteriorWall1.020
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 220
 mesh: InteriorWall1.021
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 221
 mesh: InteriorWall1.022
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 222
 mesh: InteriorWall1.023
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 223
 mesh: InteriorWall1.024
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 224
 mesh: InteriorWall1.025
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 225
 mesh: InteriorWall1.026
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 226
 mesh: InteriorWall1.027
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 227
 mesh: InteriorWall1.028
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 228
 mesh: InteriorWall1.029
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 229
 mesh: InteriorWall1.030
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 230
 mesh: InteriorWall1.031
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 231
 mesh: InteriorWall1.032
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 232
 mesh: InteriorWall1.033
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 233
 mesh: InteriorWall1.034
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 234
 mesh: InteriorWall1.035
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 235
 mesh: InteriorWall1.036
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 236
 mesh: InteriorWall1.037
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 237
 mesh: InteriorWall1.038
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 238
 mesh: InteriorWall1.039
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 239
 mesh: InteriorWall1.040
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 240
 mesh: InteriorWall1.041
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 241
 mesh: InteriorWall1.042
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 242
 mesh: InteriorWall1.043
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 243
 mesh: InteriorWall1.044
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 244
 mesh: InteriorWall1.045
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 245
 mesh: InteriorWall1.046
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 246
 mesh: InteriorWall1.047
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 247
 mesh: InteriorWall1.048
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 248
 mesh: InteriorWall1.049
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 249
 mesh: InteriorWall1.050
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 250
 mesh: InteriorWall1.051
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 251
 mesh: InteriorWall1.052
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 252
 mesh: InteriorWall1.053
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 253
 mesh: InteriorWall1.054
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 254
 mesh: InteriorWall1.055
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 255
 mesh: InteriorWall1.056
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 256
 mesh: InteriorWall1.057
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 257
 mesh: InteriorWall1.058
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 258
 mesh: InteriorWall1.059
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 259
 mesh: InteriorWall1.060
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 260
 mesh: InteriorWall1.061
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 261
 mesh: InteriorWall1.062
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 262
 mesh: InteriorWall1.063
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 263
 mesh: InteriorWall1.064
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 264
 mesh: InteriorWall1.065
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 265
 mesh: InteriorWall1.066
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 266
 mesh: InteriorWall1.067
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 267
 mesh: InteriorWall1.068
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 268
 mesh: InteriorWall1.069
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 269
 mesh: InteriorWall1.070
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 270
 mesh: InteriorWall1.071
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 271
 mesh: InteriorWall1.072
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 272
 mesh: InteriorWall1.073
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 273
 mesh: InteriorWall1.074
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 274
 mesh: InteriorWall1.075
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 275
 mesh: InteriorWall1.076
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 276
 mesh: InteriorWall1.077
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 277
 mesh: InteriorWall1.078
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 278
 mesh: InteriorWall1.079
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 279
 mesh: InteriorWall1.080
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 280
 mesh: InteriorWall1.081
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 281
 mesh: InteriorWall1.082
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 282
 mesh: InteriorWall1.083
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 283
 mesh: InteriorWall1.084
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 284
 mesh: InteriorWall1.085
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 285
 mesh: InteriorWall1.086
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 286
 mesh: InteriorWall1.087
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 287
 mesh: InteriorWall1.088
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 288
 mesh: InteriorWall1.089
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 289
 mesh: InteriorWall1.090
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 290
 mesh: InteriorWall1.091
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 291
 mesh: InteriorWall1.092
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 292
 mesh: InteriorWall1.093
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 293
 mesh: InteriorWall1.094
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 294
 mesh: InteriorWall1.095
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 295
 mesh: InteriorWall1.096
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 296
 mesh: InteriorWall1.097
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 297
 mesh: InteriorWall1.098
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 298
 mesh: InteriorWall1.099
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 299
 mesh: InteriorWall1.100
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 300
 mesh: InteriorWall1.101
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 301
 mesh: InteriorWall1.102
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 302
 mesh: InteriorWall1.103
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 303
 mesh: InteriorWall1.104
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 304
 mesh: InteriorWall1.105
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 305
 mesh: InteriorWall1.106
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 306
 mesh: InteriorWall1.107
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 307
 mesh: InteriorWall1.108
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 308
 mesh: InteriorWall1.109
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 309
 mesh: InteriorWall1.110
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 310
 mesh: InteriorWall1.111
+materials: Material.003
 }
 
 MeshRenderer {
 entityID: 311
 mesh: ceiling
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 312
 mesh: ceiling.001
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 313
 mesh: ceiling.002
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 314
 mesh: ceiling.003
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 315
 mesh: ceiling.004
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 316
 mesh: ceiling.005
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 317
 mesh: ceiling.006
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 318
 mesh: ceiling.007
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 319
 mesh: ceiling.008
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 320
 mesh: ceiling.009
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 321
 mesh: ceiling.010
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 322
 mesh: ceiling.011
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 323
 mesh: ceiling.012
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 324
 mesh: ceiling.013
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 325
 mesh: ceiling.014
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 326
 mesh: ceiling.015
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 327
 mesh: ceiling.016
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 328
 mesh: ceiling.017
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 329
 mesh: ceiling.018
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 330
 mesh: ceiling.019
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 331
 mesh: ceiling.020
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 332
 mesh: ceiling.021
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 333
 mesh: ceiling.022
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 334
 mesh: ceiling.023
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 335
 mesh: ceiling.024
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 336
 mesh: ceiling.025
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 337
 mesh: ceiling.026
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 338
 mesh: ceiling.027
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 339
 mesh: ceiling.028
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 340
 mesh: ceiling.029
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 341
 mesh: ceiling.030
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 342
 mesh: ceiling.031
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 343
 mesh: ceiling.032
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 344
 mesh: ceiling.033
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 345
 mesh: ceiling.034
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 346
 mesh: ceiling.035
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 347
 mesh: ceiling.036
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 348
 mesh: ceiling.037
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 349
 mesh: ceiling.038
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 350
 mesh: ceiling.039
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 351
 mesh: ceiling.040
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 352
 mesh: ceiling.041
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 353
 mesh: ceiling.042
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 354
 mesh: ceiling.043
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 355
 mesh: ceiling.044
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 356
 mesh: ceiling.045
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 357
 mesh: ceiling.046
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 358
 mesh: ceiling.047
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 359
 mesh: ceiling.048
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 360
 mesh: ceiling.049
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 361
 mesh: ceiling.050
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 362
 mesh: ceiling.051
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 363
 mesh: ceiling.052
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 364
 mesh: ceiling.053
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 365
 mesh: ceiling.054
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 366
 mesh: ceiling.055
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 367
 mesh: ceiling.056
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 368
 mesh: ceiling.057
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 369
 mesh: ceiling.058
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 370
 mesh: ceiling.059
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 371
 mesh: ceiling.060
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 372
 mesh: ceiling.061
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 373
 mesh: ceiling.062
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 374
 mesh: ceiling.063
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 375
 mesh: ceiling.064
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 376
 mesh: ceiling.065
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 377
 mesh: ceiling.066
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 378
 mesh: ceiling.067
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 379
 mesh: ceiling.068
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 380
 mesh: ceiling.069
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 381
 mesh: ceiling.070
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 382
 mesh: ceiling.071
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 383
 mesh: ceiling.072
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 384
 mesh: ceiling.073
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 385
 mesh: ceiling.074
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 386
 mesh: ceiling.075
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 387
 mesh: ceiling.076
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 388
 mesh: ceiling.077
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 389
 mesh: ceiling.078
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 390
 mesh: ceiling.079
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 391
 mesh: ceiling.080
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 392
 mesh: ceiling.081
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 393
 mesh: ceiling.082
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 394
 mesh: ceiling.083
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 395
 mesh: ceiling.084
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 396
 mesh: ceiling.085
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 397
 mesh: ceiling.086
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 398
 mesh: ceiling.087
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 399
 mesh: ceiling.088
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 400
 mesh: ceiling.089
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 401
 mesh: ceiling.090
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 402
 mesh: ceiling.091
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 403
 mesh: ceiling.092
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 404
 mesh: ceiling.093
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 405
 mesh: ceiling.094
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 406
 mesh: ceiling.095
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 407
 mesh: ceiling.096
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 408
 mesh: ceiling.097
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 409
 mesh: ceiling.098
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 410
 mesh: ceiling.099
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 411
 mesh: ceiling.100
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 412
 mesh: ceiling.101
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 413
 mesh: ceiling.102
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 414
 mesh: ceiling.103
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 415
 mesh: ceiling.104
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 416
 mesh: ceiling.105
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 417
 mesh: ceiling.106
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 418
 mesh: ceiling.107
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 419
 mesh: ceiling.108
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 420
 mesh: ceiling.109
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 421
 mesh: ceiling.110
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 422
 mesh: ceiling.111
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 423
 mesh: ceiling.112
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 424
 mesh: ceiling.113
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 425
 mesh: ceiling.114
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 426
 mesh: ceiling.115
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 427
 mesh: ceiling.116
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 428
 mesh: ceiling.117
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 429
 mesh: ceiling.118
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 430
 mesh: ceiling.119
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 431
 mesh: ceiling.120
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 432
 mesh: ceiling.121
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 433
 mesh: ceiling.122
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 434
 mesh: ceiling.123
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 435
 mesh: ceiling.124
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 436
 mesh: ceiling.125
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 437
 mesh: ceiling.126
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 438
 mesh: ceiling.127
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 439
 mesh: ceiling.128
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 440
 mesh: ceiling.129
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 441
 mesh: ceiling.130
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 442
 mesh: ceiling.131
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 443
 mesh: ceiling.132
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 444
 mesh: ceiling.133
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 445
 mesh: ceiling.134
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 446
 mesh: ceiling.135
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 447
 mesh: ceiling.136
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 448
 mesh: ceiling.137
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 449
 mesh: ceiling.138
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 450
 mesh: ceiling.139
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 451
 mesh: ceiling.140
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 452
 mesh: ceiling.141
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 453
 mesh: ceiling.142
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 454
 mesh: ceiling.143
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 455
 mesh: ceiling.144
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 456
 mesh: ceiling.145
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 457
 mesh: ceiling.146
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 458
 mesh: ceiling.147
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 459
 mesh: ceiling.148
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 460
 mesh: ceiling.149
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 461
 mesh: ceiling.150
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 462
 mesh: ceiling.151
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 463
 mesh: ceiling.152
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 464
 mesh: ceiling.153
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 465
 mesh: ceiling.154
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 466
 mesh: ceiling.155
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 467
 mesh: ceiling.156
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 468
 mesh: ceiling.157
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 469
 mesh: ceiling.158
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 470
 mesh: ceiling.159
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 471
 mesh: ceiling.160
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 472
 mesh: ceiling.161
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 473
 mesh: ceiling.162
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 474
 mesh: ceiling.163
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 475
 mesh: ceiling.164
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 476
 mesh: ceiling.165
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 477
 mesh: ceiling.166
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 478
 mesh: ceiling.167
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 479
 mesh: ceiling.168
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 480
 mesh: ceiling.169
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 481
 mesh: ceiling.170
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 482
 mesh: ceiling.171
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 483
 mesh: ceiling.172
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 484
 mesh: ceiling.173
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 485
 mesh: ceiling.174
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 486
 mesh: ceiling.175
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 487
 mesh: ceiling.176
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 488
 mesh: ceiling.177
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 489
 mesh: ceiling.178
+materials: floorMat
 }
 
 MeshRenderer {
 entityID: 490
 mesh: ceiling.179
-}
-
-MeshRenderer {
-entityID: 3
-mesh: TrashcanBase
-}
-
-MeshRenderer {
-entityID: 4
-mesh: TrashcanLid
-}
-
-MeshRenderer {
-entityID: 5
-mesh: TrashcanBase
-}
-
-MeshRenderer {
-entityID: 6
-mesh: TrashcanLid
-}
-
-MeshRenderer {
-entityID: 7
-mesh: TrashcanBase
-}
-
-MeshRenderer {
-entityID: 8
-mesh: TrashcanLid
-}
-
-MeshRenderer {
-entityID: 9
-mesh: TrashcanBase
-}
-
-MeshRenderer {
-entityID: 10
-mesh: TrashcanLid
+materials: floorMat
 }
 
 BoxCollider {
@@ -13170,95 +13488,11 @@ center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
 
-BoxCollider {
-entityID: 3
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 4
-isActive: false
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
-BoxCollider {
-entityID: 5
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 6
-isActive: false
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
-BoxCollider {
-entityID: 7
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 8
-isActive: false
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
-BoxCollider {
-entityID: 9
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 10
-isActive: false
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
 Rigidbody {
 entityID: 493
 linearDrag: 0.000000
 mass: 20.000000
 friction: 0.000000
-}
-
-Rigidbody {
-entityID: 3
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
-}
-
-Rigidbody {
-entityID: 5
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
-}
-
-Rigidbody {
-entityID: 7
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
-}
-
-Rigidbody {
-entityID: 9
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
 }
 
 Animator {
@@ -13313,7 +13547,6 @@ shadowHeight: 1024
 Camera {
 entityID: 495
 fov: 68.000000
-aspectRatio: 1.333333
 nearPlane: 0.010000
 farPlane: 800.000000
 }

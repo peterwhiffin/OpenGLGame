@@ -26,6 +26,10 @@ Transform* getTransform(Scene* scene, uint32_t entityID) {
 }
 
 MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID) {
+    if (scene->meshRendererIndexMap.count(entityID) == 0) {
+        return nullptr;
+    }
+
     return &scene->meshRenderers[scene->meshRendererIndexMap[entityID]];
 }
 
@@ -243,7 +247,7 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio,
     camera->entityID = entityID;
     camera->fov = fov;
     camera->fovRadians = glm::radians(fov);
-    camera->aspectRatio = aspectRatio;
+    camera->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;
     return camera;

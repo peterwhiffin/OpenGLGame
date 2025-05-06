@@ -271,6 +271,11 @@ void createTransform(Scene* scene, ComponentBlock block) {
 void createMeshRenderer(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     Mesh* mesh = nullptr;
+    std::vector<Material*> materials;
+    std::string memberString;
+    std::string materialName;
+    size_t currentPos = 0;
+    size_t commaPos = 0;
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
@@ -285,8 +290,34 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
         }
     }
 
+    if (block.memberValueMap.count("materials")) {
+        memberString = block.memberValueMap["materials"];
+
+        while (commaPos != std::string::npos) {
+            commaPos = memberString.find(",", currentPos);
+            materialName = memberString.substr(currentPos, commaPos - currentPos);
+            if (scene->materialMap.count(materialName)) {
+                materials.push_back(scene->materialMap[materialName]);
+            } else {
+                std::cerr << "ERROR::MISSING_MATERIAL::No material in map with name: " << materialName << std::endl;
+                for (auto& pair : scene->materialMap) {
+                    std::cout << pair.first << std::endl;
+                }
+            }
+
+            currentPos = commaPos + 2;
+        }
+    }
+
     MeshRenderer* meshRenderer = addMeshRenderer(scene, entityID);
+    meshRenderer->materials = materials;
     meshRenderer->mesh = mesh;
+
+    for (int i = 0; i < meshRenderer->mesh->subMeshes.size(); i++) {
+        if (meshRenderer->materials.size() > i) {
+            meshRenderer->mesh->subMeshes[i].material = meshRenderer->materials[i];
+        }
+    }
 }
 
 void createBoxCollider(Scene* scene, ComponentBlock block) {
@@ -403,10 +434,6 @@ void createCamera(Scene* scene, ComponentBlock block) {
 
     if (block.memberValueMap.count("fov")) {
         fov = std::stof(block.memberValueMap["fov"]);
-    }
-
-    if (block.memberValueMap.count("aspectRatio")) {
-        aspectRatio = std::stof(block.memberValueMap["aspectRatio"]);
     }
 
     if (block.memberValueMap.count("nearPlane")) {
@@ -667,10 +694,18 @@ void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
         std::string entityID = std::to_string(renderer.entityID);
         std::string mesh = renderer.mesh->name;
+        std::string materials = "";
+
+        materials += renderer.mesh->subMeshes[0].material->name;
+
+        for (int i = 1; i < renderer.mesh->subMeshes.size(); i++) {
+            materials += ", " + renderer.mesh->subMeshes[i].material->name;
+        }
 
         stream << "MeshRenderer {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
         stream << "mesh: " << mesh << std::endl;
+        stream << "materials: " << materials << std::endl;
         stream << "}" << std::endl
                << std::endl;
     }
@@ -807,7 +842,6 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
         stream << "Camera {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
         stream << "fov: " << fov << std::endl;
-        stream << "aspectRatio: " << aspectRatio << std::endl;
         stream << "nearPlane: " << nearPlane << std::endl;
         stream << "farPlane: " << farPlane << std::endl;
         stream << "}" << std::endl
