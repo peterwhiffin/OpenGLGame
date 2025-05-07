@@ -127,6 +127,8 @@ struct MeshRenderer {
     uint32_t entityID;
     Mesh* mesh;
     std::vector<Material*> materials;
+    GLint vao;
+    std::vector<SubMesh> subMeshes;
 };
 
 struct BoxCollider {

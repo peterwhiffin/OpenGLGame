@@ -10,7 +10,30 @@
 #include "shader.h"
 #include "debug.h"
 #include "sceneloader.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
+JPH_SUPPRESS_WARNINGS
+
+// All Jolt symbols are in the JPH namespace
+using namespace JPH;
+
+// If you want your code to compile using single or double precision write 0.0_r to get a Real value that compiles to double or float depending if JPH_DOUBLE_PRECISION is set or not.
+using namespace JPH::literals;
+namespace Layers {
+static constexpr ObjectLayer NON_MOVING = 0;
+static constexpr ObjectLayer MOVING = 1;
+static constexpr ObjectLayer NUM_LAYERS = 2;
+};  // namespace Layers
 void exitProgram(Scene* scene, int code) {
     deleteBuffers(scene);
     ImGui_ImplOpenGL3_Shutdown();
@@ -45,7 +68,7 @@ GLFWwindow* createContext(Scene* scene) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwSwapInterval(0);
+    // glfwSwapInterval(1);
     GLFWwindow* window = glfwCreateWindow(scene->windowData.width, scene->windowData.height, "Pete's Game", NULL, NULL);
 
     if (window == NULL) {
@@ -252,15 +275,15 @@ int main() {
         spotLight->shadowHeight = 1024;
     }
 */
-    for (int i = 0; i < 1; i++) {
+    /* for (int i = 0; i < 1; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* spotLight = addPointLight(scene, pointLightEntity->entityID);
         spotLight->isActive = true;
         spotLight->color = glm::vec3(1.0f);
         spotLight->brightness = 4.0f;
-    }
+    } */
 
-    createPickingFBO(scene);
+    // createPickingFBO(scene);
     createSSAOBuffer(scene);
     createShadowMapDepthBuffers(scene);
     createForwardBuffer(scene);

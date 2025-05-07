@@ -80,7 +80,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
             ImGui::DragFloat("roughness", &renderer->mesh->subMeshes[0].material->roughness, 0.01f, 0.0f, 1.0f);
             ImGui::DragFloat("metalness", &renderer->mesh->subMeshes[0].material->metalness, 0.01f, 0.0f, 1.0f);
             ImGui::DragFloat("ao strength", &renderer->mesh->subMeshes[0].material->aoStrength, 0.01f, 0.0f, 1.0f);
-            ImGui::DragFloat("normal strength", &renderer->mesh->subMeshes[0].material->normalStrength, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat("normal strength", &renderer->mesh->subMeshes[0].material->normalStrength, 0.01f, 0.0f, 100.0f);
         }
 
         if (transform->parentEntityID != INVALID_ID) {
@@ -127,7 +127,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui::DragFloat("Exposure", &scene->exposure, 0.01f, 0, 1000.0f);
     ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
     ImGui::DragFloat("Bloom Amount", &scene->bloomAmount, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Ambient", &scene->ambient, 0.01f, 0, 100.0f);
+    ImGui::DragFloat("Ambient", &scene->ambient, 0.001f, 0, 100.0f);
     ImGui::DragFloat("SSAO radius", &scene->AORadius, 0.001f, 0.0f, 90.0f);
     ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
     ImGui::DragFloat("SSAO power", &scene->AOPower, 0.001f, 0.0f, 50.0f);

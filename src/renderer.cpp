@@ -10,6 +10,7 @@ void setFlags() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
 }
 
 void drawPickingScene(Scene* scene) {
@@ -33,13 +34,8 @@ void drawPickingScene(Scene* scene) {
         glUniform3fv(uniform_location::kColor, 1, glm::value_ptr(idColor));
 
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
-            // glUniformMatrix4fv(uniform_location::kViewMatrix, 1, GL_FALSE, glm::value_ptr(camera->viewMatrix));
-            // glUniformMatrix4fv(uniform_location::kProjectionMatrix, 1, GL_FALSE, glm::value_ptr(camera->projectionMatrix));
-
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
-
-        glBindVertexArray(0);
     }
 }
 
@@ -75,33 +71,35 @@ void drawShadowMaps(Scene* scene) {
         glBindVertexArray(scene->fullscreenVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
+
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
 }
 
 void drawScene(Scene* scene) {
     Camera* camera = scene->cameras[0];
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFBO);
-    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(scene->lightingShader);
 
     for (int i = 0; i < scene->pointLights.size(); i++) {
         PointLight* pointLight = &scene->pointLights[i];
-        glUniform3fv(36 + 0 + (i * 4), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(36 + 1 + (i * 4), 1, glm::value_ptr(pointLight->color));
-        glUniform1f(36 + 2 + (i * 4), pointLight->brightness);
+        uint32_t offset = i * 4;
+        glUniform3fv(36 + 0 + offset, 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
+        glUniform3fv(36 + 1 + offset, 1, glm::value_ptr(pointLight->color));
+        glUniform1f(36 + 2 + offset, pointLight->brightness);
     }
 
     for (int i = 0; i < scene->spotLights.size(); i++) {
         SpotLight* spotLight = &scene->spotLights[i];
-        glUniform3fv(120 + 0 + (i * 7), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
-        glUniform3fv(120 + 1 + (i * 7), 1, glm::value_ptr(forward(scene, spotLight->entityID)));
-        glUniform3fv(120 + 2 + (i * 7), 1, glm::value_ptr(spotLight->color));
-        glUniform1f(120 + 3 + (i * 7), spotLight->brightness);
-        glUniform1f(120 + 4 + (i * 7), glm::cos(glm::radians(spotLight->cutoff)));
-        glUniform1f(120 + 5 + (i * 7), glm::cos(glm::radians(spotLight->outerCutoff)));
+        uint32_t offset = i * 7;
+        glUniform3fv(120 + 0 + offset, 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
+        glUniform3fv(120 + 1 + offset, 1, glm::value_ptr(forward(scene, spotLight->entityID)));
+        glUniform3fv(120 + 2 + offset, 1, glm::value_ptr(spotLight->color));
+        glUniform1f(120 + 3 + offset, spotLight->brightness);
+        glUniform1f(120 + 4 + offset, glm::cos(glm::radians(spotLight->cutoff)));
+        glUniform1f(120 + 5 + offset, glm::cos(glm::radians(spotLight->outerCutoff)));
         glUniformMatrix4fv(15 + i, 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
         glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
@@ -109,21 +107,21 @@ void drawScene(Scene* scene) {
 
     glUniform3fv(8, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     glUniform1f(9, scene->bloomThreshold);
+    glUniform1f(35, scene->ambient);
+
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
-        glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(model)));
-        glm::vec3 baseColor = (renderer.entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
-        glUniform3fv(14, 1, glm::value_ptr(baseColor));
         glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMatrix));
         glBindVertexArray(renderer.mesh->VAO);
 
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
-            // unsigned int shader = subMesh.material.shader;
             glUniform1f(10, subMesh.material->metalness);
             glUniform1f(11, subMesh.material->roughness);
             glUniform1f(12, subMesh.material->aoStrength);
             glUniform1f(13, subMesh.material->normalStrength);
+            // glm::vec3 baseColor = (renderer->entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
+
+            glUniform3fv(14, 1, glm::value_ptr(subMesh.material->baseColor));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[0].id);
@@ -135,15 +133,14 @@ void drawScene(Scene* scene) {
             glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[3].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
             glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[4].id);
+
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
     }
 }
 
 void drawSSAO(Scene* scene) {
-    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->ssaoFBO);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->ssaoShader);
     glActiveTexture(GL_TEXTURE0);
@@ -155,7 +152,6 @@ void drawSSAO(Scene* scene) {
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, scene->bloomSSAOTex);
 
-    glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(scene->matricesUBOData.projection));
     glUniform1f(6, scene->AORadius);
     glUniform1f(7, scene->AOBias);
     glUniform1f(9, scene->AOPower);
@@ -169,7 +165,6 @@ void drawBlurPass(Scene* scene) {
     int amount = 10;
     glUseProgram(scene->blurShader);
     glActiveTexture(GL_TEXTURE0);
-    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[1]);
     glUniform1i(uniform_location::kBHorizontal, true);
     glBindTexture(GL_TEXTURE_2D, scene->blurTex);
@@ -183,9 +178,6 @@ void drawBlurPass(Scene* scene) {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         scene->horizontalBlur = !scene->horizontalBlur;
     }
-
-    glBindVertexArray(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void drawFullScreenQuad(Scene* scene) {
@@ -273,8 +265,8 @@ void createShadowMapDepthBuffers(Scene* scene) {
 }
 
 void createForwardBuffer(Scene* scene) {
-    unsigned int width = scene->windowData.width;
-    unsigned int height = scene->windowData.height;
+    unsigned int width = scene->windowData.viewportWidth;
+    unsigned int height = scene->windowData.viewportHeight;
     unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
 
     glGenFramebuffers(1, &scene->litFBO);
@@ -299,14 +291,14 @@ void createForwardBuffer(Scene* scene) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glBindTexture(GL_TEXTURE_2D, scene->ssaoPosTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, scene->windowData.viewportWidth, scene->windowData.viewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // normal color buffer
     glBindTexture(GL_TEXTURE_2D, scene->ssaoNormalTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, scene->windowData.viewportWidth, scene->windowData.viewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -346,8 +338,8 @@ void createSSAOBuffer(Scene* scene) {
 }
 
 void createBlurBuffers(Scene* scene) {
-    unsigned int width = scene->windowData.width;
-    unsigned int height = scene->windowData.height;
+    unsigned int width = scene->windowData.viewportWidth;
+    unsigned int height = scene->windowData.viewportHeight;
 
     glGenFramebuffers(2, scene->blurFBO);
     glGenTextures(2, scene->blurSwapTex);

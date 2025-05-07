@@ -68,6 +68,7 @@ layout (location = 11) uniform float roughnessStrength;
 layout (location = 12) uniform float aoStrength; 
 layout (location = 13) uniform float normalStrength; 
 layout (location = 14) uniform vec3 baseColor; 
+layout (location = 35) uniform float ambientBrightness; 
 
 layout (location = 36) uniform PointLight pointLights[16];
 layout (location = 120) uniform SpotLight spotLights[16];
@@ -235,7 +236,7 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }     
   
-    vec3 ambient = vec3(0.045) * albedo * ao;
+    vec3 ambient = ambientBrightness * albedo * ao;
     vec3 color = ambient + Lo;
 	
     FragColor = vec4(color * baseColor, 1.0);

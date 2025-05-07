@@ -13,11 +13,15 @@ uniform vec3 samples[8];
 
 int kernelSize = 8;
 
-layout (location = 5) uniform mat4 projection;
 layout (location = 6) uniform float radius;
 layout (location = 7) uniform float bias;
 layout (location = 8) uniform vec2 noiseScale;
 layout (location = 9) uniform float power;
+
+ layout (std140, binding = 0) uniform global{
+    mat4 view;
+    mat4 projection;
+}; 
 
 void main()
 {

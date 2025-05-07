@@ -1,6 +1,6 @@
 Entity {
-id: 498
-name: SpotLight
+id: 486
+name: ceiling.175
 isActive: true
 }
 
@@ -17,8 +17,8 @@ isActive: true
 }
 
 Entity {
-id: 2
-name: SpotLight
+id: 485
+name: ceiling.174
 isActive: true
 }
 
@@ -2903,15 +2903,9 @@ isActive: true
 }
 
 Entity {
-id: 485
-name: ceiling.174
-isActive: true
-}
-
-Entity {
-id: 486
-name: ceiling.175
-isActive: true
+id: 2
+name: PointLight
+isActive: false
 }
 
 Entity {
@@ -2920,29 +2914,11 @@ name: PointLight
 isActive: false
 }
 
-Entity {
-id: 9
-name: TrashcanBase
-isActive: true
-}
-
-Entity {
-id: 10
-name: TrashcanLid
-isActive: false
-}
-
-Entity {
-id: 4
-name: PointLight
-isActive: false
-}
-
 Transform {
-entityID: 498
-parentEntityID: -1
+entityID: 486
+parentEntityID: 15
 childEntityIds: None
-localPosition: 0.000000, 3.000000, -23.000000
+localPosition: 24.000000, 11.799999, -36.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -2966,11 +2942,11 @@ localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 2
-parentEntityID: -1
+entityID: 485
+parentEntityID: 15
 childEntityIds: None
-localPosition: 8.300000, 6.300000, -6.900000
-localRotation: 0.791224, -0.611527, -0.000000, 0.000000
+localPosition: 18.000000, 11.799999, -36.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2988,7 +2964,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.929134, 0.369744, 0.000000, 0.000000
+localRotation: 0.999997, 0.002618, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2996,8 +2972,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: -3.145916, 2.000000, -7.501670
-localRotation: 0.597824, 0.237901, 0.711264, -0.283044
+localPosition: 0.249987, 2.000000, -23.340485
+localRotation: -0.086307, -0.000226, 0.996265, -0.002609
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3005,8 +2981,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: -3.145916, 1.300000, -7.501670
-localRotation: 0.643421, -0.000000, 0.765513, -0.000000
+localPosition: 0.249987, 1.300000, -23.340485
+localRotation: -0.086307, 0.000000, 0.996269, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3041,8 +3017,8 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.309976, -0.500000
-localRotation: 0.000000, 0.000000, 1.000000, 0.000000
+localPosition: 0.300000, -0.302429, -0.500000
+localRotation: 0.000000, -0.000000, 1.000000, -0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7295,19 +7271,10 @@ localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
-entityID: 485
-parentEntityID: 15
+entityID: 2
+parentEntityID: -1
 childEntityIds: None
-localPosition: 18.000000, 11.799999, -36.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 486
-parentEntityID: 15
-childEntityIds: None
-localPosition: 24.000000, 11.799999, -36.000000
+localPosition: 12.100000, 3.600000, -0.600000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7316,34 +7283,7 @@ Transform {
 entityID: 3
 parentEntityID: -1
 childEntityIds: None
-localPosition: 0.000000, 6.400000, 12.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 9
-parentEntityID: -1
-childEntityIds: 10
-localPosition: -4.694059, 0.986843, -7.697357
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 10
-parentEntityID: 9
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
-localRotation: 1.000000, 0.000000, 0.000000, 0.000000
-localScale: 1.000000, 1.000000, 1.000000
-}
-
-Transform {
-entityID: 4
-parentEntityID: -1
-childEntityIds: None
-localPosition: 0.000000, 0.000000, 0.000000
+localPosition: -36.000000, 3.000000, -10.000000
 localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -10214,18 +10154,6 @@ MeshRenderer {
 entityID: 490
 mesh: ceiling.179
 materials: floorMat
-}
-
-MeshRenderer {
-entityID: 9
-mesh: TrashcanBase
-materials: Trashcan
-}
-
-MeshRenderer {
-entityID: 10
-mesh: TrashcanLid
-materials: Trashcan
 }
 
 BoxCollider {
@@ -13560,32 +13488,11 @@ center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
 
-BoxCollider {
-entityID: 9
-isActive: true
-center: 0.016931, -0.074338, -0.014091
-extent: 0.404732, 0.600000, 0.404732
-}
-
-BoxCollider {
-entityID: 10
-isActive: true
-center: 0.020078, 0.545879, -0.007856
-extent: 0.435087, 0.107712, 0.435087
-}
-
 Rigidbody {
 entityID: 493
 linearDrag: 0.000000
 mass: 20.000000
 friction: 0.000000
-}
-
-Rigidbody {
-entityID: 9
-linearDrag: 3.000000
-mass: 10.000000
-friction: 10.000000
 }
 
 Animator {
@@ -13594,16 +13501,16 @@ animations: WrenchHandleAction
 }
 
 PointLight {
-entityID: 3
+entityID: 2
 isActive: true
-brightness: 36.299999
+brightness: 46.900002
 color: 1.000000, 1.000000, 1.000000
 }
 
 PointLight {
-entityID: 4
+entityID: 3
 isActive: true
-brightness: 4.000000
+brightness: 40.200001
 color: 1.000000, 1.000000, 1.000000
 }
 
@@ -13619,33 +13526,11 @@ shadowHeight: 1024
 }
 
 SpotLight {
-entityID: 498
-isActive: true
-brightness: 30.799999
-cutoff: 1.100000
-outerCutoff: 20.299999
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 1024
-shadowHeight: 1024
-}
-
-SpotLight {
 entityID: 1
 isActive: true
-brightness: 13.100000
+brightness: 0.000000
 cutoff: 1.100000
 outerCutoff: 38.209999
-color: 1.000000, 1.000000, 1.000000
-shadowWidth: 1024
-shadowHeight: 1024
-}
-
-SpotLight {
-entityID: 2
-isActive: true
-brightness: 22.920000
-cutoff: 0.900000
-outerCutoff: 7.360000
 color: 1.000000, 1.000000, 1.000000
 shadowWidth: 1024
 shadowHeight: 1024
@@ -13713,9 +13598,9 @@ Material {
 name: Wrench
 textures: wrench.png, white, white, white, wrenchNormal.png
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 0.550000
-metalness: 1.000000
+roughness: 0.400000
+metalness: 0.000000
 aoStrength: 1.000000
-normalStrength: 1.000000
+normalStrength: 0.800000
 }
 
