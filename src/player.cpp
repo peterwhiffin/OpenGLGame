@@ -41,7 +41,7 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
 
         return;
     } else {
-        scene->nodeClicked = INVALID_ID;
+        // scene->nodeClicked = INVALID_ID;
     }
 
     if (input->spawn) {

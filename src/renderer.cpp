@@ -182,8 +182,8 @@ void drawBlurPass(Scene* scene) {
 
 void drawFullScreenQuad(Scene* scene) {
     glViewport(0, 0, scene->windowData.width, scene->windowData.height);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->postProcessShader);
     glUniform1f(uniform_location::kPExposure, scene->exposure);
     glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
@@ -195,6 +195,8 @@ void drawFullScreenQuad(Scene* scene) {
     glBindTexture(GL_TEXTURE_2D, scene->blurSwapTex[scene->horizontalBlur]);
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void createPickingFBO(Scene* scene) {
@@ -320,6 +322,31 @@ void createForwardBuffer(Scene* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void createEditorBuffer(Scene* scene) {
+    GLint width = scene->windowData.viewportWidth;
+    GLint height = scene->windowData.viewportHeight;
+
+    glGenFramebuffers(1, &scene->editorFBO);
+    glGenTextures(1, &scene->editorTex);
+    glGenRenderbuffers(1, &scene->editorRBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
+    glBindTexture(GL_TEXTURE_2D, scene->editorTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->editorTex, 0);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, scene->editorRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, scene->editorRBO);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER::Editor framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void createSSAOBuffer(Scene* scene) {
     glGenFramebuffers(1, &scene->ssaoFBO);
     glGenTextures(1, &scene->blurTex);
@@ -423,6 +450,21 @@ void resizeBuffers(Scene* scene) {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "ERROR::FRAMEBUFFER:: SSAO Color framebuffer is not complete!" << std::endl;
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
+    glBindTexture(GL_TEXTURE_2D, scene->editorTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, scene->editorTex, 0);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, scene->editorRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, scene->editorRBO);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER::Editor framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void createFullScreenQuad(Scene* scene) {

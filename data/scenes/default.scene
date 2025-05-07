@@ -2914,6 +2914,18 @@ name: PointLight
 isActive: false
 }
 
+Entity {
+id: 4
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 5
+name: TrashcanLid
+isActive: true
+}
+
 Transform {
 entityID: 486
 parentEntityID: 15
@@ -2964,7 +2976,7 @@ entityID: 494
 parentEntityID: 493
 childEntityIds: 12
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.999997, 0.002618, 0.000000, 0.000000
+localRotation: 0.997564, -0.069756, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2972,8 +2984,8 @@ Transform {
 entityID: 495
 parentEntityID: -1
 childEntityIds: 11
-localPosition: 0.249987, 2.000000, -23.340485
-localRotation: -0.086307, -0.000226, 0.996265, -0.002609
+localPosition: 11.594501, 2.000000, -2.608255
+localRotation: 0.156034, -0.010911, 0.985285, 0.068898
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -2981,8 +2993,8 @@ Transform {
 entityID: 493
 parentEntityID: -1
 childEntityIds: 494
-localPosition: 0.249987, 1.300000, -23.340485
-localRotation: -0.086307, 0.000000, 0.996269, 0.000000
+localPosition: 11.594501, 1.300000, -2.608255
+localRotation: -0.156415, 0.000000, -0.987691, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -3017,8 +3029,8 @@ Transform {
 entityID: 12
 parentEntityID: 494
 childEntityIds: 13, 14
-localPosition: 0.300000, -0.302429, -0.500000
-localRotation: 0.000000, -0.000000, 1.000000, -0.000000
+localPosition: 0.300000, -0.319265, -0.500000
+localRotation: 0.000000, 0.000000, 1.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7288,6 +7300,24 @@ localRotation: 1.000000, 0.000000, 0.000000, 0.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
+Transform {
+entityID: 4
+parentEntityID: -1
+childEntityIds: 5
+localPosition: 13.115239, 0.986843, 0.345753
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 5
+parentEntityID: 4
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 1.000000, 0.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
 MeshRenderer {
 entityID: 12
 mesh: Wrench
@@ -10154,6 +10184,18 @@ MeshRenderer {
 entityID: 490
 mesh: ceiling.179
 materials: floorMat
+}
+
+MeshRenderer {
+entityID: 4
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 5
+mesh: TrashcanLid
+materials: Trashcan
 }
 
 BoxCollider {
@@ -13488,11 +13530,32 @@ center: 0.000000, 0.000000, 0.000000
 extent: 0.250000, 0.900000, 0.250000
 }
 
+BoxCollider {
+entityID: 4
+isActive: true
+center: 0.016931, -0.074338, -0.014091
+extent: 0.404732, 0.600000, 0.404732
+}
+
+BoxCollider {
+entityID: 5
+isActive: true
+center: 0.020078, 0.545879, -0.007856
+extent: 0.435087, 0.107712, 0.435087
+}
+
 Rigidbody {
 entityID: 493
 linearDrag: 0.000000
 mass: 20.000000
 friction: 0.000000
+}
+
+Rigidbody {
+entityID: 4
+linearDrag: 3.000000
+mass: 10.000000
+friction: 10.000000
 }
 
 Animator {
@@ -13503,14 +13566,14 @@ animations: WrenchHandleAction
 PointLight {
 entityID: 2
 isActive: true
-brightness: 46.900002
+brightness: 74.900002
 color: 1.000000, 1.000000, 1.000000
 }
 
 PointLight {
 entityID: 3
 isActive: true
-brightness: 40.200001
+brightness: 76.800003
 color: 1.000000, 1.000000, 1.000000
 }
 
@@ -13598,9 +13661,9 @@ Material {
 name: Wrench
 textures: wrench.png, white, white, white, wrenchNormal.png
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 0.400000
+roughness: 0.200000
 metalness: 0.000000
 aoStrength: 1.000000
-normalStrength: 0.800000
+normalStrength: 3.200000
 }
 

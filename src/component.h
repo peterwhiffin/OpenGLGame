@@ -249,6 +249,7 @@ struct Scene {
     unsigned int pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
     unsigned int blurFBO[2], blurSwapTex[2];
     unsigned int fullscreenVAO, fullscreenVBO;
+    unsigned int editorFBO, editorRBO, editorTex;
     unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
     uint32_t nodeClicked = INVALID_ID;
 

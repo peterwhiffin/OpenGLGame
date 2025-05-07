@@ -165,7 +165,7 @@ void main() {
     vec3 N = normal * 2.0 - 1.0;
     N.xy *= normalStrength;
     N = normalize(N);
-    N = fromVert.TBN * N;
+    N = normalize(fromVert.TBN * N);
 
     vec3 V = normalize(camPos - fromVert.fragPos);
 

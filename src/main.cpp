@@ -45,12 +45,12 @@ void exitProgram(Scene* scene, int code) {
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
     Scene* scene = (Scene*)glfwGetWindowUserPointer(window);
-    scene->windowData.viewportWidth = width;
-    scene->windowData.viewportHeight = height;
+    /* scene->windowData.viewportWidth = width;
+    scene->windowData.viewportHeight = height; */
 
     glViewport(0, 0, width, height);
-    scene->windowData.width = width;
-    scene->windowData.height = height;
+    /* scene->windowData.width = width;
+    scene->windowData.height = height; */
 
     glUseProgram(scene->ssaoShader);
     glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
@@ -93,9 +93,15 @@ void initializeIMGUI(GLFWwindow* window) {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    float aspectRatio = 1920.0f / 1080.0f;
+    io.Fonts->AddFontFromFileTTF("../resources/fonts/Karla-Regular.ttf", aspectRatio * 8);
+    // ImGui::GetIO().FontGlobalScale = 14.0f;
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
+
+    // ImVec4* colors = ImGui::GetStyle().Colors;
 }
 
 void updateTime(Scene* scene) {
@@ -197,10 +203,10 @@ int main() {
 
     std::string scenePath;
     Scene* scene = new Scene;
-    scene->windowData.width = 800;
-    scene->windowData.height = 600;
-    scene->windowData.viewportWidth = 800;
-    scene->windowData.viewportHeight = 600;
+    scene->windowData.width = 1920;
+    scene->windowData.height = 1080;
+    scene->windowData.viewportWidth = 1920;
+    scene->windowData.viewportHeight = 1080;
     GLFWwindow* window = createContext(scene);
 
     scene->pickingShader = loadShader("../src/shaders/pickingshader.vs", "../src/shaders/pickingshader.fs");
@@ -289,6 +295,7 @@ int main() {
     createForwardBuffer(scene);
     createBlurBuffers(scene);
     createFullScreenQuad(scene);
+    createEditorBuffer(scene);
     generateSSAOKernel(scene);
 
     initializeLights(scene, scene->lightingShader);
@@ -324,9 +331,7 @@ int main() {
         drawBlurPass(scene);
         drawFullScreenQuad(scene);
 
-        if (scene->menuOpen) {
-            drawDebug(scene, nodeFlags, scene->player);
-        }
+        drawDebug(scene, nodeFlags, scene->player);
 
         glfwSwapBuffers(window);
     }

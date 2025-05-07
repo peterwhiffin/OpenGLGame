@@ -17,3 +17,4 @@ void drawShadowMaps(Scene* scene);
 void createSSAOBuffer(Scene* scene);
 void drawSSAO(Scene* scene);
 void deleteBuffers(Scene* scene);
+void createEditorBuffer(Scene* scene);
