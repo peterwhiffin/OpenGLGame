@@ -21,3 +21,5 @@ void setRotation(Scene* scene, uint32_t entityID, glm::quat rotation);
 void setScale(Scene* scene, uint32_t entityID, glm::vec3 scale);
 void removeParent(Scene* scene, uint32_t entityID);
 void setParent(Scene* scene, uint32_t child, uint32_t parent);
+
+glm::quat quatFromMatrix(glm::mat4& matrix);

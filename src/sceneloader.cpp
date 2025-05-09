@@ -77,14 +77,14 @@ void getNextToken(std::ifstream* stream, std::vector<Token>* tokens) {
             tokens->push_back(token);
             break;
         default:
-            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-') {
-                std::cerr << "ERROR::UNKNOWN_TOKEN" << std::endl;
+            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-' && c != '_') {
+                std::cerr << "ERROR::UNKNOWN_TOKEN--->  " << c << std::endl;
                 return;
             }
 
             text += c;
 
-            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-') {
+            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-' || stream->peek() == '_') {
                 c = static_cast<char>(stream->get());
                 text += c;
                 if (c == ',') {

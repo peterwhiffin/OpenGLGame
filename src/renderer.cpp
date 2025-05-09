@@ -112,6 +112,20 @@ void drawScene(Scene* scene) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
         glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
         glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(model));
+
+        if (renderer.boneMatrices.size() > 0) {
+            for (auto& pair : renderer.transformBoneMap) {
+                Transform* boneTransform = getTransform(scene, pair.first);
+                // std::cout << getEntity(scene, pair.first)->name << ": " << pair.second.id << " - " << glm::to_string(getPosition(scene, boneTransform->entityID)) << "\n";
+                uint32_t index = pair.second.id;
+                glm::mat4 offset = pair.second.offset;
+
+                renderer.boneMatrices[index] = boneTransform->worldTransform * offset;
+            }
+
+            glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, "finalBoneMatrices[0]"), renderer.boneMatrices.size(), GL_FALSE, glm::value_ptr(renderer.boneMatrices[0]));
+        }
+
         glBindVertexArray(renderer.mesh->VAO);
 
         for (SubMesh& subMesh : renderer.mesh->subMeshes) {
@@ -181,7 +195,7 @@ void drawBlurPass(Scene* scene) {
 }
 
 void drawFullScreenQuad(Scene* scene) {
-    glViewport(0, 0, scene->windowData.width, scene->windowData.height);
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->postProcessShader);

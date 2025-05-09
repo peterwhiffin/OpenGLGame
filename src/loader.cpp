@@ -10,6 +10,7 @@
 #include "assimp/types.h"
 #include "glm/ext/quaternion_float.hpp"
 #include "shader.h"
+#include "transform.h"
 
 void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
     for (int i = 0; i < scene->mNumAnimations; i++) {
@@ -17,6 +18,8 @@ void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
         Animation* newAnimation = new Animation();
         newAnimation->name = aiAnim->mName.C_Str();
         newAnimation->duration = aiAnim->mDuration / aiAnim->mTicksPerSecond;
+
+        std::cout << "ticks: " << aiAnim->mDuration << " - ticks per second: " << aiAnim->mTicksPerSecond << " - duration: " << newAnimation->duration << std::endl;
 
         for (int j = 0; j < aiAnim->mNumChannels; j++) {
             AnimationChannel* channel = new AnimationChannel();
@@ -81,6 +84,12 @@ void createMeshBuffers(Mesh* mesh) {
 
     glEnableVertexAttribArray(vertex_attribute_location::kVertexTangent);
     glVertexAttribPointer(vertex_attribute_location::kVertexTangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexBoneIDs);
+    glVertexAttribIPointer(vertex_attribute_location::kVertexBoneIDs, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneIDs));
+
+    glEnableVertexAttribArray(vertex_attribute_location::kVertexWeights);
+    glVertexAttribPointer(vertex_attribute_location::kVertexWeights, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
 
     glBindVertexArray(0);
 }
@@ -192,6 +201,11 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
+        for (int i = 0; i < 4; i++) {
+            vertex.boneIDs[i] = -1;
+            vertex.weights[i] = 0.0f;
+        }
+
         vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
         // vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
         vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
@@ -263,6 +277,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
     glm::mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
     childNode->transform = globalTransform;
+    // childNode->transform = nodeTransform;
     childNode->parent = parentNode;
     childNode->name = node->mName.C_Str();
     childNode->mesh = nullptr;
@@ -271,6 +286,18 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
         for (AnimationChannel* channel : animation->channels) {
             if (node->mName.C_Str() == channel->name) {
                 model->channelMap[childNode] = channel;
+
+                for (int i = 0; i < channel->positions.size(); i++) {
+                    channel->positions[i].position = childNode->transform * glm::vec4(channel->positions[i].position, 1.0f);
+                }
+
+                for (int i = 0; i < channel->rotations.size(); i++) {
+                    glm::quat nodeRotation = quatFromMatrix(childNode->transform);
+                    channel->rotations[i].rotation = nodeRotation * channel->rotations[i].rotation;
+                }
+
+                for (int i = 0; i < channel->scales.size(); i++) {
+                }
             }
         }
     }
@@ -279,10 +306,35 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
         childNode->mesh->min = glm::vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
         childNode->mesh->max = childNode->mesh->min;
         childNode->mesh->name = node->mName.C_Str();
-
+        childNode->mesh->globalInverseTransform = glm::inverse(model->RootNodeTransform);
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
             processSubMesh(gameScene, mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
+
+            for (int k = 0; k < mesh->mNumBones; k++) {
+                BoneInfo bone;
+                bone.id = k;
+                bone.offset = glm::transpose(glm::make_mat4(&mesh->mBones[k]->mOffsetMatrix.a1));
+                childNode->mesh->boneNameMap[mesh->mBones[k]->mName.C_Str()] = bone;
+
+                auto weights = mesh->mBones[k]->mWeights;
+                uint32_t numWeights = mesh->mBones[k]->mNumWeights;
+
+                for (int l = 0; l < numWeights; l++) {
+                    uint32_t vertexID = weights[l].mVertexId;
+                    float weight = weights[l].mWeight;
+                    Vertex& vertex = childNode->mesh->vertices[vertexID];
+
+                    for (int m = 0; m < 4; m++) {
+                        if (vertex.boneIDs[m] < 0) {
+                            vertex.weights[m] = weight;
+                            vertex.boneIDs[m] = bone.id;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         childNode->mesh->center = (childNode->mesh->min + childNode->mesh->max) * 0.5f;
@@ -323,6 +375,7 @@ Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTe
     Model* newModel = new Model();
     newModel->name = name;
     processAnimations(gameScene, scene, newModel);
+    newModel->RootNodeTransform = glm::mat4(1.0f) * glm::transpose(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
     newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
     return newModel;
 }

@@ -251,6 +251,36 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         }
     }
 
+    Animator* animator = getAnimator(scene, entityID);
+    if (animator != nullptr) {
+        if (ImGui::CollapsingHeader("Animator", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::BeginTable("Animator Table", 2, ImGuiTableFlags_SizingFixedSame)) {
+                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
+                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Current Animation:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(animator->currentAnimation->name.c_str());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Playback Time:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(std::to_string(animator->playbackTime).c_str());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Next Position:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(glm::to_string(animator->currentAnimation->channels[0]->positions[0].position).c_str());
+
+                ImGui::EndTable();
+            }
+        }
+    }
+
     PointLight* light = getPointLight(scene, entityID);
     if (light != nullptr) {
         if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -295,8 +325,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Color");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::ColorEdit3("##color", glm::value_ptr(light->color), ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
-                ImGui::EndTable();
+                ImGui::ColorEdit3("##color", glm::value_ptr(spotLight->color), ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
@@ -324,8 +353,8 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::BeginTable("Mesh Renderer Table", 3, ImGuiTableFlags_SizingFixedSame)) {
                 ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 100.0f);
-                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_None, 0.0f);
+                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_None, 20.0f);
+                ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
@@ -344,41 +373,41 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Albedo");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::ColorEdit4("##color", glm::value_ptr(material->baseColor), ImGuiColorEditFlags_HDR);
-                ImGui::TableSetColumnIndex(2);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[0].id, ImVec2(20, 20));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::ColorEdit4("##color", glm::value_ptr(material->baseColor), ImGuiColorEditFlags_HDR);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Roughness");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-                ImGui::TableSetColumnIndex(2);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[1].id, ImVec2(20, 20));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Metalness");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
-                ImGui::TableSetColumnIndex(2);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[2].id, ImVec2(20, 20));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("AO");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
-                ImGui::TableSetColumnIndex(2);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[3].id, ImVec2(20, 20));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Normal");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
-                ImGui::TableSetColumnIndex(2);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[4].id, ImVec2(20, 20));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
 
                 ImGui::EndTable();
             }

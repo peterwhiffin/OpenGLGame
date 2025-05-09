@@ -19,6 +19,8 @@ struct Vertex {
     glm::vec3 normal;
     glm::vec3 tangent;
     glm::vec2 texCoord;
+    GLint boneIDs[4];
+    float weights[4];
 };
 
 struct Texture {
@@ -49,11 +51,18 @@ struct SubMesh {
     Material* material;
 };
 
+struct BoneInfo {
+    uint32_t id;
+    glm::mat4 offset;
+};
+
 struct Mesh {
     std::string name;
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<SubMesh> subMeshes;
+    std::unordered_map<std::string, BoneInfo> boneNameMap;
+    glm::mat4 globalInverseTransform;
     glm::vec3 center;
     glm::vec3 extent;
     glm::vec3 min;
@@ -106,6 +115,7 @@ struct Model {
     std::vector<Animation*> animations;
     std::unordered_map<ModelNode*, AnimationChannel*> channelMap;
     ModelNode* rootNode;
+    glm::mat4 RootNodeTransform;
 };
 struct Entity {
     uint32_t entityID;
@@ -129,6 +139,8 @@ struct MeshRenderer {
     std::vector<Material*> materials;
     GLint vao;
     std::vector<SubMesh> subMeshes;
+    std::vector<glm::mat4> boneMatrices;
+    std::unordered_map<uint32_t, BoneInfo> transformBoneMap;
 };
 
 struct BoxCollider {
@@ -286,6 +298,7 @@ struct Scene {
     Model* trashcanModel;
     Model* testRoom;
     Model* wrench;
+    Model* arms;
     Player* player;
 
     DirectionalLight sun;
@@ -334,6 +347,7 @@ PointLight* addPointLight(Scene* scene, uint32_t entityID);
 SpotLight* addSpotLight(Scene* scene, uint32_t entityID);
 
 void destroyEntity(Scene* scene, uint32_t entityID);
+void mapBones(Scene* scene, MeshRenderer* renderer);
 
 Entity* getEntity(Scene* scene, uint32_t entityID);
 Transform* getTransform(Scene* scene, uint32_t entityID);

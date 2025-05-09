@@ -46,6 +46,10 @@ RigidBody* getRigidbody(Scene* scene, uint32_t entityID) {
 }
 
 Animator* getAnimator(Scene* scene, uint32_t entityID) {
+    if (scene->animatorIndexMap.count(entityID) == 0) {
+        return nullptr;
+    }
+
     return &scene->animators[scene->animatorIndexMap[entityID]];
 }
 
@@ -104,6 +108,33 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTra
         addTransform(scene, entity.entityID);
     }
     return &scene->entities[index];
+}
+
+void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
+    for (int i = 0; i < parent->childEntityIds.size(); i++) {
+        Entity* child = getEntity(scene, parent->childEntityIds[i]);
+        if (renderer->mesh->boneNameMap.count(child->name)) {
+            renderer->transformBoneMap[child->entityID] = renderer->mesh->boneNameMap[child->name];
+        }
+
+        findBones(scene, renderer, getTransform(scene, child->entityID));
+    }
+}
+
+void mapBones(Scene* scene, MeshRenderer* renderer) {
+    renderer->boneMatrices.reserve(100);
+
+    for (int i = 0; i < 100; i++) {
+        renderer->boneMatrices.push_back(glm::mat4(1.0f));
+    }
+
+    Transform* parent = getTransform(scene, renderer->entityID);
+
+    if (parent->parentEntityID != INVALID_ID) {
+        parent = getTransform(scene, parent->parentEntityID);
+    }
+
+    findBones(scene, renderer, parent);
 }
 
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {

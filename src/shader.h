@@ -8,6 +8,8 @@ constexpr unsigned int kVertexPosition = 0;
 constexpr unsigned int kVertexTexCoord = 1;
 constexpr unsigned int kVertexNormal = 2;
 constexpr unsigned int kVertexTangent = 3;
+constexpr unsigned int kVertexBoneIDs = 4;
+constexpr unsigned int kVertexWeights = 5;
 }  // namespace vertex_attribute_location
 
 namespace uniform_location {
