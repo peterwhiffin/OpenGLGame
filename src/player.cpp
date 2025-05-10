@@ -2,7 +2,7 @@
 #include "transform.h"
 
 void spawnTrashCan(Scene* scene, Player* player) {
-    uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+    uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true);
     RigidBody* rb = addRigidbody(scene, trashcanID);
     Transform* transform = getTransform(scene, trashcanID);
     getBoxCollider(scene, transform->childEntityIds[0])->isActive = false;

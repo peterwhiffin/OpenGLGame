@@ -121,7 +121,7 @@ void drawScene(Scene* scene) {
                 glm::mat4 offset = pair.second.offset;
 
                 // renderer.boneMatrices[index] = renderer.mesh->globalInverseTransform * boneTransform->worldTransform * offset;
-                renderer.boneMatrices[index] = renderer.mesh->globalInverseTransform * boneTransform->worldTransform * offset;
+                renderer.boneMatrices[index] = glm::inverse(getTransform(scene, renderer.rootEntity)->worldTransform) * boneTransform->worldTransform * offset;
             }
 
             glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, "finalBoneMatrices[0]"), renderer.boneMatrices.size(), GL_FALSE, glm::value_ptr(renderer.boneMatrices[0]));

@@ -288,18 +288,34 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio,
     return camera;
 }
 
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders) {
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first) {
     uint32_t childEntity = getNewEntity(scene, node->name)->entityID;
     Entity* entity = getEntity(scene, childEntity);
-    setParent(scene, childEntity, parentEntityID);
-    entity->name = node->name;
+
+    if (first) {
+        rootEntity = childEntity;
+    }
+    /*     setLocalPosition(scene, childEntity, node->localTransform[3]);
+        setLocalRotation(scene, childEntity, quatFromMatrix(node->localTransform));
+        setLocalScale(scene, childEntity, scaleFromMatrix(node->localTransform)); */
+
     Transform* transform = getTransform(scene, childEntity);
-    glm::vec3 newPos = node->transform * glm::vec4(getLocalPosition(scene, childEntity), 1.0f);
-    setLocalPosition(scene, childEntity, newPos);
+
+    transform->worldTransform = node->transform;
+    /*     setPosition(scene, childEntity, node->transform[3]);
+        setRotation(scene, childEntity, quatFromMatrix(node->transform));
+        setScale(scene, childEntity, scaleFromMatrix(node->transform)); */
+    setParent(scene, childEntity, parentEntityID);
+    // setLocalPosition(scene, childEntity, node->localTransform[3]);
+    entity->name = node->name;
+    // glm::vec3 newPos = node->transform * glm::vec4(getLocalPosition(scene, childEntity), 1.0f);
+
+    // setLocalPosition(scene, childEntity, newPos);
 
     if (node->mesh != nullptr) {
         MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);
         meshRenderer->mesh = node->mesh;
+        meshRenderer->rootEntity = rootEntity;
 
         if (addColliders) {
             BoxCollider* boxCollider = addBoxCollider(scene, childEntity);
@@ -310,7 +326,7 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(scene, node->children[i], childEntity, addColliders);
+        createEntityFromModel(scene, node->children[i], childEntity, addColliders, rootEntity, false);
     }
 
     return childEntity;

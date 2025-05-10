@@ -40,7 +40,7 @@ void main(){
     
         
     vec4 totalPosition = vec4(0.0); 
-
+    vec3 totalNormal = vec3(0.0);
  
     for(int i = 0; i < MAX_BONE_INFLUENCE; i++){
         if(boneIds[i] == -1) 
@@ -48,18 +48,20 @@ void main(){
 
          if(boneIds[i] >= MAX_BONES) 
         {
-            totalPosition = vec4(aPos,1.0f);
+            totalPosition = vec4(aPos, 1.0);
+            totalNormal = aNormal;
             break;
         }  
 
         vec4 localPosition = finalBoneMatrices[boneIds[i]] * vec4(aPos,1.0);
         totalPosition += localPosition * weights[i];
-        // vec3 localNormal = mat3(finalBonesMatrices[boneIds[i]]) * norm;   
+        vec3 localNormal = mat3(finalBoneMatrices[boneIds[i]]) * aNormal;   
+        totalNormal += localNormal * weights[i];
     }
 
-    vec4 modelPos = totalPosition;
+    // vec4 modelPos = totalPosition;
 
-    modelPos = model * totalPosition;
+    vec4 modelPos = model * totalPosition;
 
     // modelPos = model * finalBoneMatrices[boneIds[0]] * vec4(aPos, 1.0);
     // modelPos = model * vec4(aPos, 1.0);
@@ -67,7 +69,8 @@ void main(){
 
     toFrag.fragPos = modelPos.xyz;
     toFrag.texCoord = aTexCoord;
-    toFrag.normal = normalMatrix * aNormal; 
+    // toFrag.normal = normalMatrix * aNormal; 
+    toFrag.normal = normalMatrix * totalNormal; 
     toFrag.gNormal = mat3(view) * toFrag.normal;
     toFrag.numSpotLights = numSpotLights; 
     toFrag.numPointLights = numPointLights;

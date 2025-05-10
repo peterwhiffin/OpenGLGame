@@ -220,11 +220,19 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         if (ImGui::BeginTable("Transform Table", 2, ImGuiTableFlags_SizingFixedSame)) {
             Transform* transform = getTransform(scene, entityID);
             glm::vec3 position = transform->localPosition;
+            glm::vec3 worldPosition = transform->worldTransform[3];
             glm::vec3 rotation = glm::eulerAngles(transform->localRotation);
             glm::vec3 degrees = glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z));
             glm::vec3 scale = transform->localScale;
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("World Position");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::DragFloat3("##worldposition", glm::value_ptr(worldPosition), 0.1f);
+
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Position");
@@ -263,6 +271,16 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::Text("Current Animation:");
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text(animator->currentAnimation->name.c_str());
+
+                if (ImGui::Button("Next Animation", ImVec2(30, 40))) {
+                    animator->currentIndex++;
+                    if (animator->currentIndex >= animator->animations.size()) {
+                        animator->currentIndex = 0;
+                    }
+
+                    animator->currentAnimation = animator->animations[animator->currentIndex];
+                    animator->playbackTime = 0.0f;
+                }
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);

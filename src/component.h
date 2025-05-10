@@ -104,6 +104,7 @@ struct ModelNode {
     std::string name;
     ModelNode* parent;
     glm::mat4 transform;
+    glm::mat4 localTransform;
     std::vector<ModelNode*> children;
     Mesh* mesh;
 };
@@ -136,6 +137,7 @@ struct Transform {
 struct MeshRenderer {
     uint32_t entityID;
     Mesh* mesh;
+    uint32_t rootEntity;
     std::vector<Material*> materials;
     GLint vao;
     std::vector<SubMesh> subMeshes;
@@ -163,6 +165,7 @@ struct Animator {
     uint32_t entityID;
     std::vector<Animation*> animations;
     Animation* currentAnimation = nullptr;
+    uint32_t currentIndex = 0;
     float playbackTime = 0.0f;
     std::unordered_map<AnimationChannel*, uint32_t> channelMap;
     std::unordered_map<AnimationChannel*, int> nextKeyPosition;
@@ -299,6 +302,7 @@ struct Scene {
     Model* testRoom;
     Model* wrench;
     Model* arms;
+    Model* wrenchArms;
     Player* player;
 
     DirectionalLight sun;
@@ -341,7 +345,7 @@ BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders);
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
 SpotLight* addSpotLight(Scene* scene, uint32_t entityID);

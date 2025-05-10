@@ -163,11 +163,14 @@ void loadDefaultScene(Scene* scene) {
     spotLight->shadowWidth = 800;
     spotLight->shadowHeight = 600;
 
-    uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
-    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true);
-    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true);
+    // uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
+    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true);
+    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true);
 
-    addAnimator(scene, wrenchEntity, scene->wrench);
+    uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true);
+    Transform* armsTransform = getTransform(scene, armsID);
+    addAnimator(scene, armsID, scene->wrenchArms);
+    // addAnimator(scene, wrenchEntity, scene->wrench);
     setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
     getBoxCollider(scene, trashCanEntity)->isActive = false;
 
@@ -185,7 +188,7 @@ void loadDefaultScene(Scene* scene) {
     Entity* wrenchParent = getNewEntity(scene, "Wrench Parent");
 
     Player* player = createPlayer(scene);
-    setParent(scene, wrenchEntity, wrenchParent->entityID);
+    // setParent(scene, armsID, wrenchParent->entityID);
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
     setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchParent->entityID, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
@@ -267,6 +270,7 @@ int main() {
     scene->wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
     scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
     scene->arms = loadModel(scene, "../resources/models/Arms/DidIdoit.gltf", &scene->textures, scene->lightingShader, true);
+    scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
 
     if (findLastScene(&scenePath)) {
         loadScene(scene, scenePath);
@@ -274,11 +278,11 @@ int main() {
         loadDefaultScene(scene);
     }
 
-    /* uint32_t armsID = createEntityFromModel(scene, scene->arms->rootNode, INVALID_ID, false);
-    Transform* armsTransform = getTransform(scene, armsID);
-    addAnimator(scene, armsID, scene->arms);
+    // uint32_t armsID = createEntityFromModel(scene, scene->arms->rootNode, INVALID_ID, false);
+    // Transform* armsTransform = getTransform(scene, armsID);
+    // addAnimator(scene, armsID, scene->arms);
 
-    MeshRenderer* renderer;
+    /* MeshRenderer* renderer;
 
     for (int i = 0; i < armsTransform->childEntityIds.size(); i++) {
         renderer = getMeshRenderer(scene, armsTransform->childEntityIds[i]);
@@ -289,9 +293,9 @@ int main() {
 
     // mapBones(scene, renderer);
 
-    /* for (MeshRenderer& renderer : scene->meshRenderers) {
+    for (MeshRenderer& renderer : scene->meshRenderers) {
         mapBones(scene, &renderer);
-    } */
+    }
 
     /* for (int i = 0; i < 12; i++) {
     Entity* spotLightEntity = getNewEntity(scene, "SpotLight");

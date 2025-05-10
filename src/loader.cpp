@@ -277,6 +277,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
     glm::mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
     childNode->transform = globalTransform;
+    childNode->localTransform = nodeTransform;
     // childNode->transform = nodeTransform;
     childNode->parent = parentNode;
     childNode->name = node->mName.C_Str();
