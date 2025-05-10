@@ -41,8 +41,7 @@ void main(){
         
     vec4 totalPosition = vec4(0.0); 
 
-    vec4 normalWeights = normalize(weights);
-     
+ 
     for(int i = 0; i < MAX_BONE_INFLUENCE; i++){
         if(boneIds[i] == -1) 
             continue;
@@ -54,7 +53,7 @@ void main(){
         }  
 
         vec4 localPosition = finalBoneMatrices[boneIds[i]] * vec4(aPos,1.0);
-        totalPosition += localPosition * normalWeights[i];
+        totalPosition += localPosition * weights[i];
         // vec3 localNormal = mat3(finalBonesMatrices[boneIds[i]]) * norm;   
     }
 

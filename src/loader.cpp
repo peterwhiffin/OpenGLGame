@@ -287,7 +287,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
             if (node->mName.C_Str() == channel->name) {
                 model->channelMap[childNode] = channel;
 
-                for (int i = 0; i < channel->positions.size(); i++) {
+                /* for (int i = 0; i < channel->positions.size(); i++) {
                     channel->positions[i].position = childNode->transform * glm::vec4(channel->positions[i].position, 1.0f);
                 }
 
@@ -297,7 +297,9 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
                 }
 
                 for (int i = 0; i < channel->scales.size(); i++) {
-                }
+                    glm::vec3 nodeScale = scaleFromMatrix(childNode->transform);
+                    channel->scales[i].scale = channel->scales[i].scale / nodeScale;
+                } */
             }
         }
     }
@@ -307,19 +309,31 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, glm
         childNode->mesh->max = childNode->mesh->min;
         childNode->mesh->name = node->mName.C_Str();
         childNode->mesh->globalInverseTransform = glm::inverse(model->RootNodeTransform);
+        childNode->mesh->globalInverseTransform = childNode->transform;
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
             processSubMesh(gameScene, mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
 
+            if (mesh->mNumBones == 0) {
+                for (Vertex& vertex : childNode->mesh->vertices) {
+                    for (int i = 0; i < 4; i++) {
+                        vertex.boneIDs[i] = 200;
+                    }
+                }
+            }
+
             for (int k = 0; k < mesh->mNumBones; k++) {
                 BoneInfo bone;
+                auto assimpBone = mesh->mBones[k];
                 bone.id = k;
-                bone.offset = glm::transpose(glm::make_mat4(&mesh->mBones[k]->mOffsetMatrix.a1));
-                childNode->mesh->boneNameMap[mesh->mBones[k]->mName.C_Str()] = bone;
+                bone.offset = glm::transpose(glm::make_mat4(&assimpBone->mOffsetMatrix.a1));
 
-                auto weights = mesh->mBones[k]->mWeights;
-                uint32_t numWeights = mesh->mBones[k]->mNumWeights;
+                // bone.offset = childNode->transform * bone.offset;
+                childNode->mesh->boneNameMap[assimpBone->mName.C_Str()] = bone;
+
+                auto weights = assimpBone->mWeights;
+                uint32_t numWeights = assimpBone->mNumWeights;
 
                 for (int l = 0; l < numWeights; l++) {
                     uint32_t vertexID = weights[l].mVertexId;
@@ -375,7 +389,7 @@ Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTe
     Model* newModel = new Model();
     newModel->name = name;
     processAnimations(gameScene, scene, newModel);
-    newModel->RootNodeTransform = glm::mat4(1.0f) * glm::transpose(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
+    newModel->RootNodeTransform = glm::transpose(glm::make_mat4(&scene->mRootNode->mTransformation.a1));
     newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, glm::mat4(1.0f), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
     return newModel;
 }

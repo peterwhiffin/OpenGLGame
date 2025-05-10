@@ -274,7 +274,7 @@ int main() {
         loadDefaultScene(scene);
     }
 
-    uint32_t armsID = createEntityFromModel(scene, scene->arms->rootNode, INVALID_ID, false);
+    /* uint32_t armsID = createEntityFromModel(scene, scene->arms->rootNode, INVALID_ID, false);
     Transform* armsTransform = getTransform(scene, armsID);
     addAnimator(scene, armsID, scene->arms);
 
@@ -285,9 +285,13 @@ int main() {
         if (renderer != nullptr) {
             break;
         }
-    }
+    } */
 
-    mapBones(scene, renderer);
+    // mapBones(scene, renderer);
+
+    /* for (MeshRenderer& renderer : scene->meshRenderers) {
+        mapBones(scene, &renderer);
+    } */
 
     /* for (int i = 0; i < 12; i++) {
     Entity* spotLightEntity = getNewEntity(scene, "SpotLight");

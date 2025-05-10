@@ -122,6 +122,10 @@ void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
 }
 
 void mapBones(Scene* scene, MeshRenderer* renderer) {
+    if (renderer->mesh->boneNameMap.size() == 0) {
+        return;
+    }
+
     renderer->boneMatrices.reserve(100);
 
     for (int i = 0; i < 100; i++) {
