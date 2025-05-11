@@ -8,6 +8,13 @@ void updateRigidBodies(Scene* scene) {
     glm::vec3 collisionResolution = glm::vec3(0.0f);
 
     for (RigidBody& rigidbody : scene->rigidbodies) {
+        if (!rigidbody.joltBody.IsInvalid()) {
+            JPH::RVec3 jPos = scene->bodyInterface->GetCenterOfMassPosition(rigidbody.joltBody);
+            glm::vec3 newPos = glm::vec3(jPos.GetX(), jPos.GetY(), jPos.GetZ());
+            setPosition(scene, rigidbody.entityID, newPos);
+            continue;
+        }
+
         rigidbody.linearVelocity.y += scene->gravity * deltaTime;
         rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
         glm::vec3 newPosition = getPosition(scene, rigidbody.entityID) + rigidbody.linearVelocity * deltaTime;
@@ -16,11 +23,20 @@ void updateRigidBodies(Scene* scene) {
 
     for (int i = 0; i < scene->rigidbodies.size(); i++) {
         RigidBody* rigidbodyA = &scene->rigidbodies[i];
+        if (!rigidbodyA->joltBody.IsInvalid()) {
+            continue;
+        }
+
         BoxCollider* colliderA = getBoxCollider(scene, rigidbodyA->entityID);
         totalDamping = rigidbodyA->linearDrag;
 
         for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
             RigidBody* rigidbodyB = &scene->rigidbodies[j];
+
+            if (!rigidbodyA->joltBody.IsInvalid()) {
+                continue;
+            }
+
             BoxCollider* colliderB = getBoxCollider(scene, rigidbodyB->entityID);
 
             if (checkAABB(scene, colliderA, colliderB, &collisionResolution)) {
