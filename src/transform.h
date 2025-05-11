@@ -1,6 +1,10 @@
 #pragma once
 #include "component.h"
 
+constexpr glm::vec3 kVectorRight = glm::vec3(1.0f, 0.0f, 0.0f);
+constexpr glm::vec3 kVectorUp = glm::vec3(0.0f, 1.0f, 0.0f);
+constexpr glm::vec3 kVectorForward = glm::vec3(0.0f, 0.0f, -1.0f);
+
 glm::vec3 right(Scene* scene, uint32_t entityID);
 glm::vec3 up(Scene* scene, uint32_t entityID);
 glm::vec3 forward(Scene* scene, uint32_t entityID);

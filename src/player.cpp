@@ -1,5 +1,6 @@
 #include "player.h"
 #include "transform.h"
+#include "animation.h"
 
 void spawnTrashCan(Scene* scene, Player* player) {
     uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true);
@@ -81,6 +82,14 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     glm::vec3 moveDir = glm::vec3(0.0f);
     moveDir += input->movement.y * forward(scene, player->entityID) + input->movement.x * right(scene, player->entityID);
     glm::vec3 finalMove = moveDir * player->moveSpeed;
+
+    if (input->altFire) {
+        playAnimation(getAnimator(scene, player->armsID), "FlipOff");
+    } else if (input->movement.y == 0 && input->movement.x == 0) {
+        playAnimation(getAnimator(scene, player->armsID), "WrenchIdle");
+    } else {
+        playAnimation(getAnimator(scene, player->armsID), "WrenchMove");
+    }
 
     RigidBody* rb = getRigidbody(scene, player->entityID);
 

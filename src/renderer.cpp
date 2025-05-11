@@ -21,6 +21,7 @@ void drawPickingScene(Scene* scene) {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->pickingShader);
+
     for (MeshRenderer& renderer : scene->meshRenderers) {
         Transform* transform = getTransform(scene, renderer.entityID);
 
@@ -40,22 +41,46 @@ void drawPickingScene(Scene* scene) {
 }
 
 void drawShadowMaps(Scene* scene) {
+    glm::vec3 position;
+    glm::mat4 viewMatrix;
+    glm::mat4 projectionMatrix;
+    glm::mat4 viewProjection;
+    glm::mat4 model;
+    GLint boneMatrixLoc = glGetUniformLocation(scene->depthShader, "finalBoneMatrices[0]");
+
     for (SpotLight& light : scene->spotLights) {
-        glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
+        position = getPosition(scene, light.entityID);
+        viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
+        projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
+        viewProjection = projectionMatrix * viewMatrix;
+        light.lightSpaceMatrix = viewProjection;
+
         glViewport(0, 0, light.shadowWidth, light.shadowHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(scene->depthShader);
-        glm::vec3 position = getPosition(scene, light.entityID);
-        glm::mat4 viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
-        glm::mat4 projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
-        glm::mat4 viewProjection = projectionMatrix * viewMatrix;
-        light.lightSpaceMatrix = viewProjection;
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(viewProjection));
 
         for (MeshRenderer& renderer : scene->meshRenderers) {
-            glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
+            model = getTransform(scene, renderer.entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
+
+            if (renderer.boneMatrices.size() > 0) {
+                Transform* boneTransform;
+                uint32_t index;
+                glm::mat4 offset;
+
+                for (auto& pair : renderer.transformBoneMap) {
+                    boneTransform = getTransform(scene, pair.first);
+                    index = pair.second.id;
+                    offset = pair.second.offset;
+                    renderer.boneMatrices[index] = glm::inverse(getTransform(scene, renderer.rootEntity)->worldTransform) * boneTransform->worldTransform * offset;
+                }
+
+                glUniformMatrix4fv(boneMatrixLoc, renderer.boneMatrices.size(), GL_FALSE, glm::value_ptr(renderer.boneMatrices[0]));
+            }
+
             glBindVertexArray(renderer.mesh->VAO);
 
             for (SubMesh& subMesh : renderer.mesh->subMeshes) {
@@ -76,78 +101,74 @@ void drawShadowMaps(Scene* scene) {
 }
 
 void drawScene(Scene* scene) {
+    Mesh* mesh;
+    Material* material;
+    uint32_t offset;
+    glm::mat4 model;
+
     Camera* camera = scene->cameras[0];
+    std::vector<MeshRenderer>& meshRenderers = scene->meshRenderers;
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(scene->lightingShader);
-
-    for (int i = 0; i < scene->pointLights.size(); i++) {
-        PointLight* pointLight = &scene->pointLights[i];
-        uint32_t offset = i * 4;
-        glUniform3fv(36 + 0 + offset, 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(36 + 1 + offset, 1, glm::value_ptr(pointLight->color));
-        glUniform1f(36 + 2 + offset, pointLight->brightness);
-    }
-
-    for (int i = 0; i < scene->spotLights.size(); i++) {
-        SpotLight* spotLight = &scene->spotLights[i];
-        uint32_t offset = i * 7;
-        glUniform3fv(120 + 0 + offset, 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
-        glUniform3fv(120 + 1 + offset, 1, glm::value_ptr(forward(scene, spotLight->entityID)));
-        glUniform3fv(120 + 2 + offset, 1, glm::value_ptr(spotLight->color));
-        glUniform1f(120 + 3 + offset, spotLight->brightness);
-        glUniform1f(120 + 4 + offset, glm::cos(glm::radians(spotLight->cutoff)));
-        glUniform1f(120 + 5 + offset, glm::cos(glm::radians(spotLight->outerCutoff)));
-        glUniformMatrix4fv(15 + i, 1, GL_FALSE, glm::value_ptr(spotLight->lightSpaceMatrix));
-        glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
-        glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
-    }
-
     glUniform3fv(8, 1, glm::value_ptr(getLocalPosition(scene, camera->entityID)));
     glUniform1f(9, scene->bloomThreshold);
     glUniform1f(35, scene->ambient);
 
+    for (int i = 0; i < scene->pointLights.size(); i++) {
+        PointLight& pointLight = scene->pointLights[i];
+        offset = i * 4;
+        glUniform3fv(36 + 0 + offset, 1, glm::value_ptr(getPosition(scene, pointLight.entityID)));
+        glUniform3fv(36 + 1 + offset, 1, glm::value_ptr(pointLight.color));
+        glUniform1f(36 + 2 + offset, pointLight.brightness);
+    }
+
+    for (int i = 0; i < scene->spotLights.size(); i++) {
+        SpotLight& spotLight = scene->spotLights[i];
+        offset = i * 7;
+        glUniform3fv(120 + 0 + offset, 1, glm::value_ptr(getPosition(scene, spotLight.entityID)));
+        glUniform3fv(120 + 1 + offset, 1, glm::value_ptr(forward(scene, spotLight.entityID)));
+        glUniform3fv(120 + 2 + offset, 1, glm::value_ptr(spotLight.color));
+        glUniform1f(120 + 3 + offset, spotLight.brightness);
+        glUniform1f(120 + 4 + offset, glm::cos(glm::radians(spotLight.cutoff)));
+        glUniform1f(120 + 5 + offset, glm::cos(glm::radians(spotLight.outerCutoff)));
+        glUniformMatrix4fv(15 + i, 1, GL_FALSE, glm::value_ptr(spotLight.lightSpaceMatrix));
+        glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
+        glBindTexture(GL_TEXTURE_2D, spotLight.blurDepthTex);
+    }
+
     for (MeshRenderer& renderer : scene->meshRenderers) {
-        glm::mat4 model = getTransform(scene, renderer.entityID)->worldTransform;
-        glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(model));
-
         if (renderer.boneMatrices.size() > 0) {
-            for (auto& pair : renderer.transformBoneMap) {
-                Transform* boneTransform = getTransform(scene, pair.first);
-                // std::cout << getEntity(scene, pair.first)->name << ": " << pair.second.id << " - " << glm::to_string(getPosition(scene, boneTransform->entityID)) << "\n";
-                uint32_t index = pair.second.id;
-                glm::mat4 offset = pair.second.offset;
-
-                // renderer.boneMatrices[index] = renderer.mesh->globalInverseTransform * boneTransform->worldTransform * offset;
-                renderer.boneMatrices[index] = glm::inverse(getTransform(scene, renderer.rootEntity)->worldTransform) * boneTransform->worldTransform * offset;
-            }
-
             glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, "finalBoneMatrices[0]"), renderer.boneMatrices.size(), GL_FALSE, glm::value_ptr(renderer.boneMatrices[0]));
         }
 
-        glBindVertexArray(renderer.mesh->VAO);
+        mesh = renderer.mesh;
+        model = getTransform(scene, renderer.entityID)->worldTransform;
+        glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(model));
+        glBindVertexArray(mesh->VAO);
 
-        for (SubMesh& subMesh : renderer.mesh->subMeshes) {
-            glUniform1f(10, subMesh.material->metalness);
-            glUniform1f(11, subMesh.material->roughness);
-            glUniform1f(12, subMesh.material->aoStrength);
-            glUniform1f(13, subMesh.material->normalStrength);
-            // glm::vec3 baseColor = (renderer->entityID == scene->nodeClicked) ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 1.0f, 1.0f);
+        for (SubMesh& subMesh : mesh->subMeshes) {
+            material = subMesh.material;
+            std::vector<Texture>& textures = material->textures;
 
-            glUniform3fv(14, 1, glm::value_ptr(subMesh.material->baseColor));
+            glUniform1f(10, material->metalness);
+            glUniform1f(11, material->roughness);
+            glUniform1f(12, material->aoStrength);
+            glUniform1f(13, material->normalStrength);
+            glUniform3fv(14, 1, glm::value_ptr(material->baseColor));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[0].id);
+            glBindTexture(GL_TEXTURE_2D, textures[0].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureRoughnessUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[1].id);
+            glBindTexture(GL_TEXTURE_2D, textures[1].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureMetallicUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[2].id);
+            glBindTexture(GL_TEXTURE_2D, textures[2].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAOUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[3].id);
+            glBindTexture(GL_TEXTURE_2D, textures[3].id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
-            glBindTexture(GL_TEXTURE_2D, subMesh.material->textures[4].id);
+            glBindTexture(GL_TEXTURE_2D, textures[4].id);
 
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }

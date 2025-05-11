@@ -11,7 +11,7 @@ layout (location = 4) in ivec4 boneIds;
 layout (location = 5) in vec4 weights;
 
 layout (location = 4) uniform mat4 model;
-// layout (location = 5) uniform mat3 normalMatrix;
+// layout (location = 5) uniform mat4 normalMatrix;
 layout (location = 6) uniform int numSpotLights;
 layout (location = 7) uniform int numPointLights;
 layout (location = 15) uniform mat4 lightSpaceMatrix[16];

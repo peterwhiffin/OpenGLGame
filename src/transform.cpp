@@ -1,18 +1,25 @@
 #include "transform.h"
 
 void updateTransformMatrices(Scene* scene, Transform* transform) {
-    transform->worldTransform = glm::translate(glm::mat4(1.0f), transform->localPosition);
-    transform->worldTransform *= glm::mat4_cast(transform->localRotation);
-    transform->worldTransform = glm::scale(transform->worldTransform, transform->localScale);
+    glm::mat4 worldTransform;
+    uint32_t parentID;
+    Transform* childTransform;
 
-    if (transform->parentEntityID != INVALID_ID) {
-        Transform* parentTransform = getTransform(scene, transform->parentEntityID);
-        transform->worldTransform = parentTransform->worldTransform * transform->worldTransform;
+    worldTransform = glm::translate(glm::mat4(1.0f), transform->localPosition);
+    worldTransform *= glm::mat4_cast(transform->localRotation);
+    worldTransform = glm::scale(worldTransform, transform->localScale);
+
+    parentID = transform->parentEntityID;
+
+    if (parentID != INVALID_ID) {
+        worldTransform = getTransform(scene, parentID)->worldTransform * worldTransform;
     }
 
-    for (uint32_t entityID : transform->childEntityIds) {
-        Transform* child = getTransform(scene, entityID);
-        updateTransformMatrices(scene, child);
+    transform->worldTransform = worldTransform;
+
+    for (uint32_t childID : transform->childEntityIds) {
+        childTransform = getTransform(scene, childID);
+        updateTransformMatrices(scene, childTransform);
     }
 }
 
@@ -43,21 +50,15 @@ glm::vec3 QuaternionByVector3(glm::quat rotation, glm::vec3 point) {
 }
 
 glm::vec3 right(Scene* scene, uint32_t entityID) {
-    Transform* transform = getTransform(scene, entityID);
-    // return QuaternionByVector3(transform->localRotation, glm::vec3(1.0f, 0.0f, 0.0f));
-    return QuaternionByVector3(getRotation(scene, entityID), glm::vec3(1.0f, 0.0f, 0.0f));
+    return QuaternionByVector3(getRotation(scene, entityID), kVectorRight);
 }
 
 glm::vec3 up(Scene* scene, uint32_t entityID) {
-    Transform* transform = getTransform(scene, entityID);
-    // return QuaternionByVector3(transform->localRotation, glm::vec3(0.0f, 1.0f, 0.0f));
-    return QuaternionByVector3(getRotation(scene, entityID), glm::vec3(0.0f, 1.0f, 0.0f));
+    return QuaternionByVector3(getRotation(scene, entityID), kVectorUp);
 }
 
 glm::vec3 forward(Scene* scene, uint32_t entityID) {
-    Transform* transform = getTransform(scene, entityID);
-    // return QuaternionByVector3(transform->localRotation, glm::vec3(0.0f, 0.0f, -1.0f));
-    return QuaternionByVector3(getRotation(scene, entityID), glm::vec3(0.0f, 0.0f, -1.0f));
+    return QuaternionByVector3(getRotation(scene, entityID), kVectorForward);
 }
 
 glm::vec3 positionFromMatrix(glm::mat4& matrix) {
@@ -122,15 +123,12 @@ glm::vec3 getLocalScale(Scene* scene, uint32_t entityID) {
 
 void setPosition(Scene* scene, uint32_t entityID, glm::vec3 position) {
     Transform* transform = getTransform(scene, entityID);
-    /* Entity* entity = getEntity(scene, entityID);
-    if (entity->name == "Player") {
-        std::cout << "player" << std::endl;
-    } */
+    uint32_t parentEntityID = transform->parentEntityID;
 
-    if (transform->parentEntityID == INVALID_ID) {
+    if (parentEntityID == INVALID_ID) {
         transform->localPosition = position;
     } else {
-        Transform* parent = getTransform(scene, transform->parentEntityID);
+        Transform* parent = getTransform(scene, parentEntityID);
         transform->localPosition = glm::vec3(glm::inverse(parent->worldTransform) * glm::vec4(position, 1.0f));
     }
 
@@ -139,11 +137,12 @@ void setPosition(Scene* scene, uint32_t entityID, glm::vec3 position) {
 
 void setRotation(Scene* scene, uint32_t entityID, glm::quat rotation) {
     Transform* transform = getTransform(scene, entityID);
+    uint32_t parentEntityID = transform->parentEntityID;
 
-    if (transform->parentEntityID == INVALID_ID) {
+    if (parentEntityID == INVALID_ID) {
         transform->localRotation = rotation;
     } else {
-        Transform* parent = getTransform(scene, transform->parentEntityID);
+        Transform* parent = getTransform(scene, parentEntityID);
         glm::quat parentRotation = quatFromMatrix(parent->worldTransform);
         transform->localRotation = glm::inverse(parentRotation) * rotation;
     }
@@ -153,11 +152,12 @@ void setRotation(Scene* scene, uint32_t entityID, glm::quat rotation) {
 
 void setScale(Scene* scene, uint32_t entityID, glm::vec3 scale) {
     Transform* transform = getTransform(scene, entityID);
+    uint32_t parentEntityID = transform->parentEntityID;
 
-    if (transform->parentEntityID == INVALID_ID) {
+    if (parentEntityID == INVALID_ID) {
         transform->localScale = scale;
     } else {
-        transform->localScale = scale / getScale(scene, transform->parentEntityID);
+        transform->localScale = scale / getScale(scene, parentEntityID);
     }
 
     updateTransformMatrices(scene, transform);
@@ -165,42 +165,37 @@ void setScale(Scene* scene, uint32_t entityID, glm::vec3 scale) {
 
 void setLocalPosition(Scene* scene, uint32_t entityID, glm::vec3 localPosition) {
     Transform* transform = getTransform(scene, entityID);
-
     transform->localPosition = localPosition;
     updateTransformMatrices(scene, transform);
 }
 
 void setLocalRotation(Scene* scene, uint32_t entityID, glm::quat localRotation) {
     Transform* transform = getTransform(scene, entityID);
-
     transform->localRotation = localRotation;
     updateTransformMatrices(scene, transform);
 }
 
 void setLocalScale(Scene* scene, uint32_t entityID, glm::vec3 localScale) {
     Transform* transform = getTransform(scene, entityID);
-
     transform->localScale = localScale;
     updateTransformMatrices(scene, transform);
 }
 
 void removeParent(Scene* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
+    uint32_t parentEntityID = transform->parentEntityID;
 
-    if (transform->parentEntityID == INVALID_ID) {
+    if (parentEntityID == INVALID_ID) {
         return;
     }
+
+    Transform* parent = getTransform(scene, parentEntityID);
+    std::vector<uint32_t>& childEntityIds = parent->childEntityIds;
 
     transform->localPosition = getPosition(scene, entityID);
     transform->localRotation = getRotation(scene, entityID);
     transform->localScale = getScale(scene, entityID);
-
-    Transform* parent = getTransform(scene, transform->parentEntityID);
-
-    parent->childEntityIds.erase(
-        std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID),
-        parent->childEntityIds.end());
-
+    childEntityIds.erase(std::remove(childEntityIds.begin(), childEntityIds.end(), entityID), childEntityIds.end());
     transform->parentEntityID = INVALID_ID;
     updateTransformMatrices(scene, transform);
 }

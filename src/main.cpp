@@ -185,10 +185,11 @@ void loadDefaultScene(Scene* scene) {
     rb->linearDrag = 3.0f;
     rb->friction = 10.0f;
 
-    Entity* wrenchParent = getNewEntity(scene, "Wrench Parent");
+    Entity* wrenchParent = getNewEntity(scene, "WrenchParent");
 
     Player* player = createPlayer(scene);
-    // setParent(scene, armsID, wrenchParent->entityID);
+    player->armsID = armsID;
+    setParent(scene, armsID, wrenchParent->entityID);
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
     setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchParent->entityID, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));

@@ -119,7 +119,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     std::string blockKey;
 
     if (token.type != TokenType::Value) {
-        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name: " << token.text << std::endl;
+        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name. Received: " << token.text << " on: " << block.type << std::endl;
         return currentIndex;
     }
 
@@ -127,7 +127,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     token = tokens->at(currentIndex++);
 
     if (token.type != TokenType::BlockOpen) {
-        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected block open" << token.text << std::endl;
+        std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected block open. Received: " << token.text << " on: " << block.type << std::endl;
         return currentIndex;
     }
 
@@ -135,7 +135,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
 
     while (token.type != TokenType::BlockClose && token.type != TokenType::EndOfFile) {
         if (token.type != TokenType::Value) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << token.text << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name. Received: " << token.text << " on: " << block.type << std::endl;
             return currentIndex;
         }
 
@@ -143,14 +143,14 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
         token = tokens->at(currentIndex++);
 
         if (token.type != TokenType::ValueSeparator) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected value separator" << token.text << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected value separator. Received: " << token.text << " on: " << block.type << std::endl;
             return currentIndex;
         }
 
         token = tokens->at(currentIndex++);
 
         if (token.type != TokenType::Value) {
-            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name" << token.text << std::endl;
+            std::cerr << "ERROR::WRONG_TOKEN_TYPE::Expected type name. Received: " << token.text << " on: " << block.type << std::endl;
             return currentIndex;
         }
 
@@ -270,6 +270,7 @@ void createTransform(Scene* scene, ComponentBlock block) {
 
 void createMeshRenderer(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
+    uint32_t rootEntity = INVALID_ID;
     Mesh* mesh = nullptr;
     std::vector<Material*> materials;
     std::string memberString;
@@ -279,6 +280,9 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
+    if (block.memberValueMap.count("rootEntity")) {
+        rootEntity = std::stoi(block.memberValueMap["rootEntity"]);
     }
 
     if (block.memberValueMap.count("mesh")) {
@@ -314,6 +318,7 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
     }
 
     MeshRenderer* meshRenderer = addMeshRenderer(scene, entityID);
+    meshRenderer->rootEntity = rootEntity;
     meshRenderer->materials = materials;
     meshRenderer->mesh = mesh;
 
@@ -628,6 +633,7 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
 
 void createPlayer(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
+    uint32_t armsID = INVALID_ID;
     float jumpHeight = 10.0f;
     float moveSpeed = 10.0f;
     float groundCheckDistance = 0.2f;
@@ -638,6 +644,10 @@ void createPlayer(Scene* scene, ComponentBlock block) {
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
+    }
+
+    if (block.memberValueMap.count("armsID")) {
+        armsID = std::stoi(block.memberValueMap["armsID"]);
     }
 
     if (block.memberValueMap.count("jumpHeight")) {
@@ -671,6 +681,7 @@ void createPlayer(Scene* scene, ComponentBlock block) {
     Player* player = new Player();
     player->cameraController = new CameraController();
     player->entityID = entityID;
+    player->armsID = armsID;
     player->jumpHeight = jumpHeight;
     player->moveSpeed = moveSpeed;
     player->groundCheckDistance = groundCheckDistance;
@@ -814,6 +825,7 @@ void writeMaterials(Scene* scene, std::ofstream& stream) {
 void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
         std::string entityID = std::to_string(renderer.entityID);
+        std::string rootEntity = std::to_string(renderer.rootEntity);
         std::string mesh = renderer.mesh->name;
         std::string materials = "";
 
@@ -825,6 +837,7 @@ void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
 
         stream << "MeshRenderer {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
+        stream << "rootEntity: " << rootEntity << std::endl;
         stream << "mesh: " << mesh << std::endl;
         stream << "materials: " << materials << std::endl;
         stream << "}" << std::endl
@@ -931,6 +944,7 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
 
 void writePlayer(Scene* scene, std::ofstream& stream) {
     std::string entityID = std::to_string(scene->player->entityID);
+    std::string armsID = std::to_string(scene->player->armsID);
     std::string jumpHeight = std::to_string(scene->player->jumpHeight);
     std::string moveSpeed = std::to_string(scene->player->moveSpeed);
     std::string groundCheckDistance = std::to_string(scene->player->groundCheckDistance);
@@ -941,6 +955,7 @@ void writePlayer(Scene* scene, std::ofstream& stream) {
 
     stream << "Player {" << std::endl;
     stream << "entityID: " << entityID << std::endl;
+    stream << "armsID: " << armsID << std::endl;
     stream << "jumpHeight: " << jumpHeight << std::endl;
     stream << "moveSpeed: " << moveSpeed << std::endl;
     stream << "groundCheckDistance: " << groundCheckDistance << std::endl;

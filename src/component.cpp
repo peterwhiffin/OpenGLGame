@@ -232,9 +232,6 @@ void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
         for (AnimationChannel* channel : animation->channels) {
             if (entity->name == channel->name) {
                 animator->channelMap[channel] = entity->entityID;
-                animator->nextKeyPosition[channel] = 0;
-                animator->nextKeyRotation[channel] = 0;
-                animator->nextKeyScale[channel] = 0;
             }
         }
     }
@@ -256,6 +253,10 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
         animatorPtr->animations.push_back(animation);
     }
 
+    for (Animation* animation : animatorPtr->animations) {
+        animatorPtr->animationMap[animation->name] = animation;
+    }
+
     mapAnimationChannels(scene, animatorPtr, entityID);
 
     animatorPtr->currentAnimation = animatorPtr->animations[0];
@@ -266,6 +267,11 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
     Animator animator;
     animator.entityID = entityID;
     animator.animations = animations;
+
+    for (Animation* animation : animator.animations) {
+        animator.animationMap[animation->name] = animation;
+    }
+
     size_t index = scene->animators.size();
     scene->animators.push_back(animator);
     scene->animatorIndexMap[entityID] = index;
@@ -295,22 +301,11 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
     if (first) {
         rootEntity = childEntity;
     }
-    /*     setLocalPosition(scene, childEntity, node->localTransform[3]);
-        setLocalRotation(scene, childEntity, quatFromMatrix(node->localTransform));
-        setLocalScale(scene, childEntity, scaleFromMatrix(node->localTransform)); */
 
     Transform* transform = getTransform(scene, childEntity);
-
     transform->worldTransform = node->transform;
-    /*     setPosition(scene, childEntity, node->transform[3]);
-        setRotation(scene, childEntity, quatFromMatrix(node->transform));
-        setScale(scene, childEntity, scaleFromMatrix(node->transform)); */
     setParent(scene, childEntity, parentEntityID);
-    // setLocalPosition(scene, childEntity, node->localTransform[3]);
     entity->name = node->name;
-    // glm::vec3 newPos = node->transform * glm::vec4(getLocalPosition(scene, childEntity), 1.0f);
-
-    // setLocalPosition(scene, childEntity, newPos);
 
     if (node->mesh != nullptr) {
         MeshRenderer* meshRenderer = addMeshRenderer(scene, childEntity);

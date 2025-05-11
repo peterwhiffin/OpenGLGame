@@ -92,6 +92,9 @@ struct AnimationChannel {
     std::vector<KeyFramePosition> positions;
     std::vector<KeyFrameRotation> rotations;
     std::vector<KeyFrameScale> scales;
+    uint32_t nextPositionKey = 0;
+    uint32_t nextRotationKey = 0;
+    uint32_t nextScaleKey = 0;
 };
 
 struct Animation {
@@ -167,10 +170,11 @@ struct Animator {
     Animation* currentAnimation = nullptr;
     uint32_t currentIndex = 0;
     float playbackTime = 0.0f;
+    std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<AnimationChannel*, uint32_t> channelMap;
-    std::unordered_map<AnimationChannel*, int> nextKeyPosition;
+    /* std::unordered_map<AnimationChannel*, int> nextKeyPosition;
     std::unordered_map<AnimationChannel*, int> nextKeyRotation;
-    std::unordered_map<AnimationChannel*, int> nextKeyScale;
+    std::unordered_map<AnimationChannel*, int> nextKeyScale; */
 };
 
 struct Camera {
@@ -243,6 +247,7 @@ struct WindowData {
 struct Player {
     uint32_t entityID;
     CameraController* cameraController;
+    uint32_t armsID;
     bool isGrounded = false;
     bool canJump = true;
     bool canSpawnCan = true;
