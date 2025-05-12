@@ -38,7 +38,7 @@ struct Vertex {
 struct Texture {
     std::string path;
     std::string name;
-    unsigned int id;
+    GLuint id;
 };
 
 struct Shader {
@@ -58,8 +58,8 @@ struct Material {
 };
 
 struct SubMesh {
-    unsigned int indexOffset;
-    unsigned int indexCount;
+    GLsizei indexOffset;
+    GLsizei indexCount;
     Material* material;
 };
 
@@ -70,18 +70,18 @@ struct BoneInfo {
 
 struct Mesh {
     std::string name;
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<SubMesh> subMeshes;
-    std::unordered_map<std::string, BoneInfo> boneNameMap;
+    GLuint VAO;
+    GLuint VBO;
+    GLuint EBO;
     glm::mat4 globalInverseTransform;
     glm::vec3 center;
     glm::vec3 extent;
     glm::vec3 min;
     glm::vec3 max;
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
+    std::vector<Vertex> vertices;
+    std::vector<GLuint> indices;
+    std::vector<SubMesh> subMeshes;
+    std::unordered_map<std::string, BoneInfo> boneNameMap;
 };
 
 struct KeyFramePosition {
@@ -118,20 +118,20 @@ struct Animation {
 struct ModelNode {
     std::string name;
     ModelNode* parent;
+    Mesh* mesh;
     glm::mat4 transform;
     glm::mat4 localTransform;
     std::vector<ModelNode*> children;
-    Mesh* mesh;
 };
 
 struct Model {
     std::string name;
+    ModelNode* rootNode;
+    glm::mat4 RootNodeTransform;
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
     std::vector<Animation*> animations;
     std::unordered_map<ModelNode*, AnimationChannel*> channelMap;
-    ModelNode* rootNode;
-    glm::mat4 RootNodeTransform;
 };
 struct Entity {
     uint32_t entityID;
@@ -142,19 +142,19 @@ struct Entity {
 struct Transform {
     uint32_t entityID;
     uint32_t parentEntityID = INVALID_ID;
-    std::vector<uint32_t> childEntityIds;
     glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::mat4 worldTransform = glm::mat4(1.0f);
+    std::vector<uint32_t> childEntityIds;
 };
 
 struct MeshRenderer {
     uint32_t entityID;
-    Mesh* mesh;
     uint32_t rootEntity;
-    std::vector<Material*> materials;
     GLint vao;
+    Mesh* mesh;
+    std::vector<Material*> materials;
     std::vector<SubMesh> subMeshes;
     std::vector<glm::mat4> boneMatrices;
     std::unordered_map<uint32_t, BoneInfo> transformBoneMap;
@@ -179,15 +179,12 @@ struct RigidBody {
 
 struct Animator {
     uint32_t entityID;
-    std::vector<Animation*> animations;
-    Animation* currentAnimation = nullptr;
     uint32_t currentIndex = 0;
     float playbackTime = 0.0f;
+    Animation* currentAnimation = nullptr;
+    std::vector<Animation*> animations;
     std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<AnimationChannel*, uint32_t> channelMap;
-    /* std::unordered_map<AnimationChannel*, int> nextKeyPosition;
-    std::unordered_map<AnimationChannel*, int> nextKeyRotation;
-    std::unordered_map<AnimationChannel*, int> nextKeyScale; */
 };
 
 struct Camera {
@@ -197,8 +194,6 @@ struct Camera {
     float aspectRatio;
     float nearPlane;
     float farPlane;
-    // glm::mat4 projectionMatrix;
-    // glm::mat4 viewMatrix;
 };
 
 struct CameraController {
@@ -231,30 +226,30 @@ struct DirectionalLight {
 
 struct PointLight {
     uint32_t entityID;
-    bool isActive;
-    float brightness;
     glm::vec3 color;
+    float brightness;
+    bool isActive;
 };
 
 struct SpotLight {
     uint32_t entityID;
-    bool isActive;
+    GLuint depthFrameBuffer, blurDepthFrameBuffer, depthTex, blurDepthTex;
+    GLsizei shadowWidth = 800;
+    GLsizei shadowHeight = 600;
+    glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
     glm::vec3 color;
     float brightness;
     float cutoff;
     float outerCutoff;
-    glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
     bool enableShadows = true;
-    unsigned int depthFrameBuffer, blurDepthFrameBuffer, depthTex, blurDepthTex;
-    unsigned int shadowWidth = 800;
-    unsigned int shadowHeight = 600;
+    bool isActive;
 };
 
 struct WindowData {
-    unsigned int width = 800;
-    unsigned int height = 600;
-    unsigned int viewportWidth = 800;
-    unsigned int viewportHeight = 600;
+    GLsizei width = 800;
+    GLsizei height = 600;
+    GLsizei viewportWidth = 800;
+    GLsizei viewportHeight = 600;
 };
 
 struct Player {
@@ -279,12 +274,12 @@ struct Scene {
     WindowData windowData;
     JPH::BodyInterface* bodyInterface;
     uint32_t trashCanEntity;
-    unsigned int pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
-    unsigned int pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
-    unsigned int blurFBO[2], blurSwapTex[2];
-    unsigned int fullscreenVAO, fullscreenVBO;
-    unsigned int editorFBO, editorRBO, editorTex;
-    unsigned int lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
+    GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
+    GLuint pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
+    GLuint blurFBO[2], blurSwapTex[2];
+    GLuint fullscreenVAO, fullscreenVBO;
+    GLuint editorFBO, editorRBO, editorTex;
+    GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
     uint32_t nodeClicked = INVALID_ID;
 
     float FPS = 0.0f;
@@ -312,7 +307,7 @@ struct Scene {
     bool isPicking = false;
     bool canPick = true;
 
-    unsigned int matricesUBO;
+    GLuint matricesUBO;
     GlobalUBO matricesUBOData;
     uint32_t nextEntityID = 1;
     glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);

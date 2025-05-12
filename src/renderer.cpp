@@ -2,6 +2,10 @@
 #include "transform.h"
 #include "shader.h"
 #include "renderer.h"
+#include <Jolt/Math/MathTypes.h>
+using JPH::Mat44;
+using JPH::Vec3;
+using JPH::Vec4;
 
 #define M_PI 3.14159265358979323846
 
@@ -42,7 +46,7 @@ void drawPickingScene(Scene* scene) {
 
 void drawShadowMaps(Scene* scene) {
     glm::vec3 position;
-    glm::mat4 viewMatrix;
+    Mat44 viewMatrix;
     glm::mat4 projectionMatrix;
     glm::mat4 viewProjection;
     glm::mat4 model;
@@ -51,6 +55,7 @@ void drawShadowMaps(Scene* scene) {
     for (SpotLight& light : scene->spotLights) {
         position = getPosition(scene, light.entityID);
         viewMatrix = glm::lookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
+        // viewMatrix = Mat44::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
         projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
         viewProjection = projectionMatrix * viewMatrix;
         light.lightSpaceMatrix = viewProjection;
@@ -117,7 +122,7 @@ void drawScene(Scene* scene) {
     glUniform1f(9, scene->bloomThreshold);
     glUniform1f(35, scene->ambient);
 
-    for (int i = 0; i < scene->pointLights.size(); i++) {
+    for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
         PointLight& pointLight = scene->pointLights[i];
         offset = i * 4;
         glUniform3fv(36 + 0 + offset, 1, glm::value_ptr(getPosition(scene, pointLight.entityID)));
@@ -125,7 +130,7 @@ void drawScene(Scene* scene) {
         glUniform1f(36 + 2 + offset, pointLight.brightness);
     }
 
-    for (int i = 0; i < scene->spotLights.size(); i++) {
+    for (uint32_t i = 0; i < scene->spotLights.size(); i++) {
         SpotLight& spotLight = scene->spotLights[i];
         offset = i * 7;
         glUniform3fv(120 + 0 + offset, 1, glm::value_ptr(getPosition(scene, spotLight.entityID)));
@@ -198,7 +203,7 @@ void drawSSAO(Scene* scene) {
 
 void drawBlurPass(Scene* scene) {
     scene->horizontalBlur = false;
-    int amount = 10;
+    uint32_t amount = 10;
     glUseProgram(scene->blurShader);
     glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[1]);
@@ -207,7 +212,7 @@ void drawBlurPass(Scene* scene) {
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    for (unsigned int i = 0; i < amount - 1; i++) {
+    for (uint32_t i = 0; i < amount - 1; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[scene->horizontalBlur]);
         glUniform1i(uniform_location::kBHorizontal, scene->horizontalBlur);
         glBindTexture(GL_TEXTURE_2D, scene->blurSwapTex[!scene->horizontalBlur]);
@@ -236,8 +241,8 @@ void drawFullScreenQuad(Scene* scene) {
 }
 
 void createPickingFBO(Scene* scene) {
-    unsigned int width = scene->windowData.width;
-    unsigned int height = scene->windowData.height;
+    GLsizei width = scene->windowData.width;
+    GLsizei height = scene->windowData.height;
 
     glGenFramebuffers(1, &scene->pickingFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
@@ -401,8 +406,8 @@ void createSSAOBuffer(Scene* scene) {
 }
 
 void createBlurBuffers(Scene* scene) {
-    unsigned int width = scene->windowData.viewportWidth;
-    unsigned int height = scene->windowData.viewportHeight;
+    GLsizei width = scene->windowData.viewportWidth;
+    GLsizei height = scene->windowData.viewportHeight;
 
     glGenFramebuffers(2, scene->blurFBO);
     glGenTextures(2, scene->blurSwapTex);
@@ -427,7 +432,7 @@ void createBlurBuffers(Scene* scene) {
 void resizeBuffers(Scene* scene) {
     uint32_t width = scene->windowData.viewportWidth;
     uint32_t height = scene->windowData.viewportHeight;
-    unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    GLenum attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFBO);
     glBindTexture(GL_TEXTURE_2D, scene->litColorTex);
@@ -575,7 +580,7 @@ void generateSSAOKernel(Scene* scene) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glUseProgram(scene->ssaoShader);
-    for (unsigned int i = 0; i < 32; i++) {
+    for (unsigned int i = 0; i < 8; i++) {
         glUniform3fv(glGetUniformLocation(scene->ssaoShader, ("samples[" + std::to_string(i) + "]").c_str()),
                      1, glm::value_ptr(scene->ssaoKernel[i]));
     }
