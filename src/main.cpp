@@ -284,40 +284,19 @@ void loadDefaultScene(Scene* scene) {
     spotLight->shadowWidth = 800;
     spotLight->shadowHeight = 600;
 
-    // uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
     uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
-    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true, true);
-
     uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
     Transform* armsTransform = getTransform(scene, armsID);
     addAnimator(scene, armsID, scene->wrenchArms);
-    // addAnimator(scene, wrenchEntity, scene->wrench);
-    setPosition(scene, trashCanEntity, vec3(1.0f, 3.0f, 2.0f));
-    getBoxCollider(scene, trashCanEntity)->isActive = false;
-
-    Entity* tcanEnt = getEntity(scene, trashCanEntity);
-    scene->trashCanEntity = trashCanEntity;
-    Transform* tcantrans = getTransform(scene, trashCanEntity);
-    tcanEnt->name = "trashcanBase";
-    Entity* lident = getEntity(scene, tcantrans->childEntityIds[0]);
-    lident->name = "trashcanLid";
-
-    RigidBody* rb = addRigidbody(scene, trashCanEntity);
-    rb->mass = 10.0f;
-    rb->linearDrag = 3.0f;
-    rb->friction = 10.0f;
 
     Entity* wrenchParent = getNewEntity(scene, "WrenchParent");
-
     Player* player = createPlayer(scene);
     player->armsID = armsID;
     setParent(scene, armsID, wrenchParent->entityID);
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
     setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, JPH::DegreesToRadians(180.0f), 0.0f)));
-
     setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
-
     setLocalRotation(scene, spotLightEntity->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
     setLocalPosition(scene, spotLightEntity->entityID, vec3(0.0f, 0.0f, 1.0f));
 }
@@ -374,6 +353,7 @@ int main() {
     // Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
     const uint cMaxContactConstraints = 10240;
 
+    const int cCollisionSteps = 1;
     // Create mapping table from object layer to broadphase layer
     // Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
     // Also have a look at BroadPhaseLayerInterfaceTable or BroadPhaseLayerInterfaceMask for a simpler interface.
@@ -407,8 +387,8 @@ int main() {
 
     // The main way to interact with the bodies in the physics system is through the body interface. There is a locking and a non-locking
     // variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
-    scene->bodyInterface = &physics_system.GetBodyInterfaceNoLock();
-    // BodyInterface& body_interface = physics_system.GetBodyInterface();
+    // scene->bodyInterface = &physics_system.GetBodyInterfaceNoLock();
+    scene->bodyInterface = &physics_system.GetBodyInterface();
 
     // Next we can create a rigid body to serve as the floor, we make a large box
     // Create the settings for the collision volume (the shape).
@@ -513,21 +493,20 @@ int main() {
 
     if (findLastScene(&scenePath)) {
         loadScene(scene, scenePath);
+
+        // loadDefaultScene(scene);
     } else {
         loadDefaultScene(scene);
     }
 
     // We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
-    const float cDeltaTime = 1.0f / 60.0f;
 
     // Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
     // You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
     // Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
-    physics_system.OptimizeBroadPhase();
+    // physics_system.OptimizeBroadPhase();
 
     // Now we're ready to simulate the body, keep simulating until it goes to sleep
-    uint step = 0;
-    float physicsAccum = 0.0f;
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
         mapBones(scene, &renderer);
@@ -578,26 +557,27 @@ int main() {
     scene->lastFrame = scene->currentFrame;
 
     while (!glfwWindowShouldClose(window)) {
-        ++step;
         glfwPollEvents();
         updateTime(scene);
         updateInput(window, &input);
         updatePlayer(scene, window, &input, scene->player);
+        scene->physicsAccum += scene->deltaTime;
         updateRigidBodies(scene);
 
-        physicsAccum += scene->deltaTime;
         //-----NEW PHYSICS-----
         /* RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
         Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
         cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
  */
         // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
-        const int cCollisionSteps = 1;
 
         // Step the world
-        if (physicsAccum >= cDeltaTime) {
-            physics_system.Update(cDeltaTime, cCollisionSteps, &temp_allocator, &job_system);
-            physicsAccum -= cDeltaTime;
+        if (scene->physicsAccum >= scene->cDeltaTime) {
+            physics_system.Update(scene->cDeltaTime, cCollisionSteps, &temp_allocator, &job_system);
+            scene->physicsAccum -= scene->cDeltaTime;
+            scene->physicsTicked = true;
+        } else {
+            scene->physicsTicked = false;
         }
         //-----NEW PHYSICS-----
 

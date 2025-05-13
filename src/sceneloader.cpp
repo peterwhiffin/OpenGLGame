@@ -3,6 +3,7 @@
 
 #include "sceneloader.h"
 #include "transform.h"
+#include "physics.h"
 
 void parseList(std::string memberString, std::vector<uint32_t>* out) {
     size_t currentPos = 0;
@@ -410,70 +411,108 @@ void createMaterial(Scene* scene, ComponentBlock block) {
     material->normalStrength = normalStrength;
 }
 
-void createBoxCollider(Scene* scene, ComponentBlock block) {
-    uint32_t entityID = INVALID_ID;
-    bool isActive = true;
-    vec3 center = vec3(0.0f, 0.0f, 0.0f);
-    vec3 extent = vec3(3.0f, 0.2f, 3.0f);
-    std::string memberString = block.memberValueMap["childEntityIds"];
-    float floatComps[3];
-
-    if (block.memberValueMap.count("entityID")) {
-        entityID = std::stoi(block.memberValueMap["entityID"]);
-    }
-
-    if (block.memberValueMap.count("isActive")) {
-        isActive = block.memberValueMap["isActive"] == "true" ? true : true;
-    }
-
-    if (block.memberValueMap.count("center")) {
-        memberString = block.memberValueMap["center"];
-        parseList(memberString, floatComps);
-        center.SetX(floatComps[0]);
-        center.SetY(floatComps[1]);
-        center.SetZ(floatComps[2]);
-    }
-
-    if (block.memberValueMap.count("extent")) {
-        memberString = block.memberValueMap["extent"];
-        parseList(memberString, floatComps);
-        extent.SetX(floatComps[0]);
-        extent.SetY(floatComps[1]);
-        extent.SetZ(floatComps[2]);
-    }
-
-    BoxCollider* collider = addBoxCollider(scene, entityID);
-    collider->isActive = true;
-    collider->center = center;
-    collider->extent = extent;
-}
-
 void createRigidbody(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
-    float linearDrag = 0.0f;
+    std::string memberString = "";
+    JPH::ObjectLayer objectLayer = Layers::NON_MOVING;
+    JPH::EMotionType motionType = JPH::EMotionType::Static;
+    JPH::ShapeSettings::ShapeResult shapeResult;
+    JPH::ShapeRefC shape;
+    vec3 halfExtents = vec3(1.0f, 1.0f, 1.0f);
+    float halfHeight;
+    float radius;
     float mass = 1.0f;
-    float friction = 1.0f;
+    float floatComps[3];
+    bool rotationLocked = false;
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
-    }
-
-    if (block.memberValueMap.count("linearDrag")) {
-        linearDrag = std::stof(block.memberValueMap["linearDrag"]);
     }
 
     if (block.memberValueMap.count("mass")) {
-        mass = std::stoi(block.memberValueMap["mass"]);
+        mass = std::stof(block.memberValueMap["mass"]);
     }
 
-    if (block.memberValueMap.count("friction")) {
-        friction = std::stoi(block.memberValueMap["friction"]);
+    if (block.memberValueMap.count("radius")) {
+        radius = std::stof(block.memberValueMap["radius"]);
     }
 
-    RigidBody* rb = addRigidbody(scene, entityID);
-    rb->linearDrag = linearDrag;
-    rb->mass = mass;
-    rb->friction = friction;
+    if (block.memberValueMap.count("halfHeight")) {
+        halfHeight = std::stof(block.memberValueMap["halfHeight"]);
+    }
+
+    if (block.memberValueMap.count("rotationLocked")) {
+        memberString = block.memberValueMap["rotationLocked"];
+        if (memberString == "true") {
+            rotationLocked = true;
+        }
+    }
+
+    if (block.memberValueMap.count("motionType")) {
+        memberString = block.memberValueMap["motionType"];
+
+        if (memberString == "static") {
+            motionType = JPH::EMotionType::Static;
+        } else if (memberString == "kinematic") {
+            motionType = JPH::EMotionType::Kinematic;
+        } else if (memberString == "dynamic") {
+            motionType = JPH::EMotionType::Dynamic;
+        }
+    }
+
+    if (block.memberValueMap.count("layer")) {
+        memberString = block.memberValueMap["layer"];
+        if (memberString == "MOVING") {
+            objectLayer = Layers::MOVING;
+        } else if (memberString == "NON_MOVING") {
+            objectLayer = Layers::NON_MOVING;
+        }
+    }
+
+    if (block.memberValueMap.count("halfExtents")) {
+        memberString = block.memberValueMap["halfExtents"];
+        parseList(memberString, floatComps);
+        halfExtents.SetX(floatComps[0]);
+        halfExtents.SetY(floatComps[1]);
+        halfExtents.SetZ(floatComps[2]);
+    }
+    if (block.memberValueMap.count("shape")) {
+        memberString = block.memberValueMap["shape"];
+
+        if (memberString == "box") {
+            JPH::BoxShapeSettings boxSettings(halfExtents);
+            // boxSettings.SetEmbedded();
+            shapeResult = boxSettings.Create();
+            shape = shapeResult.Get();
+            JPH::EActivation shouldActivate = motionType == JPH::EMotionType::Dynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+
+            shouldActivate = JPH::EActivation::DontActivate;
+            // motionType = JPH::EMotionType::Static;
+            JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, objectLayer);
+            if (rotationLocked) {
+                bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
+            }
+            JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
+
+            scene->bodyInterface->AddBody(body->GetID(), shouldActivate);
+            RigidBody* rb = addRigidbody(scene, entityID);
+            rb->rotationLocked = rotationLocked;
+            // rb->lastPosition = getPosition(scene, rb->entityID);
+            // rb->lastRotation = getRotation(scene, rb->entityID);
+            rb->joltBody = body->GetID();
+
+        } else if (memberString == "sphere") {
+            JPH::SphereShapeSettings sphereSettings(radius);
+            // sphereSettings.SetEmbedded();
+            shapeResult = sphereSettings.Create();
+            shape = shapeResult.Get();
+        } else if (memberString == "capsule") {
+            JPH::CapsuleShapeSettings capsuleSettings(halfHeight, radius);
+            // capsuleSettings.SetEmbedded();
+            shapeResult = capsuleSettings.Create();
+            shape = shapeResult.Get();
+        }
+    }
 }
 
 void createAnimator(Scene* scene, ComponentBlock block) {
@@ -702,8 +741,6 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createTransform(scene, block);
         } else if (block.type == "MeshRenderer") {
             createMeshRenderer(scene, block);
-        } else if (block.type == "BoxCollider") {
-            createBoxCollider(scene, block);
         } else if (block.type == "Rigidbody") {
             createRigidbody(scene, block);
         } else if (block.type == "Animator") {
@@ -734,6 +771,13 @@ void loadScene(Scene* scene, std::string path) {
 
     for (int i = 0; i < scene->transforms.size(); i++) {
         updateTransformMatrices(scene, &scene->transforms[i]);
+    }
+
+    for (int i = 0; i < scene->rigidbodies.size(); i++) {
+        RigidBody* rb = &scene->rigidbodies[i];
+        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(scene, rb->entityID);
+        rb->lastRotation = getRotation(scene, rb->entityID);
     }
 
     if (scene->player != nullptr) {
@@ -845,35 +889,91 @@ void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeBoxColliders(Scene* scene, std::ofstream& stream) {
-    for (BoxCollider& collider : scene->boxColliders) {
-        std::string entityID = std::to_string(collider.entityID);
-        std::string isActive = collider.isActive ? "true" : "false";
-        std::string center = std::to_string(collider.center.GetX()) + ", " + std::to_string(collider.center.GetY()) + ", " + std::to_string(collider.center.GetZ());
-        std::string extent = std::to_string(collider.extent.GetX()) + ", " + std::to_string(collider.extent.GetY()) + ", " + std::to_string(collider.extent.GetZ());
-
-        stream << "BoxCollider {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "isActive: " << isActive << std::endl;
-        stream << "center: " << center << std::endl;
-        stream << "extent: " << extent << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
-    }
-}
-
 void writeRigidbodies(Scene* scene, std::ofstream& stream) {
     for (RigidBody& rb : scene->rigidbodies) {
+        const JPH::Shape* shape = scene->bodyInterface->GetShape(rb.joltBody).GetPtr();
+        JPH::MassProperties massProp = shape->GetMassProperties();
+        JPH::EShapeSubType shapeType = shape->GetSubType();
+        JPH::ObjectLayer objectLayer = scene->bodyInterface->GetObjectLayer(rb.joltBody);
+        JPH::EMotionType motionType = scene->bodyInterface->GetMotionType(rb.joltBody);
+        const JPH::BoxShape* box;
+        const JPH::SphereShape* sphere;
+        const JPH::CapsuleShape* capsule;
         std::string entityID = std::to_string(rb.entityID);
-        std::string linearDrag = std::to_string(rb.linearDrag);
-        std::string mass = std::to_string(rb.mass);
-        std::string friction = std::to_string(rb.friction);
+        std::string objectLayerString;
+        std::string halfExtentString;
+        std::string radius;
+        std::string rotationLocked = "false";
+        std::string halfHeight;
+        std::string motionTypeString;
+        std::string mass = std::to_string(massProp.mMass);
 
         stream << "Rigidbody {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
-        stream << "linearDrag: " << linearDrag << std::endl;
+
+        switch (objectLayer) {
+            case Layers::MOVING:
+                stream << "layer: MOVING" << std::endl;
+                break;
+            case Layers::NON_MOVING:
+                stream << "layer: NON_MOVING" << std::endl;
+                break;
+        }
+
         stream << "mass: " << mass << std::endl;
-        stream << "friction: " << friction << std::endl;
+
+        if (rb.rotationLocked) {
+            rotationLocked = "true";
+        }
+
+        stream << "rotationLocked: " << rotationLocked << std::endl;
+
+        switch (motionType) {
+            case JPH::EMotionType::Static:
+                motionTypeString = "static";
+                break;
+            case JPH::EMotionType::Kinematic:
+                motionTypeString = "kinematic";
+                break;
+            case JPH::EMotionType::Dynamic:
+                motionTypeString = "dynamic";
+                break;
+        }
+
+        stream << "motionType: " << motionTypeString << std::endl;
+
+        switch (shapeType) {
+            case JPH::EShapeSubType::Box:
+                box = static_cast<const JPH::BoxShape*>(shape);
+                vec3 extents = box->GetHalfExtent();
+                halfExtentString = std::to_string(extents.GetX()) + ", " + std::to_string(extents.GetY()) + ", " + std::to_string(extents.GetZ());
+                stream << "shape: box" << std::endl;
+                stream << "halfExtents: " << halfExtentString << std::endl;
+                break;
+            case JPH::EShapeSubType::Sphere:
+                sphere = static_cast<const JPH::SphereShape*>(shape);
+                radius = std::to_string(sphere->GetRadius());
+                stream << "shape: sphere" << std::endl;
+                stream << "radius: " << radius << std::endl;
+                break;
+            case JPH::EShapeSubType::Capsule:
+                capsule = static_cast<const JPH::CapsuleShape*>(shape);
+                halfHeight = std::to_string(capsule->GetHalfHeightOfCylinder());
+                radius = std::to_string(capsule->GetRadius());
+                stream << "shape: capsule" << std::endl;
+                stream << "halfHeight: " << halfHeight << std::endl;
+                stream << "radius: " << radius << std::endl;
+                break;
+            case JPH::EShapeSubType::Cylinder:
+                break;
+            case JPH::EShapeSubType::Mesh:
+                break;
+            case JPH::EShapeSubType::HeightField:
+                break;
+            case JPH::EShapeSubType::ConvexHull:
+                break;
+        }
+
         stream << "}" << std::endl
                << std::endl;
     }
@@ -990,7 +1090,6 @@ void saveScene(Scene* scene) {
     writeEntities(scene, stream);
     writeTransforms(scene, stream);
     writeMeshRenderers(scene, stream);
-    writeBoxColliders(scene, stream);
     writeRigidbodies(scene, stream);
     writeAnimators(scene, stream);
     writePointLights(scene, stream);

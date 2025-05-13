@@ -23,6 +23,7 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 using namespace JPH::literals;
@@ -166,21 +167,12 @@ struct MeshRenderer {
     std::unordered_map<uint32_t, BoneInfo> transformBoneMap;
 };
 
-struct BoxCollider {
-    uint32_t entityID;
-    bool isActive = true;
-    vec3 center;
-    vec3 extent;
-};
-
 struct RigidBody {
     uint32_t entityID;
     JPH::BodyID joltBody;
-    vec3 linearVelocity;
-    float linearMagnitude;
-    float linearDrag;
-    float mass = 1.0f;
-    float friction = 10.0f;
+    vec3 lastPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat lastRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    bool rotationLocked = false;
 };
 
 struct Animator {
@@ -288,9 +280,11 @@ struct Scene {
     GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
     uint32_t nodeClicked = INVALID_ID;
 
+    const float cDeltaTime = 1.0f / 60.0f;
     float FPS = 0.0f;
     float frameTime = 0.0f;
     float timeAccum = 0.0f;
+    float physicsAccum = 0.0f;
     float frameCount = 0;
     float currentFrame = 0.0f;
     float lastFrame = 0.0f;
@@ -300,7 +294,7 @@ struct Scene {
     float exposure = 1.0f;
     float bloomThreshold = 0.39f;
     float bloomAmount = 0.1f;
-    float ambient = 0.108f;
+    float ambient = 0.004f;
     float AORadius = 0.5f;
     float AOBias = 0.025f;
     float AOAmount = 1.0f;
@@ -312,6 +306,7 @@ struct Scene {
     bool horizontalBlur = true;
     bool isPicking = false;
     bool canPick = true;
+    bool physicsTicked = false;
 
     GLuint matricesUBO;
     GlobalUBO matricesUBOData;
@@ -336,7 +331,6 @@ struct Scene {
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
     std::vector<MeshRenderer> meshRenderers;
-    std::vector<BoxCollider> boxColliders;
     std::vector<RigidBody> rigidbodies;
     std::vector<Animator> animators;
     std::vector<Camera*> cameras;
@@ -350,7 +344,6 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
     std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
-    std::unordered_map<uint32_t, size_t> boxColliderIndexMap;
     std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
@@ -361,7 +354,6 @@ uint32_t getEntityID(Scene* scene);
 Transform* addTransform(Scene* scene, uint32_t entityID);
 Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1, bool createTransform = true);
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
-BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
@@ -376,7 +368,6 @@ void mapBones(Scene* scene, MeshRenderer* renderer);
 Entity* getEntity(Scene* scene, uint32_t entityID);
 Transform* getTransform(Scene* scene, uint32_t entityID);
 MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID);
-BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* getRigidbody(Scene* scene, uint32_t entityID);
 Animator* getAnimator(Scene* scene, uint32_t entityID);
 PointLight* getPointLight(Scene* scene, uint32_t entityID);

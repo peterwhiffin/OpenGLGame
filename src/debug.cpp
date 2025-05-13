@@ -221,8 +221,8 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
             Transform* transform = getTransform(scene, entityID);
             vec3 position = transform->localPosition;
             vec3 worldPosition = transform->worldTransform.GetTranslation();
-            vec3 rotation = transform->localRotation.GetEulerAngles();
-            vec3 degrees = vec3(JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetX()));
+            vec3 rotation = getLocalRotation(scene, entityID).GetEulerAngles();
+            vec3 degrees = vec3(JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetY()), JPH::RadiansToDegrees(rotation.GetZ()));
             vec3 scale = transform->localScale;
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
@@ -237,13 +237,13 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Position");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Position", position.mF32, 0.1f);
+            ImGui::DragFloat3("##Position", position.mF32, 0.01f);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Rotation");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Rotation", degrees.mF32, 0.1f);
+            ImGui::DragFloat3("##Rotation", degrees.mF32, 0.01f);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
@@ -316,10 +316,6 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         }
     }
 
-    BoxCollider* collider = getBoxCollider(scene, entityID);
-    if (collider != nullptr) {
-    }
-
     SpotLight* spotLight = getSpotLight(scene, entityID);
     if (spotLight != nullptr) {
         if (ImGui::CollapsingHeader("Spot Light", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -354,6 +350,43 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 if (ImGui::CollapsingHeader("Shadow Map")) {
                     ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
                 }
+
+                ImGui::EndTable();
+            }
+        }
+    }
+
+    RigidBody* rigidbody = getRigidbody(scene, entityID);
+    if (rigidbody != nullptr) {
+        if (ImGui::CollapsingHeader("Rigidbody", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::BeginTable("Rigidbody Table", 2, ImGuiTableFlags_SizingFixedSame)) {
+                const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
+                JPH::EShapeSubType shapeType = shape->GetSubType();
+                JPH::ObjectLayer objectLayer = scene->bodyInterface->GetObjectLayer(rigidbody->joltBody);
+                JPH::EMotionType motionType = scene->bodyInterface->GetMotionType(rigidbody->joltBody);
+                std::string motionTypeString = motionType == JPH::EMotionType::Dynamic ? "Dynamic" : "Static";
+                const JPH::BoxShape* box = static_cast<const JPH::BoxShape*>(shape);
+                vec3 halfExtents = box->GetHalfExtent();
+                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
+                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Shape: ");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Box");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Motion Type: ");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(motionTypeString.c_str());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Half Extents: ");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::DragFloat3("##halfExtents", halfExtents.mF32, 0.01f, 0.0f, 0.0f);
 
                 ImGui::EndTable();
             }

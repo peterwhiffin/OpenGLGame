@@ -38,15 +38,11 @@ MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID) {
     return &scene->meshRenderers[scene->meshRendererIndexMap[entityID]];
 }
 
-BoxCollider* getBoxCollider(Scene* scene, uint32_t entityID) {
-    if (scene->boxColliderIndexMap.count(entityID) == 0) {
+RigidBody* getRigidbody(Scene* scene, uint32_t entityID) {
+    if (scene->rigidbodyIndexMap.count(entityID) == 0) {
         return nullptr;
     }
 
-    return &scene->boxColliders[scene->boxColliderIndexMap[entityID]];
-}
-
-RigidBody* getRigidbody(Scene* scene, uint32_t entityID) {
     return &scene->rigidbodies[scene->rigidbodyIndexMap[entityID]];
 }
 
@@ -155,20 +151,9 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {
     return &scene->meshRenderers[index];
 }
 
-BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID) {
-    BoxCollider boxCollider;
-    boxCollider.entityID = entityID;
-    size_t index = scene->boxColliders.size();
-    scene->boxColliders.push_back(boxCollider);
-    scene->boxColliderIndexMap[entityID] = index;
-    return &scene->boxColliders[index];
-}
-
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
-    rigidbody.linearVelocity = vec3(0.0f, 0.0f, 0.0f);
-    rigidbody.linearMagnitude = 0.0f;
     size_t index = scene->rigidbodies.size();
     scene->rigidbodies.push_back(rigidbody);
     scene->rigidbodyIndexMap[entityID] = index;
@@ -209,7 +194,6 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
 
     destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
     destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
-    destroyComponent(scene->boxColliders, scene->boxColliderIndexMap, entityID);
     destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
 
@@ -318,34 +302,21 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
         meshRenderer->rootEntity = rootEntity;
 
         if (addColliders) {
-            BoxCollider* boxCollider = addBoxCollider(scene, childEntity);
-            boxCollider->center = node->mesh->center;
-            boxCollider->extent = node->mesh->extent;
-            boxCollider->isActive = true;
-
             JPH::BoxShapeSettings floor_shape_settings(node->mesh->extent);
-            floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
+            // floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
 
-            // Create the shape
             JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
             JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
-
-            // Create the settings for the body itself. Note that here you can also set other properties like the restitution / friction.
-            // JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(0.0_r, -1.0_r, 0.0_r), quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
-
             JPH::ObjectLayer layer = isDynamic ? Layers::MOVING : Layers::NON_MOVING;
             JPH::EActivation shouldActivate = isDynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
             JPH::EMotionType motionType = isDynamic ? JPH::EMotionType::Dynamic : JPH::EMotionType::Static;
             JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, childEntity), getRotation(scene, childEntity), motionType, layer);
-
-            // Create the actual rigid body
             JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
-
-            // Add it to the world
-
             scene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
 
             RigidBody* rb = addRigidbody(scene, childEntity);
+            rb->lastPosition = getPosition(scene, childEntity);
+            rb->lastRotation = getRotation(scene, childEntity);
             rb->joltBody = floor->GetID();
         }
     }

@@ -93,13 +93,13 @@ void drawShadowMaps(Scene* scene) {
             }
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
+        /* glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(scene->shadowBlurShader);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
         glBindVertexArray(scene->fullscreenVAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); */
     }
 
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
@@ -141,7 +141,7 @@ void drawScene(Scene* scene) {
         glUniform1f(120 + 5 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.outerCutoff)));
         glUniformMatrix4fv(15 + i, 1, GL_FALSE, &spotLight.lightSpaceMatrix(0, 0));
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
-        glBindTexture(GL_TEXTURE_2D, spotLight.blurDepthTex);
+        glBindTexture(GL_TEXTURE_2D, spotLight.depthTex);
     }
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
