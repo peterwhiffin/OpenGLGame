@@ -481,38 +481,33 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
 
         if (memberString == "box") {
             JPH::BoxShapeSettings boxSettings(halfExtents);
-            // boxSettings.SetEmbedded();
             shapeResult = boxSettings.Create();
             shape = shapeResult.Get();
-            JPH::EActivation shouldActivate = motionType == JPH::EMotionType::Dynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-
-            shouldActivate = JPH::EActivation::DontActivate;
-            // motionType = JPH::EMotionType::Static;
-            JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, objectLayer);
-            if (rotationLocked) {
-                bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
-            }
-            JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
-
-            scene->bodyInterface->AddBody(body->GetID(), shouldActivate);
-            RigidBody* rb = addRigidbody(scene, entityID);
-            rb->rotationLocked = rotationLocked;
-            // rb->lastPosition = getPosition(scene, rb->entityID);
-            // rb->lastRotation = getRotation(scene, rb->entityID);
-            rb->joltBody = body->GetID();
-
         } else if (memberString == "sphere") {
             JPH::SphereShapeSettings sphereSettings(radius);
-            // sphereSettings.SetEmbedded();
             shapeResult = sphereSettings.Create();
             shape = shapeResult.Get();
         } else if (memberString == "capsule") {
             JPH::CapsuleShapeSettings capsuleSettings(halfHeight, radius);
-            // capsuleSettings.SetEmbedded();
             shapeResult = capsuleSettings.Create();
+            shape = shapeResult.Get();
+        } else if (memberString == "cylinder") {
+            JPH::CylinderShapeSettings cylinderSettings(halfHeight, radius);
+            shapeResult = cylinderSettings.Create();
             shape = shapeResult.Get();
         }
     }
+
+    JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, objectLayer);
+    if (rotationLocked) {
+        bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
+    }
+    JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
+    scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
+
+    RigidBody* rb = addRigidbody(scene, entityID);
+    rb->rotationLocked = rotationLocked;
+    rb->joltBody = body->GetID();
 }
 
 void createAnimator(Scene* scene, ComponentBlock block) {
@@ -899,6 +894,7 @@ void writeRigidbodies(Scene* scene, std::ofstream& stream) {
         const JPH::BoxShape* box;
         const JPH::SphereShape* sphere;
         const JPH::CapsuleShape* capsule;
+        const JPH::CylinderShape* cylinder;
         std::string entityID = std::to_string(rb.entityID);
         std::string objectLayerString;
         std::string halfExtentString;
@@ -965,6 +961,12 @@ void writeRigidbodies(Scene* scene, std::ofstream& stream) {
                 stream << "radius: " << radius << std::endl;
                 break;
             case JPH::EShapeSubType::Cylinder:
+                cylinder = static_cast<const JPH::CylinderShape*>(shape);
+                halfHeight = std::to_string(cylinder->GetHalfHeight());
+                radius = std::to_string(cylinder->GetRadius());
+                stream << "shape: cylinder" << std::endl;
+                stream << "halfHeight: " << halfHeight << std::endl;
+                stream << "radius: " << radius << std::endl;
                 break;
             case JPH::EShapeSubType::Mesh:
                 break;

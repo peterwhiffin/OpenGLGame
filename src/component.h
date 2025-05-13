@@ -24,6 +24,8 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+
 JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 using namespace JPH::literals;

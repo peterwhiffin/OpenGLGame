@@ -274,8 +274,8 @@ void loadDefaultScene(Scene* scene) {
         pointLight->brightness = 1.0f;
     }
 
-    Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
-    SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
+    uint32_t spotLightEntityID = getNewEntity(scene, "SpotLight")->entityID;
+    SpotLight* spotLight = addSpotLight(scene, spotLightEntityID);
     spotLight->isActive = true;
     spotLight->color = vec3(1.0f, 1.0f, 1.0f);
     spotLight->brightness = 6.0f;
@@ -294,11 +294,11 @@ void loadDefaultScene(Scene* scene) {
     player->armsID = armsID;
     setParent(scene, armsID, wrenchParent->entityID);
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
-    setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
+    setParent(scene, spotLightEntityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, JPH::DegreesToRadians(180.0f), 0.0f)));
     setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
-    setLocalRotation(scene, spotLightEntity->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
-    setLocalPosition(scene, spotLightEntity->entityID, vec3(0.0f, 0.0f, 1.0f));
+    setLocalRotation(scene, spotLightEntityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
+    setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
 }
 
 int main() {

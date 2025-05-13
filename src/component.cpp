@@ -94,7 +94,7 @@ Transform* addTransform(Scene* scene, uint32_t entityID) {
 
 Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTransform) {
     Entity entity;
-    if (id == -1) {
+    if (id == INVALID_ID) {
         entity.entityID = getEntityID(scene);
     } else {
         registerEntityID(scene, id);
