@@ -1,18 +1,18 @@
 #pragma once
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
-#include <glm/glm.hpp>
+/* #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/ext/quaternion_float.hpp>
+#include <glm/ext/quaternion_float.hpp> */
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <iostream>
-#include <glm/gtx/string_cast.hpp>
+/* #include <glm/gtx/string_cast.hpp> */
 
 #include <Jolt/Jolt.h>
+#include <Jolt/Math/Float2.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/TempAllocator.h>
@@ -23,14 +23,20 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
-
+JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
+using namespace JPH::literals;
+using mat4 = JPH::Mat44;
+using vec2 = JPH::Float2;
+using vec3 = JPH::Vec3;
+using vec4 = JPH::Vec4;
+using quat = JPH::Quat;
 
 struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 tangent;
-    glm::vec2 texCoord;
+    vec4 position;
+    vec3 normal;
+    vec3 tangent;
+    vec2 texCoord;
     GLint boneIDs[4];
     float weights[4];
 };
@@ -50,7 +56,7 @@ struct Material {
     GLint shader;  // this will probably need to be a shader struct eventually
     std::string name;
     std::vector<Texture> textures;
-    glm::vec4 baseColor;
+    vec4 baseColor;
     float roughness = 1.0f;
     float metalness = 1.0f;
     float aoStrength = 1.0f;
@@ -65,7 +71,7 @@ struct SubMesh {
 
 struct BoneInfo {
     uint32_t id;
-    glm::mat4 offset;
+    mat4 offset;
 };
 
 struct Mesh {
@@ -73,11 +79,11 @@ struct Mesh {
     GLuint VAO;
     GLuint VBO;
     GLuint EBO;
-    glm::mat4 globalInverseTransform;
-    glm::vec3 center;
-    glm::vec3 extent;
-    glm::vec3 min;
-    glm::vec3 max;
+    mat4 globalInverseTransform;
+    vec3 center;
+    vec3 extent;
+    vec3 min;
+    vec3 max;
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
     std::vector<SubMesh> subMeshes;
@@ -85,17 +91,17 @@ struct Mesh {
 };
 
 struct KeyFramePosition {
-    glm::vec3 position;
+    vec3 position;
     float time;
 };
 
 struct KeyFrameRotation {
-    glm::quat rotation;
+    quat rotation;
     float time;
 };
 
 struct KeyFrameScale {
-    glm::vec3 scale;
+    vec3 scale;
     float time;
 };
 
@@ -119,15 +125,15 @@ struct ModelNode {
     std::string name;
     ModelNode* parent;
     Mesh* mesh;
-    glm::mat4 transform;
-    glm::mat4 localTransform;
+    mat4 transform;
+    mat4 localTransform;
     std::vector<ModelNode*> children;
 };
 
 struct Model {
     std::string name;
     ModelNode* rootNode;
-    glm::mat4 RootNodeTransform;
+    mat4 RootNodeTransform;
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
     std::vector<Animation*> animations;
@@ -142,10 +148,10 @@ struct Entity {
 struct Transform {
     uint32_t entityID;
     uint32_t parentEntityID = INVALID_ID;
-    glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::mat4 worldTransform = glm::mat4(1.0f);
+    vec3 localPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat localRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    vec3 localScale = vec3(1.0f, 1.0f, 1.0f);
+    mat4 worldTransform = mat4::sIdentity();
     std::vector<uint32_t> childEntityIds;
 };
 
@@ -156,21 +162,21 @@ struct MeshRenderer {
     Mesh* mesh;
     std::vector<Material*> materials;
     std::vector<SubMesh> subMeshes;
-    std::vector<glm::mat4> boneMatrices;
+    std::vector<mat4> boneMatrices;
     std::unordered_map<uint32_t, BoneInfo> transformBoneMap;
 };
 
 struct BoxCollider {
     uint32_t entityID;
     bool isActive = true;
-    glm::vec3 center;
-    glm::vec3 extent;
+    vec3 center;
+    vec3 extent;
 };
 
 struct RigidBody {
     uint32_t entityID;
     JPH::BodyID joltBody;
-    glm::vec3 linearVelocity;
+    vec3 linearVelocity;
     float linearMagnitude;
     float linearDrag;
     float mass = 1.0f;
@@ -209,14 +215,14 @@ struct CameraController {
 
 struct DirectionalLight {
     uint32_t entityID;
-    glm::vec3 position;
-    glm::vec3 lookDirection;
-    glm::vec3 color;
-    glm::vec3 brightness;
+    vec3 position;
+    vec3 lookDirection;
+    vec3 color;
+    vec3 brightness;
 
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 
     float ambientBrightness;
     float diffuseBrightness;
@@ -226,7 +232,7 @@ struct DirectionalLight {
 
 struct PointLight {
     uint32_t entityID;
-    glm::vec3 color;
+    vec3 color;
     float brightness;
     bool isActive;
 };
@@ -236,8 +242,8 @@ struct SpotLight {
     GLuint depthFrameBuffer, blurDepthFrameBuffer, depthTex, blurDepthTex;
     GLsizei shadowWidth = 800;
     GLsizei shadowHeight = 600;
-    glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
-    glm::vec3 color;
+    mat4 lightSpaceMatrix = mat4::sIdentity();
+    vec3 color;
     float brightness;
     float cutoff;
     float outerCutoff;
@@ -265,8 +271,8 @@ struct Player {
 };
 
 struct GlobalUBO {
-    glm::mat4 view = glm::mat4(1.0);
-    glm::mat4 projection = glm::mat4(1.0);
+    mat4 view = mat4::sIdentity();
+    mat4 projection = mat4::sIdentity();
 };
 
 struct Scene {
@@ -310,7 +316,7 @@ struct Scene {
     GLuint matricesUBO;
     GlobalUBO matricesUBOData;
     uint32_t nextEntityID = 1;
-    glm::vec3 wrenchOffset = glm::vec3(0.3f, -0.3f, -0.5f);
+    vec3 wrenchOffset = vec3(0.3f, -0.3f, -0.5f);
 
     Model* trashcanModel;
     Model* testRoom;
@@ -322,8 +328,8 @@ struct Scene {
     DirectionalLight sun;
     std::unordered_map<uint32_t, uint32_t> usedIds;
     std::vector<Model*> models;
-    std::vector<glm::vec3> ssaoKernel;
-    std::vector<glm::vec3> ssaoNoise;
+    std::vector<vec3> ssaoKernel;
+    std::vector<vec3> ssaoNoise;
 
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
@@ -359,7 +365,7 @@ BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first);
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
 SpotLight* addSpotLight(Scene* scene, uint32_t entityID);
@@ -377,6 +383,8 @@ PointLight* getPointLight(Scene* scene, uint32_t entityID);
 SpotLight* getSpotLight(Scene* scene, uint32_t entityID);
 Camera* getCamera(Scene* scene, uint32_t entityID);
 
+vec3 lerp(const vec3 a, const vec3 b, float t);
+
 template <typename Component>
 bool destroyComponent(std::vector<Component>& components, std::unordered_map<uint32_t, size_t>& indexMap, uint32_t entityID) {
     if (!indexMap.count(entityID)) {
@@ -384,7 +392,8 @@ bool destroyComponent(std::vector<Component>& components, std::unordered_map<uin
     }
 
     size_t indexToRemove = indexMap[entityID];
-    size_t lastIndex = indexMap.size() - 1;
+    // size_t lastIndex = indexMap.size() - 1;
+    size_t lastIndex = components.size() - 1;
 
     if (indexToRemove != lastIndex) {
         uint32_t lastID = components[lastIndex].entityID;

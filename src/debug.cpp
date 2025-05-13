@@ -219,11 +219,11 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::BeginTable("Transform Table", 2, ImGuiTableFlags_SizingFixedSame)) {
             Transform* transform = getTransform(scene, entityID);
-            glm::vec3 position = transform->localPosition;
-            glm::vec3 worldPosition = transform->worldTransform[3];
-            glm::vec3 rotation = glm::eulerAngles(transform->localRotation);
-            glm::vec3 degrees = glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z));
-            glm::vec3 scale = transform->localScale;
+            vec3 position = transform->localPosition;
+            vec3 worldPosition = transform->worldTransform.GetTranslation();
+            vec3 rotation = transform->localRotation.GetEulerAngles();
+            vec3 degrees = vec3(JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetX()));
+            vec3 scale = transform->localScale;
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
@@ -231,29 +231,29 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("World Position");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##worldposition", glm::value_ptr(worldPosition), 0.1f);
+            ImGui::DragFloat3("##worldposition", worldPosition.mF32, 0.1f);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Position");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Position", glm::value_ptr(position), 0.1f);
+            ImGui::DragFloat3("##Position", position.mF32, 0.1f);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Rotation");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Rotation", glm::value_ptr(degrees), 0.1f);
+            ImGui::DragFloat3("##Rotation", degrees.mF32, 0.1f);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Scale");
             ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Scale", glm::value_ptr(scale), 0.1f);
+            ImGui::DragFloat3("##Scale", scale.mF32, 0.1f);
 
-            glm::vec3 radians = glm::vec3(glm::radians(degrees.x), glm::radians(degrees.y), glm::radians(degrees.z));
+            vec3 radians = vec3(JPH::DegreesToRadians(degrees.GetX()), JPH::DegreesToRadians(degrees.GetY()), JPH::DegreesToRadians(degrees.GetZ()));
             setLocalPosition(scene, entityID, position);
-            setLocalRotation(scene, entityID, glm::quat(radians));
+            setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
             setLocalScale(scene, entityID, scale);
             ImGui::EndTable();
         }
@@ -288,12 +288,6 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text(std::to_string(animator->playbackTime).c_str());
 
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Next Position:");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::Text(glm::to_string(animator->currentAnimation->channels[0]->positions[0].position).c_str());
-
                 ImGui::EndTable();
             }
         }
@@ -316,7 +310,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Color");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::ColorEdit3("##color", glm::value_ptr(light->color), ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
+                ImGui::ColorEdit3("##color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
                 ImGui::EndTable();
             }
         }
@@ -343,7 +337,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Color");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::ColorEdit3("##color", glm::value_ptr(spotLight->color), ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
+                ImGui::ColorEdit3("##color", spotLight->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
@@ -393,7 +387,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Image((ImTextureID)(intptr_t)material->textures[0].id, ImVec2(20, 20));
                 ImGui::TableSetColumnIndex(2);
-                ImGui::ColorEdit4("##color", glm::value_ptr(material->baseColor), ImGuiColorEditFlags_HDR);
+                ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);

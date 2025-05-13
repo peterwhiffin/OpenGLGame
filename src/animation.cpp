@@ -13,16 +13,16 @@ void updateAnimators(Scene* scene) {
     float prevTime;
     float totalDuration;
     float timeElapsed;
-    float lerp;
+    float t;
     float targetTime;
 
-    glm::vec3 currentPosition;
-    glm::vec3 targetPosition;
-    glm::vec3 nextPosition;
+    vec3 prevPosition;
+    vec3 targetPosition;
+    vec3 nextPosition;
 
-    glm::quat currentRotation;
-    glm::quat targetRotation;
-    glm::quat nextRotation;
+    quat prevRotation;
+    quat targetRotation;
+    quat nextRotation;
 
     for (int i = 0; i < scene->animators.size(); i++) {
         animator = &scene->animators[i];
@@ -47,20 +47,15 @@ void updateAnimators(Scene* scene) {
                 targetTime = channel->positions[nextPositionKey].time;
             }
 
-            prevTime = 0.0f;
-            prevIndex = nextPositionKey - 1;
-
-            if (prevIndex > 0) {
-                prevTime = channel->positions[prevIndex].time;
-            }
-
+            prevIndex = nextPositionKey > 0 ? nextPositionKey - 1 : 0;
+            prevTime = channel->positions[prevIndex].time;
             totalDuration = targetTime - prevTime;
             timeElapsed = playbackTime - prevTime;
-            lerp = glm::min(timeElapsed / totalDuration, 1.0f);
+            t = JPH::min(timeElapsed / totalDuration, 1.0f);
 
-            currentPosition = getLocalPosition(scene, channelID);
+            prevPosition = channel->positions[prevIndex].position;
             targetPosition = channel->positions[nextPositionKey].position;
-            nextPosition = glm::mix(currentPosition, targetPosition, lerp);
+            nextPosition = lerp(prevPosition, targetPosition, t);
             setLocalPosition(scene, channelID, nextPosition);
 
             targetTime = channel->rotations[nextRotationKey].time;
@@ -75,20 +70,15 @@ void updateAnimators(Scene* scene) {
                 targetTime = channel->rotations[nextRotationKey].time;
             }
 
-            prevTime = 0.0f;
-            prevIndex = nextRotationKey - 1;
-
-            if (prevIndex > 0) {
-                prevTime = channel->rotations[prevIndex].time;
-            }
-
+            prevIndex = nextRotationKey > 0 ? nextRotationKey - 1 : 0;
+            prevTime = channel->rotations[prevIndex].time;
             totalDuration = targetTime - prevTime;
             timeElapsed = playbackTime - prevTime;
-            lerp = glm::min(timeElapsed / totalDuration, 1.0f);
+            t = JPH::min(timeElapsed / totalDuration, 1.0f);
 
-            currentRotation = getLocalRotation(scene, animator->channelMap[channel]);
+            prevRotation = channel->rotations[prevIndex].rotation;
             targetRotation = channel->rotations[channel->nextRotationKey].rotation;
-            nextRotation = glm::slerp(currentRotation, targetRotation, 1.0f);
+            nextRotation = prevRotation.SLERP(targetRotation, t);
             setLocalRotation(scene, channelID, nextRotation);
         }
 

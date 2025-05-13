@@ -209,9 +209,9 @@ void createTransform(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     uint32_t parentEntityID = INVALID_ID;
     std::vector<uint32_t> childEntityIds;
-    glm::vec3 localPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::quat localRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    glm::vec3 localScale = glm::vec3(1.0f, 1.0f, 1.0f);
+    vec3 localPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat localRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    vec3 localScale = vec3(1.0f, 1.0f, 1.0f);
 
     std::string memberString;
     size_t currentPos = 0;
@@ -238,26 +238,26 @@ void createTransform(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("localPosition")) {
         memberString = block.memberValueMap["localPosition"];
         parseList(memberString, floatComps);
-        localPosition.x = floatComps[0];
-        localPosition.y = floatComps[1];
-        localPosition.z = floatComps[2];
+        localPosition.SetX(floatComps[0]);
+        localPosition.SetY(floatComps[1]);
+        localPosition.SetZ(floatComps[2]);
     }
 
     if (block.memberValueMap.count("localRotation")) {
         memberString = block.memberValueMap["localRotation"];
         parseList(memberString, floatComps);
-        localRotation.w = floatComps[0];
-        localRotation.x = floatComps[1];
-        localRotation.y = floatComps[2];
-        localRotation.z = floatComps[3];
+        localRotation.SetX(floatComps[0]);
+        localRotation.SetY(floatComps[1]);
+        localRotation.SetZ(floatComps[2]);
+        localRotation.SetW(floatComps[3]);
     }
 
     if (block.memberValueMap.count("localScale")) {
         memberString = block.memberValueMap["localScale"];
         parseList(memberString, floatComps);
-        localScale.x = floatComps[0];
-        localScale.y = floatComps[1];
-        localScale.z = floatComps[2];
+        localScale.SetX(floatComps[0]);
+        localScale.SetY(floatComps[1]);
+        localScale.SetZ(floatComps[2]);
     }
 
     Transform* transform = addTransform(scene, entityID);
@@ -332,7 +332,7 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 void createMaterial(Scene* scene, ComponentBlock block) {
     std::string name = "default";
     std::vector<Texture> textures;
-    glm::vec4 baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    vec4 baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     float roughness = 0.5f;
     float metalness = 0.0f;
     float aoStrength = 1.0f;
@@ -370,10 +370,10 @@ void createMaterial(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("baseColor")) {
         memberString = block.memberValueMap["baseColor"];
         parseList(memberString, floatComps);
-        baseColor.r = floatComps[0];
-        baseColor.g = floatComps[1];
-        baseColor.b = floatComps[2];
-        baseColor.a = floatComps[3];
+        baseColor.SetX(floatComps[0]);
+        baseColor.SetY(floatComps[1]);
+        baseColor.SetZ(floatComps[2]);
+        baseColor.SetW(floatComps[3]);
     }
 
     if (block.memberValueMap.count("roughness")) {
@@ -413,8 +413,8 @@ void createMaterial(Scene* scene, ComponentBlock block) {
 void createBoxCollider(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     bool isActive = true;
-    glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 extent = glm::vec3(3.0f, 0.2f, 3.0f);
+    vec3 center = vec3(0.0f, 0.0f, 0.0f);
+    vec3 extent = vec3(3.0f, 0.2f, 3.0f);
     std::string memberString = block.memberValueMap["childEntityIds"];
     float floatComps[3];
 
@@ -429,17 +429,17 @@ void createBoxCollider(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("center")) {
         memberString = block.memberValueMap["center"];
         parseList(memberString, floatComps);
-        center.x = floatComps[0];
-        center.y = floatComps[1];
-        center.z = floatComps[2];
+        center.SetX(floatComps[0]);
+        center.SetY(floatComps[1]);
+        center.SetZ(floatComps[2]);
     }
 
     if (block.memberValueMap.count("extent")) {
         memberString = block.memberValueMap["extent"];
         parseList(memberString, floatComps);
-        extent.x = floatComps[0];
-        extent.y = floatComps[1];
-        extent.z = floatComps[2];
+        extent.SetX(floatComps[0]);
+        extent.SetY(floatComps[1]);
+        extent.SetZ(floatComps[2]);
     }
 
     BoxCollider* collider = addBoxCollider(scene, entityID);
@@ -541,7 +541,7 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     bool isActive = false;
     float brightness = 1.0f;
-    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    vec3 color = vec3(1.0f, 1.0f, 1.0f);
 
     std::string memberString;
     float floatComps[3];
@@ -561,9 +561,9 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("color")) {
         memberString = block.memberValueMap["color"];
         parseList(memberString, floatComps);
-        color.r = floatComps[0];
-        color.g = floatComps[1];
-        color.b = floatComps[2];
+        color.SetX(floatComps[0]);
+        color.SetY(floatComps[1]);
+        color.SetZ(floatComps[2]);
     }
 
     PointLight* light = addPointLight(scene, entityID);
@@ -578,7 +578,7 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     float brightness = 1.0f;
     float cutoff = 45.0f;
     float outerCutoff = 60.0f;
-    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    vec3 color = vec3(1.0f, 1.0f, 1.0f);
     unsigned int shadowWidth = 800;
     unsigned int shadowHeight = 600;
 
@@ -616,9 +616,9 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     if (block.memberValueMap.count("color")) {
         memberString = block.memberValueMap["color"];
         parseList(memberString, floatComps);
-        color.r = floatComps[0];
-        color.g = floatComps[1];
-        color.b = floatComps[2];
+        color.SetX(floatComps[0]);
+        color.SetY(floatComps[1]);
+        color.SetZ(floatComps[2]);
     }
 
     SpotLight* light = addSpotLight(scene, entityID);
@@ -772,9 +772,9 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
             childEntityIds = "None";
         }
 
-        std::string localPosition = std::to_string(transform.localPosition.x) + ", " + std::to_string(transform.localPosition.y) + ", " + std::to_string(transform.localPosition.z);
-        std::string localRotation = std::to_string(transform.localRotation.w) + ", " + std::to_string(transform.localRotation.x) + ", " + std::to_string(transform.localRotation.y) + ", " + std::to_string(transform.localRotation.z);
-        std::string localScale = std::to_string(transform.localScale.x) + ", " + std::to_string(transform.localScale.y) + ", " + std::to_string(transform.localScale.z);
+        std::string localPosition = std::to_string(transform.localPosition.GetX()) + ", " + std::to_string(transform.localPosition.GetY()) + ", " + std::to_string(transform.localPosition.GetZ());
+        std::string localRotation = std::to_string(transform.localRotation.GetX()) + ", " + std::to_string(transform.localRotation.GetY()) + ", " + std::to_string(transform.localRotation.GetZ()) + ", " + std::to_string(transform.localRotation.GetW());
+        std::string localScale = std::to_string(transform.localScale.GetX()) + ", " + std::to_string(transform.localScale.GetY()) + ", " + std::to_string(transform.localScale.GetZ());
 
         stream << "Transform {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
@@ -793,7 +793,7 @@ void writeMaterials(Scene* scene, std::ofstream& stream) {
         Material* material = pair.second;
         std::string name = material->name;
         std::string textures = "";
-        std::string baseColor = std::to_string(material->baseColor.r) + ", " + std::to_string(material->baseColor.g) + ", " + std::to_string(material->baseColor.b) + ", " + std::to_string(material->baseColor.a);
+        std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
         std::string roughness = std::to_string(material->roughness);
         std::string metalness = std::to_string(material->metalness);
         std::string aoStrength = std::to_string(material->aoStrength);
@@ -849,8 +849,8 @@ void writeBoxColliders(Scene* scene, std::ofstream& stream) {
     for (BoxCollider& collider : scene->boxColliders) {
         std::string entityID = std::to_string(collider.entityID);
         std::string isActive = collider.isActive ? "true" : "false";
-        std::string center = std::to_string(collider.center.x) + ", " + std::to_string(collider.center.y) + ", " + std::to_string(collider.center.z);
-        std::string extent = std::to_string(collider.extent.x) + ", " + std::to_string(collider.extent.y) + ", " + std::to_string(collider.extent.z);
+        std::string center = std::to_string(collider.center.GetX()) + ", " + std::to_string(collider.center.GetY()) + ", " + std::to_string(collider.center.GetZ());
+        std::string extent = std::to_string(collider.extent.GetX()) + ", " + std::to_string(collider.extent.GetY()) + ", " + std::to_string(collider.extent.GetZ());
 
         stream << "BoxCollider {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
@@ -905,7 +905,7 @@ void writePointLights(Scene* scene, std::ofstream& stream) {
         std::string entityID = std::to_string(light.entityID);
         std::string isActive = light.isActive ? "true" : "false";
         std::string brightness = std::to_string(light.brightness);
-        std::string color = std::to_string(light.color.r) + ", " + std::to_string(light.color.g) + ", " + std::to_string(light.color.b);
+        std::string color = std::to_string(light.color.GetX()) + ", " + std::to_string(light.color.GetY()) + ", " + std::to_string(light.color.GetZ());
 
         stream << "PointLight {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
@@ -924,7 +924,7 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
         std::string brightness = std::to_string(light.brightness);
         std::string cutoff = std::to_string(light.cutoff);
         std::string outerCutoff = std::to_string(light.outerCutoff);
-        std::string color = std::to_string(light.color.r) + ", " + std::to_string(light.color.g) + ", " + std::to_string(light.color.b);
+        std::string color = std::to_string(light.color.GetX()) + ", " + std::to_string(light.color.GetY()) + ", " + std::to_string(light.color.GetZ());
         std::string shadowWidth = std::to_string(light.shadowWidth);
         std::string shadowHeight = std::to_string(light.shadowHeight);
 

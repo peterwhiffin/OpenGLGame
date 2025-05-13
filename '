@@ -5,17 +5,38 @@
 
 void spawnTrashCan(Scene* scene, Player* player) {
     uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true, true);
-    RigidBody* rb = getRigidbody(scene, trashcanID);
+    RigidBody* rb = addRigidbody(scene, trashcanID);
     Transform* transform = getTransform(scene, trashcanID);
-    // getBoxCollider(scene, transform->childEntityIds[0])->isActive = false;
+    getBoxCollider(scene, transform->childEntityIds[0])->isActive = false;
 
-    // rb->mass = 10.0f;
-    // rb->linearDrag = 3.0f;
-    // rb->friction = 10.0f;
+    rb->mass = 10.0f;
+    rb->linearDrag = 3.0f;
+    rb->friction = 10.0f;
     vec3 camForward = forward(scene, player->cameraController->camera->entityID);
-    // rb->linearVelocity = camForward * 20.0f;
-    // setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
-    scene->bodyInterface->SetPosition(rb->joltBody, getPosition(scene, player->cameraController->camera->entityID) + camForward, JPH::EActivation::Activate);
+    rb->linearVelocity = camForward * 20.0f;
+    setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
+
+    JPH::BoxShapeSettings floor_shape_settings(vec3(0.5f, 1.8f, 0.5f));
+    floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
+
+    // Create the shape
+    JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
+    JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
+
+    // Create the settings for the body itself. Note that here you can also set other properties like the restitution / friction.
+    // JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(0.0_r, -1.0_r, 0.0_r), quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+
+    JPH::ObjectLayer layer = Layers::MOVING;
+    JPH::EActivation shouldActivate = JPH::EActivation::Activate;
+    JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, trashcanID), getRotation(scene, trashcanID), JPH::EMotionType::Dynamic, layer);
+
+    // Create the actual rigid body
+    JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
+
+    rb->joltBody = floor->GetID();
+    // Add it to the world
+
+    scene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, camForward * 20);
 }
 
@@ -43,7 +64,7 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
             scene->canPick = true;
         }
 
-        // return;
+        return;
     } else {
         // scene->nodeClicked = INVALID_ID;
     }
@@ -80,7 +101,7 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     vec3 playerRotation = vec3(0.0f, JPH::DegreesToRadians(player->cameraController->yaw), 0.0f);
 
     setLocalRotation(scene, player->cameraController->cameraTargetEntityID, quat::sEulerAngles(cameraTargetRotation));
-    // setRotation(scene, player->entityID, quat::sEulerAngles(playerRotation));
+    setRotation(scene, player->entityID, quat::sEulerAngles(playerRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
     moveDir += input->movement.y * forward(scene, player->entityID) + input->movement.x * right(scene, player->entityID);
@@ -110,7 +131,6 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     player->isGrounded = true;
     rb->linearVelocity = finalMove;
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, finalMove);
-    scene->bodyInterface->SetRotation(rb->joltBody, quat::sEulerAngles(playerRotation), JPH::EActivation::Activate);
 }
 
 Player* createPlayer(Scene* scene) {
@@ -133,7 +153,7 @@ Player* createPlayer(Scene* scene) {
     rb->linearDrag = 0.0f;
     rb->friction = 0.0f;
 
-    setPosition(scene, playerEntityID, vec3(0.0f, 5.0f, 0.0f));
+    setPosition(scene, playerEntityID, vec3(0.0f, 3.0f, 0.0f));
 
     JPH::BoxShapeSettings floor_shape_settings(vec3(0.5f, 1.8f, 0.5f));
     floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
@@ -147,10 +167,8 @@ Player* createPlayer(Scene* scene) {
 
     JPH::ObjectLayer layer = Layers::MOVING;
     JPH::EActivation shouldActivate = JPH::EActivation::Activate;
-    JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, playerEntityID), getRotation(scene, playerEntityID), JPH::EMotionType::Dynamic, layer);
-    floor_settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
+    JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, playerEntityID), getRotation(scene, playerEntityID), JPH::EMotionType::Kinematic, layer);
 
-    // floor_settings.mAllowedDOFs = JPH::EAllowedDOFs::RotationY;
     // Create the actual rigid body
     JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
 
@@ -158,7 +176,7 @@ Player* createPlayer(Scene* scene) {
     // Add it to the world
 
     scene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
-    scene->bodyInterface->SetLinearVelocity(floor->GetID(), vec3(0.0f, 0.0f, 0.0f));
+
     player->cameraController->camera = camera;
     player->cameraController->entityID = playerEntityID;
     player->cameraController->cameraTargetEntityID = cameraTargetEntityID;

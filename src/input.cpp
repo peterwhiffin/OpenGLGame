@@ -12,8 +12,8 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
     actions->jump = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
     actions->spawn = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
 
-    actions->movement.x += glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? -1 : 0;
-    actions->movement.x += glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? 1 : 0;
+    actions->movement.x += glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS ? 1 : 0;
+    actions->movement.x += glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS ? -1 : 0;
     actions->movement.y += glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ? -1 : 0;
     actions->movement.y += glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS ? 1 : 0;
 
@@ -26,9 +26,10 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
 
     glfwGetCursorPos(window, &actions->cursorPosition.x, &actions->cursorPosition.y);
 
+    // actions->lookX = actions->cursorPosition.x - oldX;
+    // actions->lookY = actions->cursorPosition.y - oldY;
     actions->lookX = actions->cursorPosition.x - oldX;
-    actions->lookY = actions->cursorPosition.y - oldY;
-
+    actions->lookY = oldY - actions->cursorPosition.y;
     oldX = actions->cursorPosition.x;
     oldY = actions->cursorPosition.y;
 }

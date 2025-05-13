@@ -2,131 +2,121 @@
 #include "transform.h"
 
 void updateRigidBodies(Scene* scene) {
-    float deltaTime = scene->deltaTime;
-    float totalDamping = 0.0f;
-    float epsilon = 1e-6f;
-    glm::vec3 collisionResolution = glm::vec3(0.0f);
-
     for (RigidBody& rigidbody : scene->rigidbodies) {
-        if (!rigidbody.joltBody.IsInvalid()) {
-            JPH::RVec3 jPos = scene->bodyInterface->GetCenterOfMassPosition(rigidbody.joltBody);
-            glm::vec3 newPos = glm::vec3(jPos.GetX(), jPos.GetY(), jPos.GetZ());
-            setPosition(scene, rigidbody.entityID, newPos);
-            continue;
-        }
-
-        rigidbody.linearVelocity.y += scene->gravity * deltaTime;
-        rigidbody.linearMagnitude = glm::length(rigidbody.linearVelocity);
-        glm::vec3 newPosition = getPosition(scene, rigidbody.entityID) + rigidbody.linearVelocity * deltaTime;
-        setPosition(scene, rigidbody.entityID, newPosition);
+        vec3 newPos = lerp(getPosition(scene, rigidbody.entityID), scene->bodyInterface->GetPosition(rigidbody.joltBody), 0.75f);
+        quat newRot = getRotation(scene, rigidbody.entityID).SLERP(scene->bodyInterface->GetRotation(rigidbody.joltBody), 0.75f);
+        setPosition(scene, rigidbody.entityID, newPos);
+        setRotation(scene, rigidbody.entityID, newRot);
     }
 
-    for (int i = 0; i < scene->rigidbodies.size(); i++) {
-        RigidBody* rigidbodyA = &scene->rigidbodies[i];
-        if (!rigidbodyA->joltBody.IsInvalid()) {
-            continue;
-        }
+    return;
 
-        BoxCollider* colliderA = getBoxCollider(scene, rigidbodyA->entityID);
-        totalDamping = rigidbodyA->linearDrag;
-
-        for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
-            RigidBody* rigidbodyB = &scene->rigidbodies[j];
-
+    /*     for (int i = 0; i < scene->rigidbodies.size(); i++) {
+            RigidBody* rigidbodyA = &scene->rigidbodies[i];
             if (!rigidbodyA->joltBody.IsInvalid()) {
                 continue;
             }
 
-            BoxCollider* colliderB = getBoxCollider(scene, rigidbodyB->entityID);
+            BoxCollider* colliderA = getBoxCollider(scene, rigidbodyA->entityID);
+            totalDamping = rigidbodyA->linearDrag;
 
-            if (checkAABB(scene, colliderA, colliderB, &collisionResolution)) {
-                setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution * 0.5f));
-                setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution * 0.5f));
+            for (int j = i + 1; j < scene->rigidbodies.size(); j++) {
+                RigidBody* rigidbodyB = &scene->rigidbodies[j];
 
-                glm::vec3 flatForce = rigidbodyA->linearVelocity - rigidbodyB->linearVelocity;
-
-                if (glm::length(flatForce) > epsilon) {
-                    flatForce = glm::normalize(flatForce);
+                if (!rigidbodyA->joltBody.IsInvalid()) {
+                    continue;
                 }
 
-                flatForce.y = 0.0f;
+                BoxCollider* colliderB = getBoxCollider(scene, rigidbodyB->entityID);
 
-                if (collisionResolution.y != 0.0f) {
-                    rigidbodyA->linearVelocity.y = -2.0f;
-                    rigidbodyB->linearVelocity.y = -2.0f;
-                    flatForce *= 0.1f;
-                } else {
-                    totalDamping += rigidbodyA->friction;
-                }
+                if (checkAABB(scene, colliderA, colliderB, &collisionResolution)) {
+                    setPosition(scene, rigidbodyA->entityID, getPosition(scene, rigidbodyA->entityID) + (collisionResolution * 0.5f));
+                    setPosition(scene, rigidbodyB->entityID, getPosition(scene, rigidbodyB->entityID) - (collisionResolution * 0.5f));
 
-                float velocityDiff = glm::abs(rigidbodyB->linearMagnitude - rigidbodyA->linearMagnitude) * 0.8f;
-                float rigidBodyAForce = 1.0f - rigidbodyA->mass / (rigidbodyA->mass + rigidbodyB->mass);
-                float rigidbodyBForce = 1.0f - rigidBodyAForce;
-                rigidbodyA->linearVelocity -= flatForce * rigidBodyAForce * velocityDiff;
-                rigidbodyB->linearVelocity += flatForce * rigidbodyBForce * velocityDiff;
-            }
-        }
+                    vec3 flatForce = rigidbodyA->linearVelocity - rigidbodyB->linearVelocity;
 
-        for (BoxCollider collider : scene->boxColliders) {
-            if (collider.entityID == colliderA->entityID || !collider.isActive) {
-                continue;
-            }
+                    if (flatForce.Length() > epsilon) {
+                        flatForce = flatForce.Normalized();
+                    }
 
-            if (checkAABB(scene, colliderA, &collider, &collisionResolution)) {
-                setPosition(scene, colliderA->entityID, getPosition(scene, colliderA->entityID) + collisionResolution);
+                    flatForce.SetY(0.0f);
 
-                if (collisionResolution.y != 0.0f) {
-                    rigidbodyA->linearVelocity.y = -2.0f;
-                    totalDamping += rigidbodyA->friction;
+                    if (collisionResolution.GetY() != 0.0f) {
+                        rigidbodyA->linearVelocity.SetY(-2.0f);
+                        rigidbodyB->linearVelocity.SetY(-2.0f);
+                        flatForce *= 0.1f;
+                    } else {
+                        totalDamping += rigidbodyA->friction;
+                    }
+
+                    float velocityDiff = JPH::abs(rigidbodyB->linearMagnitude - rigidbodyA->linearMagnitude) * 0.8f;
+                    float rigidBodyAForce = 1.0f - rigidbodyA->mass / (rigidbodyA->mass + rigidbodyB->mass);
+                    float rigidbodyBForce = 1.0f - rigidBodyAForce;
+                    rigidbodyA->linearVelocity -= flatForce * rigidBodyAForce * velocityDiff;
+                    rigidbodyB->linearVelocity += flatForce * rigidbodyBForce * velocityDiff;
                 }
             }
-        }
 
-        applyDamping(rigidbodyA, totalDamping, deltaTime);
-    }
+            for (BoxCollider collider : scene->boxColliders) {
+                if (collider.entityID == colliderA->entityID || !collider.isActive) {
+                    continue;
+                }
+
+                if (checkAABB(scene, colliderA, &collider, &collisionResolution)) {
+                    setPosition(scene, colliderA->entityID, getPosition(scene, colliderA->entityID) + collisionResolution);
+
+                    if (collisionResolution.GetY() != 0.0f) {
+                        rigidbodyA->linearVelocity.SetY(-2.0f);
+                        totalDamping += rigidbodyA->friction;
+                    }
+                }
+            }
+
+            applyDamping(rigidbodyA, totalDamping, deltaTime);
+        } */
 }
 
 void applyDamping(RigidBody* rigidbody, float damping, float deltaTime) {
     float epsilon = 1e-6f;
-    rigidbody->linearMagnitude = glm::length(rigidbody->linearVelocity);
+    rigidbody->linearMagnitude = rigidbody->linearVelocity.Length();
 
     if (rigidbody->linearMagnitude > epsilon) {
-        glm::vec3 normalVel = glm::normalize(rigidbody->linearVelocity);
-        rigidbody->linearMagnitude = glm::max(rigidbody->linearMagnitude - (damping * deltaTime), 0.0f);
+        vec3 normalVel = rigidbody->linearVelocity.Normalized();
+        rigidbody->linearMagnitude = std::max(rigidbody->linearMagnitude - (damping * deltaTime), 0.0f);
         rigidbody->linearVelocity = normalVel * rigidbody->linearMagnitude;
     } else {
-        rigidbody->linearVelocity = glm::vec3(0.0f);
+        rigidbody->linearVelocity = vec3(0.0f, 0.0f, 0.0f);
     }
 }
 
-bool checkAABB(Scene* scene, BoxCollider* colliderA, BoxCollider* colliderB, glm::vec3* resolutionOut) {
+bool checkAABB(Scene* scene, BoxCollider* colliderA, BoxCollider* colliderB, vec3* resolutionOut) {
     Transform* transformA = getTransform(scene, colliderA->entityID);
     Transform* transformB = getTransform(scene, colliderB->entityID);
     Entity* entityA = getEntity(scene, colliderA->entityID);
     Entity* entityB = getEntity(scene, colliderB->entityID);
-    glm::vec3 centerA = getPosition(scene, colliderA->entityID) + colliderA->center;
-    glm::vec3 centerB = getPosition(scene, colliderB->entityID) + colliderB->center;
-    glm::vec3 delta = centerA - centerB;
-    glm::vec3 overlap = colliderA->extent + colliderB->extent - glm::abs(delta);
+    vec3 centerA = getPosition(scene, colliderA->entityID) + colliderA->center;
+    vec3 centerB = getPosition(scene, colliderB->entityID) + colliderB->center;
+    vec3 delta = centerA - centerB;
+    vec3 overlap = colliderA->extent + colliderB->extent - delta.Abs();
 
-    if (overlap.x <= 0.0f || overlap.y <= 0.0f || overlap.z <= 0.0f) {
+    if (overlap.GetX() <= 0.0f || overlap.GetY() <= 0.0f || overlap.GetZ() <= 0.0f) {
         return false;
     }
 
-    float minOverlap = overlap.x;
-    float push = delta.x < 0 ? -1.0f : 1.0f;
-    glm::vec3 pushDir = glm::vec3(push, 0.0f, 0.0f);
+    float minOverlap = overlap.GetX();
+    float push = delta.GetX() < 0 ? -1.0f : 1.0f;
+    vec3 pushDir = vec3(push, 0.0f, 0.0f);
 
-    if (overlap.y < minOverlap) {
-        minOverlap = overlap.y;
-        push = delta.y < 0 ? -1.0f : 1.0f;
-        pushDir = glm::vec3(0.0f, push, 0.0f);
+    if (overlap.GetY() < minOverlap) {
+        minOverlap = overlap.GetY();
+        push = delta.GetY() < 0 ? -1.0f : 1.0f;
+        pushDir = vec3(0.0f, push, 0.0f);
     }
 
-    if (overlap.z < minOverlap) {
-        minOverlap = overlap.z;
-        push = delta.z < 0 ? -1.0f : 1.0f;
-        pushDir = glm::vec3(0.0f, 0.0f, push);
+    if (overlap.GetZ() < minOverlap) {
+        minOverlap = overlap.GetZ();
+        push = delta.GetZ() < 0 ? -1.0f : 1.0f;
+        pushDir = vec3(0.0f, 0.0f, push);
     }
 
     *resolutionOut = pushDir * minOverlap;

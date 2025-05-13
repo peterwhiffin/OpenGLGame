@@ -15,13 +15,11 @@
 #include <thread>
 // using std::cout;
 // using std::endl;
-JPH_SUPPRESS_WARNINGS
 
 // All Jolt symbols are in the JPH namespace
 using namespace JPH;
 
 // If you want your code to compile using single or double precision write 0.0_r to get a Real value that compiles to double or float depending if JPH_DOUBLE_PRECISION is set or not.
-using namespace JPH::literals;
 
 static void TraceImpl(const char* inFMT, ...) {
     // Format the message
@@ -49,11 +47,7 @@ static bool AssertFailedImpl(const char* inExpression, const char* inMessage, co
 // Typically you at least want to have 1 layer for moving bodies and 1 layer for static bodies, but you can have more
 // layers if you want. E.g. you could have a layer for high detail collision (which is not used by the physics simulation
 // but only if you do collision testing).
-namespace Layers {
-static constexpr ObjectLayer NON_MOVING = 0;
-static constexpr ObjectLayer MOVING = 1;
-static constexpr ObjectLayer NUM_LAYERS = 2;
-};  // namespace Layers
+// namespace Layers
 
 /// Class that determines if two object layers can collide
 class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter {
@@ -76,11 +70,7 @@ class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter {
 // You can have a 1-on-1 mapping between object layers and broadphase layers (like in this case) but if you have
 // many object layers you'll be creating many broad phase trees, which is not efficient. If you want to fine tune
 // your broadphase layers define JPH_TRACK_BROADPHASE_STATS and look at the stats reported on the TTY.
-namespace BroadPhaseLayers {
-static constexpr BroadPhaseLayer NON_MOVING(0);
-static constexpr BroadPhaseLayer MOVING(1);
-static constexpr uint NUM_LAYERS(2);
-};  // namespace BroadPhaseLayers
+// namespace BroadPhaseLayers
 
 // BroadPhaseLayerInterface implementation
 // This defines a mapping between object and broadphase layers.
@@ -182,7 +172,8 @@ void onScreenChanged(GLFWwindow* window, int width, int height) {
     scene->windowData.height = height; */
 
     glUseProgram(scene->ssaoShader);
-    glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
+    vec2 v(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f);
+    glUniform2fv(8, 1, &v.x);
 
     for (int i = 0; i < scene->cameras.size(); i++) {
         scene->cameras[i]->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
@@ -249,16 +240,16 @@ void initializeLights(Scene* scene, unsigned int shader) {
     for (int i = 0; i < numPointLights; i++) {
         PointLight* pointLight = &scene->pointLights[i];
         std::string base = "pointLights[" + std::to_string(i) + "]";
-        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, pointLight->entityID)));
-        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(pointLight->color));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, getPosition(scene, pointLight->entityID).mF32);
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, pointLight->color.mF32);
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
     }
 
     for (int i = 0; i < numSpotLights; i++) {
         SpotLight* spotLight = &scene->spotLights[i];
         std::string base = "spotLights[" + std::to_string(i) + "]";
-        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, glm::value_ptr(getPosition(scene, spotLight->entityID)));
-        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, glm::value_ptr(spotLight->color));
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, getPosition(scene, spotLight->entityID).mF32);
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, spotLight->color.mF32);
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
@@ -266,7 +257,8 @@ void initializeLights(Scene* scene, unsigned int shader) {
     }
 
     glUseProgram(scene->ssaoShader);
-    glUniform2fv(8, 1, glm::value_ptr(glm::vec2(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f)));
+    vec2 v(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f);
+    glUniform2fv(8, 1, &v.x);
     scene->AORadius = 0.06f;
     scene->AOBias = 0.04f;
     scene->AOPower = 2.02f;
@@ -276,8 +268,8 @@ void loadDefaultScene(Scene* scene) {
     for (int i = 0; i < 2; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
-        setPosition(scene, pointLightEntity->entityID, glm::vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
-        pointLight->color = glm::vec3(1.0f);
+        setPosition(scene, pointLightEntity->entityID, vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
+        pointLight->color = vec3(1.0f, 1.0f, 1.0f);
         pointLight->isActive = true;
         pointLight->brightness = 1.0f;
     }
@@ -285,7 +277,7 @@ void loadDefaultScene(Scene* scene) {
     Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
     SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
     spotLight->isActive = true;
-    spotLight->color = glm::vec3(1.0f);
+    spotLight->color = vec3(1.0f, 1.0f, 1.0f);
     spotLight->brightness = 6.0f;
     spotLight->cutoff = 15.5f;
     spotLight->outerCutoff = 55.5f;
@@ -293,14 +285,14 @@ void loadDefaultScene(Scene* scene) {
     spotLight->shadowHeight = 600;
 
     // uint32_t wrenchEntity = createEntityFromModel(scene, scene->wrench->rootNode, INVALID_ID, false);
-    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true);
-    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true);
+    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
+    uint32_t trashCanEntity = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, true, INVALID_ID, true, true);
 
-    uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true);
+    uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
     Transform* armsTransform = getTransform(scene, armsID);
     addAnimator(scene, armsID, scene->wrenchArms);
     // addAnimator(scene, wrenchEntity, scene->wrench);
-    setPosition(scene, trashCanEntity, glm::vec3(1.0f, 3.0f, 2.0f));
+    setPosition(scene, trashCanEntity, vec3(1.0f, 3.0f, 2.0f));
     getBoxCollider(scene, trashCanEntity)->isActive = false;
 
     Entity* tcanEnt = getEntity(scene, trashCanEntity);
@@ -322,11 +314,12 @@ void loadDefaultScene(Scene* scene) {
     setParent(scene, armsID, wrenchParent->entityID);
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
     setParent(scene, spotLightEntity->entityID, player->cameraController->cameraEntityID);
-    setLocalRotation(scene, wrenchParent->entityID, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(180.0f), 0.0f)));
+    setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, JPH::DegreesToRadians(180.0f), 0.0f)));
+
     setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
 
-    setLocalRotation(scene, spotLightEntity->entityID, glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(0.0f), 0.0f)));
-    setLocalPosition(scene, spotLightEntity->entityID, glm::vec3(0.0f, 0.0f, 1.0f));
+    setLocalRotation(scene, spotLightEntity->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
+    setLocalPosition(scene, spotLightEntity->entityID, vec3(0.0f, 0.0f, 1.0f));
 }
 
 int main() {
@@ -365,7 +358,7 @@ int main() {
 
     // This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
     // Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-    const uint cMaxBodies = 1024;
+    const uint cMaxBodies = 65536;
 
     // This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
     const uint cNumBodyMutexes = 0;
@@ -374,12 +367,12 @@ int main() {
     // body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
     // too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
     // Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-    const uint cMaxBodyPairs = 1024;
+    const uint cMaxBodyPairs = 65536;
 
     // This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
     // number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
     // Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
-    const uint cMaxContactConstraints = 1024;
+    const uint cMaxContactConstraints = 10240;
 
     // Create mapping table from object layer to broadphase layer
     // Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
@@ -399,7 +392,7 @@ int main() {
     // Now we can create the actual physics system.
     PhysicsSystem physics_system;
     physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broadphase_layer_filter, object_vs_object_layer_filter);
-
+    physics_system.SetGravity(vec3(0.0f, -18.0f, 0.0f));
     // A body activation listener gets notified when bodies activate and go to sleep
     // Note that this is called from a job so whatever you do here needs to be thread safe.
     // Registering one is entirely optional.
@@ -420,42 +413,15 @@ int main() {
     // Next we can create a rigid body to serve as the floor, we make a large box
     // Create the settings for the collision volume (the shape).
     // Note that for simple shapes (like boxes) you can also directly construct a BoxShape.
-    BoxShapeSettings floor_shape_settings(Vec3(100.0f, 1.0f, 100.0f));
-    floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
-
-    // Create the shape
-    ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
-    ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
-
-    // Create the settings for the body itself. Note that here you can also set other properties like the restitution / friction.
-    BodyCreationSettings floor_settings(floor_shape, RVec3(0.0_r, -1.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
-
-    // Create the actual rigid body
-    Body* floor = scene->bodyInterface->CreateBody(floor_settings);
-
-    // Add it to the world
-
-    scene->bodyInterface->AddBody(floor->GetID(), EActivation::DontActivate);
 
     // Now create a dynamic body to bounce on the floor
     // Note that this uses the shorthand version of creating and adding a body to the world
-    BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
+    // BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
     // BodyID sphere_id = body_interface.CreateAndAddBody(sphere_settings, EActivation::Activate);
 
     // Now you can interact with the dynamic body, in this case we're going to give it a velocity.
     // (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
     // body_interface.SetLinearVelocity(sphere_id, Vec3(0.0f, -5.0f, 0.0f));
-
-    // We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
-    const float cDeltaTime = 1.0f / 60.0f;
-
-    // Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
-    // You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
-    // Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
-    physics_system.OptimizeBroadPhase();
-
-    // Now we're ready to simulate the body, keep simulating until it goes to sleep
-    uint step = 0;
     /* while (body_interface.IsActive(sphere_id)) {
         // Next step
 
@@ -536,15 +502,13 @@ int main() {
     defaultMaterial->textures.push_back(black);
     defaultMaterial->textures.push_back(white);
     defaultMaterial->textures.push_back(blue);
-    defaultMaterial->baseColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    defaultMaterial->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     defaultMaterial->shader = scene->lightingShader;
     defaultMaterial->name = "default";
     scene->materialMap[defaultMaterial->name] = defaultMaterial;
 
     scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    // scene->wrench = loadModel(scene, "../resources/models/wrench/wrench.gltf", &scene->textures, scene->lightingShader, true);
     scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
-    // scene->arms = loadModel(scene, "../resources/models/Arms/DidIdoit.gltf", &scene->textures, scene->lightingShader, true);
     scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
 
     if (findLastScene(&scenePath)) {
@@ -553,25 +517,17 @@ int main() {
         loadDefaultScene(scene);
     }
 
-    RigidBody* rb = getRigidbody(scene, scene->trashCanEntity);
-    rb->joltBody = scene->bodyInterface->CreateAndAddBody(sphere_settings, EActivation::Activate);
+    // We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
+    const float cDeltaTime = 1.0f / 60.0f;
 
-    scene->bodyInterface->SetLinearVelocity(rb->joltBody, Vec3(0.0f, -5.0f, 0.0f));
+    // Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
+    // You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
+    // Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
+    physics_system.OptimizeBroadPhase();
 
-    // uint32_t armsID = createEntityFromModel(scene, scene->arms->rootNode, INVALID_ID, false);
-    // Transform* armsTransform = getTransform(scene, armsID);
-    // addAnimator(scene, armsID, scene->arms);
-
-    /* MeshRenderer* renderer;
-
-    for (int i = 0; i < armsTransform->childEntityIds.size(); i++) {
-        renderer = getMeshRenderer(scene, armsTransform->childEntityIds[i]);
-        if (renderer != nullptr) {
-            break;
-        }
-    } */
-
-    // mapBones(scene, renderer);
+    // Now we're ready to simulate the body, keep simulating until it goes to sleep
+    uint step = 0;
+    float physicsAccum = 0.0f;
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
         mapBones(scene, &renderer);
@@ -629,6 +585,7 @@ int main() {
         updatePlayer(scene, window, &input, scene->player);
         updateRigidBodies(scene);
 
+        physicsAccum += scene->deltaTime;
         //-----NEW PHYSICS-----
         /* RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
         Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
@@ -638,9 +595,13 @@ int main() {
         const int cCollisionSteps = 1;
 
         // Step the world
-        physics_system.Update(cDeltaTime, cCollisionSteps, &temp_allocator, &job_system);
+        if (physicsAccum >= cDeltaTime) {
+            physics_system.Update(cDeltaTime, cCollisionSteps, &temp_allocator, &job_system);
+            physicsAccum -= cDeltaTime;
+        }
         //-----NEW PHYSICS-----
 
+        // physics_system.Update(cDeltaTime, cCollisionSteps, &temp_allocator, &job_system);
         updateAnimators(scene);
         updateCamera(scene);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);

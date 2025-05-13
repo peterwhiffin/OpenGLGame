@@ -1,6 +1,11 @@
 #include "component.h"
 #include "transform.h"
 #include "shader.h"
+#include "physics.h"
+
+vec3 lerp(const vec3 a, const vec3 b, float t) {
+    return a + (b - a) * t;
+}
 
 uint32_t getEntityID(Scene* scene) {
     uint32_t newID = scene->nextEntityID++;
@@ -129,7 +134,7 @@ void mapBones(Scene* scene, MeshRenderer* renderer) {
     renderer->boneMatrices.reserve(100);
 
     for (int i = 0; i < 100; i++) {
-        renderer->boneMatrices.push_back(glm::mat4(1.0f));
+        renderer->boneMatrices.push_back(mat4::sIdentity());
     }
 
     Transform* parent = getTransform(scene, renderer->entityID);
@@ -162,7 +167,7 @@ BoxCollider* addBoxCollider(Scene* scene, uint32_t entityID) {
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
-    rigidbody.linearVelocity = glm::vec3(0.0f);
+    rigidbody.linearVelocity = vec3(0.0f, 0.0f, 0.0f);
     rigidbody.linearMagnitude = 0.0f;
     size_t index = scene->rigidbodies.size();
     scene->rigidbodies.push_back(rigidbody);
@@ -287,14 +292,14 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio,
     scene->cameras.push_back(camera);
     camera->entityID = entityID;
     camera->fov = fov;
-    camera->fovRadians = glm::radians(fov);
+    camera->fovRadians = JPH::DegreesToRadians(fov);
     camera->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;
     return camera;
 }
 
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first) {
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic) {
     uint32_t childEntity = getNewEntity(scene, node->name)->entityID;
     Entity* entity = getEntity(scene, childEntity);
 
@@ -317,11 +322,36 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
             boxCollider->center = node->mesh->center;
             boxCollider->extent = node->mesh->extent;
             boxCollider->isActive = true;
+
+            JPH::BoxShapeSettings floor_shape_settings(node->mesh->extent);
+            floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
+
+            // Create the shape
+            JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
+            JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
+
+            // Create the settings for the body itself. Note that here you can also set other properties like the restitution / friction.
+            // JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(0.0_r, -1.0_r, 0.0_r), quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+
+            JPH::ObjectLayer layer = isDynamic ? Layers::MOVING : Layers::NON_MOVING;
+            JPH::EActivation shouldActivate = isDynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+            JPH::EMotionType motionType = isDynamic ? JPH::EMotionType::Dynamic : JPH::EMotionType::Static;
+            JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, childEntity), getRotation(scene, childEntity), motionType, layer);
+
+            // Create the actual rigid body
+            JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
+
+            // Add it to the world
+
+            scene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
+
+            RigidBody* rb = addRigidbody(scene, childEntity);
+            rb->joltBody = floor->GetID();
         }
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(scene, node->children[i], childEntity, addColliders, rootEntity, false);
+        createEntityFromModel(scene, node->children[i], childEntity, addColliders, rootEntity, false, isDynamic);
     }
 
     return childEntity;
