@@ -25,7 +25,7 @@
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
-
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 using namespace JPH::literals;
@@ -313,7 +313,7 @@ struct Scene {
     GLuint matricesUBO;
     GlobalUBO matricesUBOData;
     uint32_t nextEntityID = 1;
-    vec3 wrenchOffset = vec3(0.3f, -0.3f, -0.5f);
+    vec3 wrenchOffset = vec3(0.0f, -0.42f, 0.37f);
 
     Model* trashcanModel;
     Model* testRoom;
@@ -323,25 +323,19 @@ struct Scene {
     Player* player;
 
     DirectionalLight sun;
-    std::unordered_map<uint32_t, uint32_t> usedIds;
+    // std::unordered_map<uint32_t, uint32_t> usedIds;
     std::vector<Model*> models;
     std::vector<vec3> ssaoKernel;
     std::vector<vec3> ssaoNoise;
 
-    std::vector<PointLight> pointLights;
-    std::vector<SpotLight> spotLights;
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
     std::vector<MeshRenderer> meshRenderers;
-    std::vector<RigidBody> rigidbodies;
     std::vector<Animator> animators;
+    std::vector<RigidBody> rigidbodies;
+    std::vector<PointLight> pointLights;
+    std::vector<SpotLight> spotLights;
     std::vector<Camera*> cameras;
-
-    std::vector<Texture> textures;
-    std::unordered_map<std::string, Mesh*> meshMap;
-    std::unordered_map<std::string, Animation*> animationMap;
-    std::unordered_map<std::string, Material*> materialMap;
-    std::unordered_map<std::string, Texture> textureMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
@@ -350,6 +344,12 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
     std::unordered_map<uint32_t, size_t> spotLightIndexMap;
+
+    std::vector<Texture> textures;
+    std::unordered_map<std::string, Mesh*> meshMap;
+    std::unordered_map<std::string, Animation*> animationMap;
+    std::unordered_map<std::string, Material*> materialMap;
+    std::unordered_map<std::string, Texture> textureMap;
 };
 
 uint32_t getEntityID(Scene* scene);
@@ -385,7 +385,6 @@ bool destroyComponent(std::vector<Component>& components, std::unordered_map<uin
     }
 
     size_t indexToRemove = indexMap[entityID];
-    // size_t lastIndex = indexMap.size() - 1;
     size_t lastIndex = components.size() - 1;
 
     if (indexToRemove != lastIndex) {

@@ -148,6 +148,9 @@ Player* createPlayer(Scene* scene) {
 
     setPosition(scene, playerEntityID, vec3(0.0f, 5.0f, 0.0f));
 
+    // JPH::CharacterVirtualSettings* characterSettings = new JPH::CharacterVirtualSettings();
+    // characterSettings->mSupportingVolume = JPH::Plane(vec3::sAxisY(), .25);
+
     JPH::BoxShapeSettings floor_shape_settings(vec3(0.25f, 0.9f, 0.25f));
     floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
     JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();

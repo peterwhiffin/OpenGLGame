@@ -3,8 +3,9 @@
 
 void updateRigidBodies(Scene* scene) {
     float t = scene->physicsAccum / scene->cDeltaTime;
+    JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (RigidBody& rigidbody : scene->rigidbodies) {
-        if (scene->bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
+        if (bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
             continue;
         }
 
@@ -13,11 +14,11 @@ void updateRigidBodies(Scene* scene) {
             rigidbody.lastRotation = getRotation(scene, rigidbody.entityID);
         }
 
-        vec3 newPos = lerp(rigidbody.lastPosition, scene->bodyInterface->GetPosition(rigidbody.joltBody), t);
+        vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
         setPosition(scene, rigidbody.entityID, newPos);
 
         if (!rigidbody.rotationLocked) {
-            quat newRot = rigidbody.lastRotation.SLERP(scene->bodyInterface->GetRotation(rigidbody.joltBody), t);
+            quat newRot = rigidbody.lastRotation.SLERP(bodyInterface->GetRotation(rigidbody.joltBody), t);
             setRotation(scene, rigidbody.entityID, newRot);
         }
     }

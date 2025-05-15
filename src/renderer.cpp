@@ -68,6 +68,10 @@ void drawShadowMaps(Scene* scene) {
         glUniformMatrix4fv(1, 1, GL_FALSE, &viewProjection(0, 0));
 
         for (MeshRenderer& renderer : scene->meshRenderers) {
+            if (renderer.mesh == nullptr) {
+                continue;
+            }
+
             model = getTransform(scene, renderer.entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 

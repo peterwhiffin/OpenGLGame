@@ -885,24 +885,32 @@ void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
 }
 
 void writeRigidbodies(Scene* scene, std::ofstream& stream) {
+    JPH::EShapeSubType shapeType;
+    JPH::ObjectLayer objectLayer;
+    JPH::EMotionType motionType;
+
+    std::string entityID;
+    std::string objectLayerString;
+    std::string motionTypeString;
+    std::string rotationLocked;
+    std::string halfExtentString;
+    std::string halfHeight;
+    std::string radius;
+    std::string mass;
+
     for (RigidBody& rb : scene->rigidbodies) {
-        const JPH::Shape* shape = scene->bodyInterface->GetShape(rb.joltBody).GetPtr();
-        JPH::MassProperties massProp = shape->GetMassProperties();
-        JPH::EShapeSubType shapeType = shape->GetSubType();
-        JPH::ObjectLayer objectLayer = scene->bodyInterface->GetObjectLayer(rb.joltBody);
-        JPH::EMotionType motionType = scene->bodyInterface->GetMotionType(rb.joltBody);
         const JPH::BoxShape* box;
         const JPH::SphereShape* sphere;
         const JPH::CapsuleShape* capsule;
         const JPH::CylinderShape* cylinder;
-        std::string entityID = std::to_string(rb.entityID);
-        std::string objectLayerString;
-        std::string halfExtentString;
-        std::string radius;
-        std::string rotationLocked = "false";
-        std::string halfHeight;
-        std::string motionTypeString;
-        std::string mass = std::to_string(massProp.mMass);
+        const JPH::Shape* shape = scene->bodyInterface->GetShape(rb.joltBody).GetPtr();
+
+        entityID = std::to_string(rb.entityID);
+        objectLayer = scene->bodyInterface->GetObjectLayer(rb.joltBody);
+        shapeType = shape->GetSubType();
+        motionType = scene->bodyInterface->GetMotionType(rb.joltBody);
+        rotationLocked = rb.rotationLocked ? "true" : "false";
+        mass = std::to_string(shape->GetMassProperties().mMass);
 
         stream << "Rigidbody {" << std::endl;
         stream << "entityID: " << entityID << std::endl;
@@ -917,11 +925,6 @@ void writeRigidbodies(Scene* scene, std::ofstream& stream) {
         }
 
         stream << "mass: " << mass << std::endl;
-
-        if (rb.rotationLocked) {
-            rotationLocked = "true";
-        }
-
         stream << "rotationLocked: " << rotationLocked << std::endl;
 
         switch (motionType) {
@@ -1088,6 +1091,18 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
 }
 
 void saveScene(Scene* scene) {
+    /* std::vector<uint32_t> temp;
+
+    for (Entity& entity : scene->entities) {
+        if (entity.name == "TrashcanBase") {
+            temp.push_back(entity.entityID);
+        }
+    }
+
+    for (uint32_t id : temp) {
+        destroyEntity(scene, id);
+    } */
+
     std::ofstream stream(scene->name);
     writeEntities(scene, stream);
     writeTransforms(scene, stream);

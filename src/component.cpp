@@ -10,17 +10,17 @@ vec3 lerp(const vec3 a, const vec3 b, float t) {
 uint32_t getEntityID(Scene* scene) {
     uint32_t newID = scene->nextEntityID++;
 
-    while (scene->usedIds.count(newID) != 0) {
+    while (scene->entityIndexMap.count(newID)) {
         newID = scene->nextEntityID++;
     }
 
-    scene->usedIds[newID] = 0;
+    scene->entityIndexMap[newID] = 0;
     return newID;
 }
 
-void registerEntityID(Scene* scene, uint32_t id) {
+/* void registerEntityID(Scene* scene, uint32_t id) {
     scene->usedIds[id] = 0;
-}
+} */
 
 Entity* getEntity(Scene* scene, uint32_t entityID) {
     return &scene->entities[scene->entityIndexMap[entityID]];
@@ -97,7 +97,7 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTra
     if (id == INVALID_ID) {
         entity.entityID = getEntityID(scene);
     } else {
-        registerEntityID(scene, id);
+        // registerEntityID(scene, id);
         entity.entityID = id;
     }
 
@@ -188,12 +188,28 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
         parent->childEntityIds.erase(std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID), parent->childEntityIds.end());
     }
 
-    for (size_t i = 0; i < transform->childEntityIds.size(); i++) {
-        destroyEntity(scene, transform->childEntityIds[i]);
+    std::vector<uint32_t> temp;
+    for (uint32_t childID : transform->childEntityIds) {
+        temp.push_back(childID);
     }
+
+    for (uint32_t id : temp) {
+        destroyEntity(scene, id);
+    }
+
+    /* for (size_t i = 0; i < transform->childEntityIds.size(); i++) {
+        destroyEntity(scene, transform->childEntityIds[i]);
+    } */
 
     destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
     destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
+
+    RigidBody* rb = getRigidbody(scene, entityID);
+    if (rb != nullptr) {
+        scene->bodyInterface->RemoveBody(rb->joltBody);
+        scene->bodyInterface->DestroyBody(rb->joltBody);
+    }
+
     destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
 
