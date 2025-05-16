@@ -206,11 +206,29 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
 
     ImGui::PopStyleVar();
     ImGui::Begin("SceneHierarchy");
+    int ITEMS_COUNT = scene->entities.size();
+    static ImGuiSelectionBasicStorage selection;
+
+    ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
+    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, ITEMS_COUNT);
+    selection.ApplyRequests(ms_io);
+
+    /* for (int n = 0; n < ITEMS_COUNT; n++) {
+        char label[64];
+        sprintf(label, "Object %05d: %s", n, ExampleNames[n % IM_ARRAYSIZE(ExampleNames)]);
+        bool item_is_selected = selection.Contains((ImGuiID)n);
+        ImGui::SetNextItemSelectionUserData(n);
+        ImGui::Selectable(label, item_is_selected);
+    } */
+
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
             createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
         }
     }
+
+    ms_io = ImGui::EndMultiSelect();
+    selection.ApplyRequests(ms_io);
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("HierarchyContextMenu");
@@ -220,6 +238,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         if (ImGui::MenuItem("Create Entity")) {
             getNewEntity(scene, "NewEntity");
         }
+
         ImGui::EndPopup();
     }
 
@@ -331,7 +350,7 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Color");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::ColorEdit3("##color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar);
+                    ImGui::ColorEdit3("##color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
                     ImGui::EndTable();
                 }
             }

@@ -451,7 +451,7 @@ int main() {
     // variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
     // scene->bodyInterface = &physics_system.GetBodyInterfaceNoLock();
     scene->bodyInterface = &physics_system.GetBodyInterface();
-
+    scene->physicsSystem = &physics_system;
     // Next we can create a rigid body to serve as the floor, we make a large box
     // Create the settings for the collision volume (the shape).
     // Note that for simple shapes (like boxes) you can also directly construct a BoxShape.

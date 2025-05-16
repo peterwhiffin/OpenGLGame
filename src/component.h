@@ -324,6 +324,7 @@ struct Scene {
     WindowData windowData;
     MyDebugRenderer* debugRenderer;
     JPH::BodyInterface* bodyInterface;
+    JPH::PhysicsSystem* physicsSystem;
     uint32_t trashCanEntity;
     GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
     GLuint pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;

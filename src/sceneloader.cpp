@@ -511,6 +511,7 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
     if (rotationLocked) {
         bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
     }
+
     JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
     scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
 
