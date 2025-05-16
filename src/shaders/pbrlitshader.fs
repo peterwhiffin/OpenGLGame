@@ -69,6 +69,7 @@ layout (location = 12) uniform float aoStrength;
 layout (location = 13) uniform float normalStrength; 
 layout (location = 14) uniform vec3 baseColor; 
 layout (location = 35) uniform float ambientBrightness; 
+uniform vec2 textureTiling;
 
 layout (location = 36) uniform PointLight pointLights[16];
 layout (location = 120) uniform SpotLight spotLights[16];
@@ -77,6 +78,7 @@ layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BloomColor;
 layout (location = 2) out vec3 ViewPosition;
 layout (location = 3) out vec3 ViewNormal;
+
 
 float ShadowCalculation(int index, vec3 N)
 {
@@ -151,11 +153,12 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
 }  
 
 void main() {		
-    vec3 albedo = texture(albedoMap, fromVert.texCoord).rgb * baseColor;
-    vec3 normal = texture(normalMap, fromVert.texCoord).rgb;
-    float roughness = texture(roughnessMap, fromVert.texCoord).r * roughnessStrength;
-    float metallic = texture(metallicMap, fromVert.texCoord).r * metallicStrength;
-    float ao = texture(aoMap, fromVert.texCoord).r * aoStrength;
+    vec2 tiledTexCoord = fromVert.texCoord * textureTiling;
+    vec3 albedo = texture(albedoMap, tiledTexCoord).rgb * baseColor;
+    vec3 normal = texture(normalMap, tiledTexCoord).rgb;
+    float roughness = texture(roughnessMap, tiledTexCoord).r * roughnessStrength;
+    float metallic = texture(metallicMap, tiledTexCoord).r * metallicStrength;
+    float ao = texture(aoMap, tiledTexCoord).r * aoStrength;
 
     ViewPosition = fromVert.gPosition;
     ViewNormal = fromVert.gNormal;

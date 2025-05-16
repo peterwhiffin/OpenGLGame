@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <string_view>
 /* #include <glm/gtx/string_cast.hpp> */
 
 #include <Jolt/Jolt.h>
@@ -26,6 +27,10 @@
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
+#include <glm/vec2.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 using namespace JPH::literals;
@@ -60,6 +65,7 @@ struct Material {
     std::string name;
     std::vector<Texture> textures;
     vec4 baseColor;
+    glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
     float roughness = 1.0f;
     float metalness = 1.0f;
     float aoStrength = 1.0f;
@@ -269,9 +275,54 @@ struct GlobalUBO {
     mat4 projection = mat4::sIdentity();
 };
 
+struct DebugVertex {
+    vec3 pos;
+    vec4 color;
+};
+
+struct DebugLine {
+    vec3 start;
+    vec3 end;
+    JPH::Color color;
+};
+
+struct DebugTri {
+    vec3 v0, v1, v2;
+    JPH::Color color;
+};
+
+class MyDebugRenderer : public JPH::DebugRendererSimple {
+   public:
+    std::vector<DebugLine> lines;
+    std::vector<DebugTri> triangles;
+
+    void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override {
+        lines.push_back({inFrom,
+                         inTo,
+                         inColor});
+    }
+
+    void DrawTriangle(JPH::RVec3Arg inV1, const JPH::RVec3Arg inV2, const JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override {
+        triangles.push_back({inV1,
+                             inV2,
+                             inV3,
+                             inColor});
+    }
+
+    virtual void DrawText3D(JPH::RVec3Arg inPosition, const std::string_view& inString, JPH::ColorArg inColor, float inHeight) override {
+        // Implement
+    }
+
+    void Clear() {
+        lines.clear();
+        triangles.clear();
+    }
+};
+
 struct Scene {
     std::string name = "../data/scenes/default.scene";
     WindowData windowData;
+    MyDebugRenderer* debugRenderer;
     JPH::BodyInterface* bodyInterface;
     uint32_t trashCanEntity;
     GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
@@ -279,7 +330,7 @@ struct Scene {
     GLuint blurFBO[2], blurSwapTex[2];
     GLuint fullscreenVAO, fullscreenVBO;
     GLuint editorFBO, editorRBO, editorTex;
-    GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader;
+    GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
     uint32_t nodeClicked = INVALID_ID;
 
     const float cDeltaTime = 1.0f / 60.0f;
@@ -336,6 +387,10 @@ struct Scene {
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
     std::vector<Camera*> cameras;
+
+    std::unordered_map<Material*, std::vector<uint32_t>> renderMap;
+
+    std::unordered_map<uint32_t, size_t> renderGroupIndexMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;

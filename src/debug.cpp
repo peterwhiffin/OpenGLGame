@@ -265,9 +265,17 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::DragFloat3("##Scale", scale.mF32, 0.1f);
 
                 vec3 radians = vec3(JPH::DegreesToRadians(degrees.GetX()), JPH::DegreesToRadians(degrees.GetY()), JPH::DegreesToRadians(degrees.GetZ()));
-                setLocalPosition(scene, entityID, position);
-                setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
-                setLocalScale(scene, entityID, scale);
+                RigidBody* rb = getRigidbody(scene, entityID);
+                if (rb != nullptr) {
+                    scene->bodyInterface->SetPositionAndRotation(rb->joltBody, position, quat::sEulerAngles(radians), JPH::EActivation::Activate);
+                    setLocalPosition(scene, entityID, position);
+                    setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
+                } else {
+                    setLocalPosition(scene, entityID, position);
+                    setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
+                    setLocalScale(scene, entityID, scale);
+                }
+
                 ImGui::EndTable();
             }
         }
@@ -371,6 +379,30 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
 
         RigidBody* rigidbody = getRigidbody(scene, entityID);
         if (rigidbody != nullptr) {
+            const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
+            const JPH::BoxShape* box;
+            const JPH::SphereShape* sphere;
+            const JPH::CapsuleShape* capsule;
+            const JPH::CylinderShape* cylinder;
+            JPH::EShapeSubType shapeType = shape->GetSubType();
+            JPH::Color color(0, 255, 0);
+            JPH::AABox localBox;
+
+            switch (shapeType) {
+                case JPH::EShapeSubType::Box:
+                    box = static_cast<const JPH::BoxShape*>(shape);
+                    vec3 halfExtents = box->GetHalfExtent();
+                    localBox = JPH::AABox(-halfExtents, halfExtents);
+                    scene->debugRenderer->DrawBox(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+                    break;
+                case JPH::EShapeSubType::Sphere:
+                    break;
+                case JPH::EShapeSubType::Capsule:
+                    break;
+                case JPH::EShapeSubType::Cylinder:
+                    break;
+            }
+
             if (ImGui::CollapsingHeader("Rigidbody", ImGuiTreeNodeFlags_DefaultOpen)) {
                 if (ImGui::BeginTable("Rigidbody Table", 2, ImGuiTableFlags_SizingFixedSame)) {
                     const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
@@ -478,6 +510,12 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                     ImGui::Image((ImTextureID)(intptr_t)material->textures[4].id, ImVec2(20, 20));
                     ImGui::TableSetColumnIndex(2);
                     ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Tiling");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
 
                     ImGui::EndTable();
                 }

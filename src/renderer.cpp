@@ -149,11 +149,15 @@ void drawScene(Scene* scene) {
     }
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
+        mesh = renderer.mesh;
+        if (mesh == nullptr) {
+            continue;
+        }
+
         if (renderer.boneMatrices.size() > 0) {
             glUniformMatrix4fv(glGetUniformLocation(scene->lightingShader, "finalBoneMatrices[0]"), renderer.boneMatrices.size(), GL_FALSE, &renderer.boneMatrices[0](0, 0));
         }
 
-        mesh = renderer.mesh;
         model = getTransform(scene, renderer.entityID)->worldTransform;
         glUniformMatrix4fv(4, 1, GL_FALSE, &model(0, 0));
         glBindVertexArray(mesh->VAO);
@@ -167,6 +171,7 @@ void drawScene(Scene* scene) {
             glUniform1f(12, material->aoStrength);
             glUniform1f(13, material->normalStrength);
             glUniform3fv(14, 1, material->baseColor.mF32);
+            glUniform2fv(glGetUniformLocation(scene->lightingShader, "textureTiling"), 1, glm::value_ptr(material->textureTiling));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
             glBindTexture(GL_TEXTURE_2D, textures[0].id);
@@ -229,6 +234,7 @@ void drawFullScreenQuad(Scene* scene) {
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glUseProgram(scene->postProcessShader);
     glUniform1f(uniform_location::kPExposure, scene->exposure);
     glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
@@ -241,7 +247,73 @@ void drawFullScreenQuad(Scene* scene) {
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    // renderDebug(scene);
+    glDisable(GL_DEPTH_TEST);
+    renderDebug(scene);
+    glEnable(GL_DEPTH_TEST);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void renderDebug(Scene* scene) {
+    // glEnable(GL_DEPTH_TEST);
+    // glDepthFunc(GL_LEQUAL);  // Match your main scene's depth function
+    glUseProgram(scene->debugShader);
+
+    MyDebugRenderer* debug = scene->debugRenderer;
+
+    std::vector<DebugVertex> lineVerts;
+    for (DebugLine& line : debug->lines) {
+        lineVerts.push_back({line.start, line.color.ToVec4()});
+        lineVerts.push_back({line.end, line.color.ToVec4()});
+    }
+
+    GLuint lineVBO, lineVAO;
+    glGenVertexArrays(1, &lineVAO);
+    glGenBuffers(1, &lineVBO);
+    glBindVertexArray(lineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, lineVerts.size() * sizeof(DebugVertex), lineVerts.data(), GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)offsetof(DebugVertex, color));
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_LINES, 0, lineVerts.size());
+
+    glDeleteBuffers(1, &lineVBO);
+    glDeleteVertexArrays(1, &lineVAO);
+
+    // Triangles
+    std::vector<DebugVertex> triVerts;
+    for (DebugTri& tri : debug->triangles) {
+        triVerts.push_back({tri.v0, tri.color.ToVec4()});
+        triVerts.push_back({tri.v1, tri.color.ToVec4()});
+        triVerts.push_back({tri.v2, tri.color.ToVec4()});
+    }
+
+    GLuint triVBO, triVAO;
+    glGenVertexArrays(1, &triVAO);
+    glGenBuffers(1, &triVBO);
+    glBindVertexArray(triVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, triVBO);
+    glBufferData(GL_ARRAY_BUFFER, triVerts.size() * sizeof(DebugVertex), triVerts.data(), GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)offsetof(DebugVertex, color));
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_TRIANGLES, 0, triVerts.size());
+
+    glDeleteBuffers(1, &triVBO);
+    glDeleteVertexArrays(1, &triVAO);
+
+    // Clear buffers after drawing
+    debug->Clear();
+    // glDisable(GL_DEPTH_TEST);
+    // glDepthFunc(GL_LEQUAL);  // Match your main scene's depth function
 }
 
 void createPickingFBO(Scene* scene) {

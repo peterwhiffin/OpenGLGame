@@ -333,6 +333,7 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 void createMaterial(Scene* scene, ComponentBlock block) {
     std::string name = "default";
     std::vector<Texture> textures;
+    glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
     vec4 baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     float roughness = 0.5f;
     float metalness = 0.0f;
@@ -366,6 +367,13 @@ void createMaterial(Scene* scene, ComponentBlock block) {
 
             currentPos = commaPos + 2;
         }
+    }
+
+    if (block.memberValueMap.count("textureTiling")) {
+        memberString = block.memberValueMap["textureTiling"];
+        parseList(memberString, floatComps);
+        textureTiling.x = floatComps[0];
+        textureTiling.y = floatComps[1];
     }
 
     if (block.memberValueMap.count("baseColor")) {
@@ -404,6 +412,7 @@ void createMaterial(Scene* scene, ComponentBlock block) {
     material->name = name;
     material->shader = scene->lightingShader;
     material->textures = textures;
+    material->textureTiling = textureTiling;
     material->baseColor = baseColor;
     material->roughness = roughness;
     material->metalness = metalness;
@@ -837,6 +846,7 @@ void writeMaterials(Scene* scene, std::ofstream& stream) {
         std::string metalness = std::to_string(material->metalness);
         std::string aoStrength = std::to_string(material->aoStrength);
         std::string normalStrength = std::to_string(material->normalStrength);
+        std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
 
         if (material->textures.size() > 0) {
             textures += material->textures[0].name;
@@ -851,6 +861,7 @@ void writeMaterials(Scene* scene, std::ofstream& stream) {
         stream << "Material {" << std::endl;
         stream << "name: " << name << std::endl;
         stream << "textures: " << textures << std::endl;
+        stream << "textureTiling: " << textureTiling << std::endl;
         stream << "baseColor: " << baseColor << std::endl;
         stream << "roughness: " << roughness << std::endl;
         stream << "metalness: " << metalness << std::endl;

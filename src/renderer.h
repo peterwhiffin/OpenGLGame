@@ -1,6 +1,7 @@
 #pragma once
 #include "component.h"
 
+void renderDebug(Scene* scene);
 void setFlags();
 void drawPickingScene(Scene* scene);
 void drawScene(Scene* scene);

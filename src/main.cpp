@@ -506,6 +506,7 @@ int main() {
     scene->shadowBlurShader = loadShader("../src/shaders/SSAOshader.vs", "../src/shaders/SSAOblurshader.fs");
     scene->blurShader = loadShader("../src/shaders/gaussianblurshader.vs", "../src/shaders/gaussianblurshader.fs");
     scene->postProcessShader = loadShader("../src/shaders/postprocessshader.vs", "../src/shaders/postprocessshader.fs");
+    scene->debugShader = loadShader("../src/shaders/debugShader.vs", "../src/shaders/debugShader.fs");
 
     glGenTextures(1, &whiteTexture);
     glGenTextures(1, &blackTexture);
@@ -572,8 +573,44 @@ int main() {
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
         mapBones(scene, &renderer);
+
+        scene->renderMap[renderer.mesh->subMeshes[0].material].push_back(renderer.entityID);
     }
 
+    scene->debugRenderer = new MyDebugRenderer();
+    JPH::DebugRenderer::sInstance = scene->debugRenderer;
+    /* struct DrawSettings
+            {
+                    bool						mDrawGetSupportFunction = false;				///< Draw the GetSupport() function, used for convex collision detection
+                    bool						mDrawSupportDirection = false;					///< When drawing the support function, also draw which direction mapped to a specific support point
+                    bool						mDrawGetSupportingFace = false;					///< Draw the faces that were found colliding during collision detection
+                    bool						mDrawShape = true;								///< Draw the shapes of all bodies
+                    bool						mDrawShapeWireframe = false;					///< When mDrawShape is true and this is true, the shapes will be drawn in wireframe instead of solid.
+                    EShapeColor					mDrawShapeColor = EShapeColor::MotionTypeColor; ///< Coloring scheme to use for shapes
+                    bool						mDrawBoundingBox = false;						///< Draw a bounding box per body
+                    bool						mDrawCenterOfMassTransform = false;				///< Draw the center of mass for each body
+                    bool						mDrawWorldTransform = false;					///< Draw the world transform (which can be different than the center of mass) for each body
+                    bool						mDrawVelocity = false;							///< Draw the velocity vector for each body
+                    bool						mDrawMassAndInertia = false;					///< Draw the mass and inertia (as the box equivalent) for each body
+                    bool						mDrawSleepStats = false;						///< Draw stats regarding the sleeping algorithm of each body
+                    bool						mDrawSoftBodyVertices = false;					///< Draw the vertices of soft bodies
+                    bool						mDrawSoftBodyVertexVelocities = false;			///< Draw the velocities of the vertices of soft bodies
+                    bool						mDrawSoftBodyEdgeConstraints = false;			///< Draw the edge constraints of soft bodies
+                    bool						mDrawSoftBodyBendConstraints = false;			///< Draw the bend constraints of soft bodies
+                    bool						mDrawSoftBodyVolumeConstraints = false;			///< Draw the volume constraints of soft bodies
+                    bool						mDrawSoftBodySkinConstraints = false;			///< Draw the skin constraints of soft bodies
+                    bool						mDrawSoftBodyLRAConstraints = false;			///< Draw the LRA constraints of soft bodies
+                    bool						mDrawSoftBodyPredictedBounds = false;			///< Draw the predicted bounds of soft bodies
+                    ESoftBodyConstraintColor	mDrawSoftBodyConstraintColor = ESoftBodyConstraintColor::ConstraintType; ///< Coloring scheme to use for soft body constraints
+            }; */
+    JPH::BodyManager::DrawSettings drawSettings;
+    drawSettings.mDrawShape = true;
+    drawSettings.mDrawShapeWireframe = true;
+    drawSettings.mDrawShapeColor = JPH::BodyManager::EShapeColor::MotionTypeColor;
+    // drawSettings.mDrawBoundingBox = true;
+    // drawSettings.mDrawCenterOfMassTransform = true;
+    // drawSettings.mDrawVelocity = true;
+    // drawSettings.mDrawWorldTransform = true;
     /* for (int i = 0; i < 12; i++) {
     Entity* spotLightEntity = getNewEntity(scene, "SpotLight");
     SpotLight* spotLight = addSpotLight(scene, spotLightEntity->entityID);
@@ -647,6 +684,10 @@ int main() {
         updateCamera(scene);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
 
+        scene->debugRenderer->SetCameraPos(getPosition(scene, scene->cameras[0]->entityID));
+        // physics_system.DrawBodies(drawSettings, scene->debugRenderer);
+
+        // scene->debugRenderer->DrawBox(box, color);
         // drawPickingScene(scene);
         // checkPicker(scene, input.cursorPosition);
         drawShadowMaps(scene);

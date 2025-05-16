@@ -162,7 +162,7 @@ Texture loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std::
             break;
         case aiTextureType_NORMALS:  // normal map
             newTexture.id = allTextures->at(2).id;
-            filter = GL_LINEAR;
+            filter = GL_NEAREST;
             isNormal = true;
             break;
     }
