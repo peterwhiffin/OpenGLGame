@@ -30,6 +30,8 @@
 #include <Jolt/Renderer/DebugRendererSimple.h>
 #include <glm/vec2.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <unordered_set>
+#include "input.h"
 
 JPH_SUPPRESS_WARNINGS
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
@@ -322,6 +324,7 @@ class MyDebugRenderer : public JPH::DebugRendererSimple {
 struct Scene {
     std::string name = "../data/scenes/default.scene";
     WindowData windowData;
+    InputActions input;
     MyDebugRenderer* debugRenderer;
     JPH::BodyInterface* bodyInterface;
     JPH::PhysicsSystem* physicsSystem;
@@ -361,6 +364,7 @@ struct Scene {
     bool isPicking = false;
     bool canPick = true;
     bool physicsTicked = false;
+    bool canDelete = true;
 
     GLuint matricesUBO;
     GlobalUBO matricesUBOData;
@@ -375,10 +379,6 @@ struct Scene {
     Player* player;
 
     DirectionalLight sun;
-    // std::unordered_map<uint32_t, uint32_t> usedIds;
-    std::vector<Model*> models;
-    std::vector<vec3> ssaoKernel;
-    std::vector<vec3> ssaoNoise;
 
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
@@ -388,10 +388,6 @@ struct Scene {
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
     std::vector<Camera*> cameras;
-
-    std::unordered_map<Material*, std::vector<uint32_t>> renderMap;
-
-    std::unordered_map<uint32_t, size_t> renderGroupIndexMap;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
@@ -406,6 +402,12 @@ struct Scene {
     std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<std::string, Material*> materialMap;
     std::unordered_map<std::string, Texture> textureMap;
+
+    std::vector<Model*> models;
+    std::vector<vec3> ssaoKernel;
+    std::vector<vec3> ssaoNoise;
+
+    std::unordered_set<uint32_t> selectedEntities;
 };
 
 uint32_t getEntityID(Scene* scene);

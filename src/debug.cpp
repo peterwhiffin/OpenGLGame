@@ -3,6 +3,7 @@
 #include "transform.h"
 #include "player.h"
 #include "sceneloader.h"
+#include "physics.h"
 
 void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     if (!scene->isPicking) {
@@ -32,7 +33,7 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags) {
+/* void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiMultiSelectIO* ms_io) {
     Entity* entity = getEntity(scene, entityID);
     Transform* transform = getTransform(scene, entityID);
 
@@ -54,14 +55,14 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
     }
     if (node_open) {
         for (uint32_t childEntityID : transform->childEntityIds) {
-            createImGuiEntityTree(scene, childEntityID, node_flags);
+            createImGuiEntityTree(scene, childEntityID, node_flags, ms_io);
         }
 
         ImGui::TreePop();
     }
 
     ImGui::PopID();
-}
+} */
 
 static void ShowExampleMenuFile(Scene* scene) {
     ImGui::MenuItem("(demo menu)", NULL, false, false);
@@ -140,6 +141,41 @@ static void ShowExampleMenuFile(Scene* scene) {
     }
 }
 
+void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
+    Entity* entity = getEntity(scene, entityID);
+    Transform* transform = getTransform(scene, entityID);
+
+    ImGui::PushID(entityID);
+
+    node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
+
+    if (transform->childEntityIds.size() == 0) {
+        node_flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    ImGui::SetNextItemSelectionUserData(entityID);
+
+    bool is_selected = selection.Contains(entityID);
+    if (is_selected) {
+        node_flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    std::string title = entity->name;
+    bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
+    if (ImGui::IsItemClicked()) {
+        scene->nodeClicked = entity->entityID;
+    }
+
+    if (node_open) {
+        for (uint32_t childEntityID : transform->childEntityIds) {
+            createImGuiEntityTree(scene, childEntityID, node_flags, selection);
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID();
+}
+
 void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -205,25 +241,19 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     flags = ImGuiConfigFlags_DockingEnable;
 
     ImGui::PopStyleVar();
-    ImGui::Begin("SceneHierarchy");
-    int ITEMS_COUNT = scene->entities.size();
+    /////////////////////////////////////////////////////////////////////
+
     static ImGuiSelectionBasicStorage selection;
 
-    ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
-    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, ITEMS_COUNT);
-    selection.ApplyRequests(ms_io);
+    ImGui::Begin("SceneHierarchy");
 
-    /* for (int n = 0; n < ITEMS_COUNT; n++) {
-        char label[64];
-        sprintf(label, "Object %05d: %s", n, ExampleNames[n % IM_ARRAYSIZE(ExampleNames)]);
-        bool item_is_selected = selection.Contains((ImGuiID)n);
-        ImGui::SetNextItemSelectionUserData(n);
-        ImGui::Selectable(label, item_is_selected);
-    } */
+    ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
+    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, scene->entities.size());
+    selection.ApplyRequests(ms_io);
 
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
+            createImGuiEntityTree(scene, scene->transforms[i].entityID, 0, selection);
         }
     }
 
@@ -242,10 +272,54 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         ImGui::EndPopup();
     }
 
+    if (scene->input.deleteKey) {
+        if (scene->canDelete) {
+            scene->canDelete = false;
+
+            for (int i = 0; i < selection._Storage.Data.Size; ++i) {
+                ImGuiID key = selection._Storage.Data[i].key;
+                if (selection._Storage.GetInt(key, 0) != 0) {
+                    uint32_t entityID = static_cast<uint32_t>(key);
+                    destroyEntity(scene, entityID);
+                }
+            }
+        }
+    } else {
+        scene->canDelete = true;
+    }
+
     ImGui::End();
+    /////////////////////////////////////////////////////////////////////
+    /* ImGui::Begin("SceneHierarchy");
+
+    ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
+    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags);
+
+    for (int i = 0; i < scene->transforms.size(); i++) {
+        if (scene->transforms[i].parentEntityID == INVALID_ID) {
+            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
+        }
+    }
+
+    ms_io = ImGui::EndMultiSelect();
+
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        ImGui::OpenPopup("HierarchyContextMenu");
+    }
+    if (ImGui::BeginPopup("HierarchyContextMenu")) {
+        ImGui::Text("Inspector menu");
+        if (ImGui::MenuItem("Create Entity")) {
+            getNewEntity(scene, "NewEntity");
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::End(); */
 
     ImGui::Begin("Inspector");
 
+    // unsigned int entityID = scene->nodeClicked;
     unsigned int entityID = scene->nodeClicked;
     if (entityID != INVALID_ID) {
         if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -283,10 +357,14 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                 ImGui::TableSetColumnIndex(1);
                 ImGui::DragFloat3("##Scale", scale.mF32, 0.1f);
 
+                vec3 newPos;
+                newPos.SetX(position.GetX());
+                newPos.SetY(position.GetY());
+                newPos.SetZ(position.GetZ());
                 vec3 radians = vec3(JPH::DegreesToRadians(degrees.GetX()), JPH::DegreesToRadians(degrees.GetY()), JPH::DegreesToRadians(degrees.GetZ()));
                 RigidBody* rb = getRigidbody(scene, entityID);
                 if (rb != nullptr) {
-                    scene->bodyInterface->SetPositionAndRotation(rb->joltBody, position, quat::sEulerAngles(radians), JPH::EActivation::Activate);
+                    scene->bodyInterface->SetPositionAndRotation(rb->joltBody, newPos, quat::sEulerAngles(radians), JPH::EActivation::Activate);
                     setLocalPosition(scene, entityID, position);
                     setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
                 } else {
@@ -406,6 +484,8 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
             JPH::EShapeSubType shapeType = shape->GetSubType();
             JPH::Color color(0, 255, 0);
             JPH::AABox localBox;
+            float radius = 0.5f;
+            float halfHeight = 0.5f;
 
             switch (shapeType) {
                 case JPH::EShapeSubType::Box:
@@ -415,14 +495,33 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                     scene->debugRenderer->DrawBox(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Sphere:
+                    sphere = static_cast<const JPH::SphereShape*>(shape);
+                    radius = sphere->GetRadius();
+                    scene->debugRenderer->DrawSphere(scene->bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Capsule:
+                    capsule = static_cast<const JPH::CapsuleShape*>(shape);
+                    halfHeight = capsule->GetHalfHeightOfCylinder();
+                    radius = capsule->GetRadius();
+                    scene->debugRenderer->DrawCapsule(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Cylinder:
+                    cylinder = static_cast<const JPH::CylinderShape*>(shape);
+                    halfHeight = cylinder->GetHalfHeight();
+                    radius = cylinder->GetRadius();
+                    scene->debugRenderer->DrawCylinder(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
             }
 
             if (ImGui::CollapsingHeader("Rigidbody", ImGuiTreeNodeFlags_DefaultOpen)) {
+                if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                    ImGui::OpenPopup("RigidbodyContext");
+                }
+                if (ImGui::BeginPopup("Rigidbody Stuff")) {
+                    ImGui::Text("Remove Rigidbody");
+                    ImGui::EndPopup();
+                }
+
                 if (ImGui::BeginTable("Rigidbody Table", 2, ImGuiTableFlags_SizingFixedSame)) {
                     const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
                     JPH::EShapeSubType shapeType = shape->GetSubType();
@@ -451,7 +550,6 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
                     ImGui::Text("Half Extents: ");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::DragFloat3("##halfExtents", halfExtents.mF32, 0.01f, 0.0f, 0.0f);
-
                     ImGui::EndTable();
                 }
             }
@@ -460,84 +558,85 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
         MeshRenderer* renderer = getMeshRenderer(scene, entityID);
         if (renderer != nullptr) {
             if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
-                if (ImGui::BeginTable("Mesh Renderer Table", 3, ImGuiTableFlags_SizingFixedSame)) {
-                    ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 100.0f);
-                    ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_None, 20.0f);
-                    ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
+                if (ImGui::IsItemHovered())
+                    if (ImGui::BeginTable("Mesh Renderer Table", 3, ImGuiTableFlags_SizingFixedSame)) {
+                        ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 100.0f);
+                        ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_None, 20.0f);
+                        ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
 
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Mesh");
-                    ImGui::TableSetColumnIndex(1);
-                    std::string meshName = renderer->mesh == nullptr ? "None" : renderer->mesh->name;
-                    if (ImGui::BeginCombo("##currentMesh", meshName.c_str())) {
-                        const bool isSelected = false;
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Mesh");
+                        ImGui::TableSetColumnIndex(1);
+                        std::string meshName = renderer->mesh == nullptr ? "None" : renderer->mesh->name;
+                        if (ImGui::BeginCombo("##currentMesh", meshName.c_str())) {
+                            const bool isSelected = false;
 
-                        for (auto& pair : scene->meshMap) {
-                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                                renderer->mesh = pair.second;
+                            for (auto& pair : scene->meshMap) {
+                                if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                    renderer->mesh = pair.second;
+                                }
                             }
+
+                            ImGui::EndCombo();
                         }
+                        // ImGui::Text(renderer->mesh->name.c_str());
 
-                        ImGui::EndCombo();
+                        Material* material = renderer->mesh->subMeshes[0].material;
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Material");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text(material->name.c_str());
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Albedo");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[0].id, ImVec2(20, 20));
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Roughness");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[1].id, ImVec2(20, 20));
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Metalness");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[2].id, ImVec2(20, 20));
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("AO");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[3].id, ImVec2(20, 20));
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Normal");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[4].id, ImVec2(20, 20));
+                        ImGui::TableSetColumnIndex(2);
+                        ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("Tiling");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
+
+                        ImGui::EndTable();
                     }
-                    // ImGui::Text(renderer->mesh->name.c_str());
-
-                    Material* material = renderer->mesh->subMeshes[0].material;
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Material");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Text(material->name.c_str());
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Albedo");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Image((ImTextureID)(intptr_t)material->textures[0].id, ImVec2(20, 20));
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Roughness");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Image((ImTextureID)(intptr_t)material->textures[1].id, ImVec2(20, 20));
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Metalness");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Image((ImTextureID)(intptr_t)material->textures[2].id, ImVec2(20, 20));
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("AO");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Image((ImTextureID)(intptr_t)material->textures[3].id, ImVec2(20, 20));
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Normal");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Image((ImTextureID)(intptr_t)material->textures[4].id, ImVec2(20, 20));
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
-
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Tiling");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
-
-                    ImGui::EndTable();
-                }
             }
         }
 
@@ -548,17 +647,32 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
 
         if (ImGui::BeginCombo("##Add Component", "Add Component")) {
             const bool isSelected = false;
-            if (ImGui::Selectable("Mesh Renderer", isSelected)) {
-                MeshRenderer* renderer = addMeshRenderer(scene, entityID);
-                renderer->mesh = nullptr;
-                uint32_t parentID = getTransform(scene, entityID)->parentEntityID;
-                uint32_t childID = entityID;
-                while (parentID != INVALID_ID) {
-                    childID = parentID;
-                    parentID = getTransform(scene, childID)->parentEntityID;
-                }
+            if (getMeshRenderer(scene, entityID) == nullptr) {
+                if (ImGui::Selectable("Mesh Renderer", isSelected)) {
+                    MeshRenderer* renderer = addMeshRenderer(scene, entityID);
+                    renderer->mesh = nullptr;
+                    uint32_t parentID = getTransform(scene, entityID)->parentEntityID;
+                    uint32_t childID = entityID;
+                    while (parentID != INVALID_ID) {
+                        childID = parentID;
+                        parentID = getTransform(scene, childID)->parentEntityID;
+                    }
 
-                renderer->rootEntity = childID;
+                    renderer->rootEntity = childID;
+                }
+            }
+
+            if (getRigidbody(scene, entityID) == nullptr) {
+                if (ImGui::Selectable("Rigidbody: Box", isSelected)) {
+                    RigidBody* rb = addRigidbody(scene, entityID);
+                    JPH::BoxShapeSettings boxSettings(vec3(0.5f, 0.5f, 0.5f));
+                    JPH::ShapeSettings::ShapeResult shapeResult = boxSettings.Create();
+                    JPH::ShapeRefC shape = shapeResult.Get();
+                    JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
+                    JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
+                    scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
+                    rb->joltBody = body->GetID();
+                }
             }
             ImGui::EndCombo();
         }

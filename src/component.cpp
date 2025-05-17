@@ -179,13 +179,36 @@ SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
 }
 
 void destroyEntity(Scene* scene, uint32_t entityID) {
+    if (!scene->entityIndexMap.count(entityID)) {
+        return;
+    }
+
     size_t indexToRemove = scene->entityIndexMap[entityID];
     size_t lastIndex = scene->entityIndexMap.size() - 1;
 
     Transform* transform = getTransform(scene, entityID);
     if (transform->parentEntityID != INVALID_ID) {
         Transform* parent = getTransform(scene, transform->parentEntityID);
-        parent->childEntityIds.erase(std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID), parent->childEntityIds.end());
+
+        for (int i = 0; i < parent->childEntityIds.size(); i++) {
+            if (parent->childEntityIds[i] == entityID) {
+                size_t childIndex = i;
+                size_t lastIndex = 0;
+
+                if (parent->childEntityIds.size() > 0) {
+                    lastIndex = parent->childEntityIds.size() - 1;
+                }
+
+                if (childIndex != lastIndex) {
+                    std::swap(parent->childEntityIds[childIndex], parent->childEntityIds[lastIndex]);
+                }
+
+                parent->childEntityIds.pop_back();
+                break;
+            }
+        }
+
+        // parent->childEntityIds.erase(std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID), parent->childEntityIds.end());
     }
 
     std::vector<uint32_t> temp;

@@ -3,9 +3,6 @@
 #include "shader.h"
 #include "renderer.h"
 #include <Jolt/Math/MathTypes.h>
-using JPH::Mat44;
-using JPH::Vec3;
-using JPH::Vec4;
 
 #define M_PI 3.14159265358979323846
 
@@ -46,7 +43,7 @@ void drawPickingScene(Scene* scene) {
 
 void drawShadowMaps(Scene* scene) {
     vec3 position;
-    Mat44 viewMatrix;
+    mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjection;
     mat4 model;
@@ -54,8 +51,7 @@ void drawShadowMaps(Scene* scene) {
 
     for (SpotLight& light : scene->spotLights) {
         position = getPosition(scene, light.entityID);
-        viewMatrix = Mat44::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
-        // projectionMatrix = glm::perspective(glm::radians((light.outerCutoff * 2.0f)), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
+        viewMatrix = mat4::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
         projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light.outerCutoff * 2.0f), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
         viewProjection = projectionMatrix * viewMatrix;
         light.lightSpaceMatrix = viewProjection;
@@ -256,8 +252,6 @@ void drawFullScreenQuad(Scene* scene) {
 }
 
 void renderDebug(Scene* scene) {
-    // glEnable(GL_DEPTH_TEST);
-    // glDepthFunc(GL_LEQUAL);  // Match your main scene's depth function
     glUseProgram(scene->debugShader);
 
     MyDebugRenderer* debug = scene->debugRenderer;
@@ -310,10 +304,7 @@ void renderDebug(Scene* scene) {
     glDeleteBuffers(1, &triVBO);
     glDeleteVertexArrays(1, &triVAO);
 
-    // Clear buffers after drawing
     debug->Clear();
-    // glDisable(GL_DEPTH_TEST);
-    // glDepthFunc(GL_LEQUAL);  // Match your main scene's depth function
 }
 
 void createPickingFBO(Scene* scene) {
