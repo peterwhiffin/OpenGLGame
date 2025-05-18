@@ -40,14 +40,14 @@ struct Scene {
 
     uint32_t nodeClicked = INVALID_ID;
 
+    double timeAccum = 0.0f;
+    double physicsAccum = 0.0f;
+    double currentFrame = 0.0f;
+    double lastFrame = 0.0f;
+    double deltaTime;
     float FPS = 0.0f;
     float frameTime = 0.0f;
-    float timeAccum = 0.0f;
-    float physicsAccum = 0.0f;
     float frameCount = 0;
-    float currentFrame = 0.0f;
-    float lastFrame = 0.0f;
-    float deltaTime;
     float gravity = -18.81f;
     float normalStrength = 1.06f;
     float exposure = 1.0f;

@@ -94,29 +94,6 @@ void initPhysics(Scene* scene) {
     scene->bodyInterface = &scene->physicsSystem.GetBodyInterface();
 }
 
-void setAndUpdateObjectPositions(Scene* scene) {
-    const float t = scene->physicsAccum / cDeltaTime;
-    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
-    for (RigidBody& rigidbody : scene->rigidbodies) {
-        if (bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
-            continue;
-        }
-
-        rigidbody.lastPosition = getPosition(scene, rigidbody.entityID);
-        rigidbody.lastRotation = getRotation(scene, rigidbody.entityID);
-
-        const vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
-        setPosition(scene, rigidbody.entityID, newPos);
-
-        if (!rigidbody.rotationLocked) {
-            quat newRot = rigidbody.lastRotation.SLERP(bodyInterface->GetRotation(rigidbody.joltBody), t);
-            setRotation(scene, rigidbody.entityID, newRot);
-        }
-    }
-
-    return;
-}
-
 void updateObjectPositions(Scene* scene) {
     const float t = scene->physicsAccum / cDeltaTime;
     const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
@@ -129,12 +106,31 @@ void updateObjectPositions(Scene* scene) {
         setPosition(scene, rigidbody.entityID, newPos);
 
         if (!rigidbody.rotationLocked) {
-            quat newRot = rigidbody.lastRotation.SLERP(bodyInterface->GetRotation(rigidbody.joltBody), t);
+            const quat newRot = rigidbody.lastRotation.SLERP(bodyInterface->GetRotation(rigidbody.joltBody), t);
             setRotation(scene, rigidbody.entityID, newRot);
         }
     }
+}
 
-    return;
+void setPreviousTransforms(Scene* scene) {
+    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
+    for (RigidBody& rigidbody : scene->rigidbodies) {
+        if (bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
+            continue;
+        }
+
+        const vec3 currentPosition = bodyInterface->GetPosition(rigidbody.joltBody);
+        const quat currentRotation = bodyInterface->GetRotation(rigidbody.joltBody);
+
+        rigidbody.lastPosition = currentPosition;
+        rigidbody.lastRotation = currentRotation;
+
+        setPosition(scene, rigidbody.entityID, currentPosition);
+
+        if (!rigidbody.rotationLocked) {
+            setRotation(scene, rigidbody.entityID, currentRotation);
+        }
+    }
 }
 
 void updatePhysics(Scene* scene) {
@@ -144,9 +140,9 @@ void updatePhysics(Scene* scene) {
         return;
     }
 
+    setPreviousTransforms(scene);
     scene->physicsSystem.Update(cDeltaTime, cCollisionSteps, scene->tempAllocator, scene->jobSystem);
     scene->physicsAccum -= cDeltaTime;
-    setAndUpdateObjectPositions(scene);
 }
 
 void destroyPhysicsSystem() {

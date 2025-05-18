@@ -21,7 +21,7 @@ void exitProgram(Scene* scene, int code) {
 }
 
 void updateTime(Scene* scene) {
-    scene->currentFrame = static_cast<float>(glfwGetTime());
+    scene->currentFrame = glfwGetTime();
     scene->deltaTime = scene->currentFrame - scene->lastFrame;
     scene->lastFrame = scene->currentFrame;
 }

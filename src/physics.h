@@ -47,7 +47,7 @@ const JPH::uint cNumBodyMutexes = 0;
 const JPH::uint cMaxBodyPairs = 65536;
 const JPH::uint cMaxContactConstraints = 10240;
 const JPH::uint cCollisionSteps = 1;
-const float cDeltaTime = 1.0f / 60.0f;
+constexpr double cDeltaTime = 1.0 / 60.0;
 
 void initPhysics(Scene* scene);
 void updatePhysics(Scene* scene);
