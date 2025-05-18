@@ -1,14 +1,16 @@
-#include "component.h"
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
+
 #include "loader.h"
 #include "sceneloader.h"
-#include "input.h"
-#include "camera.h"
-#include "physics.h"
-#include "animation.h"
-#include "player.h"
+#include "scene.h"
 #include "renderer.h"
-#include "transform.h"
 #include "shader.h"
+#include "physics.h"
+#include "input.h"
+#include "player.h"
+#include "animation.h"
+#include "camera.h"
 #include "editor.h"
 
 void exitProgram(Scene* scene, int code) {

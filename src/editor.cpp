@@ -1,11 +1,15 @@
+#include <iostream>
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"
 #include "editor.h"
-#include "transform.h"
+#include "scene.h"
 #include "sceneloader.h"
-#include "physics.h"
+#include "ecs.h"
+#include "transform.h"
 #include "renderer.h"
+#include "physics.h"
+#include "animation.h"
 
 void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     if (!scene->isPicking) {

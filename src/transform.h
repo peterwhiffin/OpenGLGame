@@ -1,5 +1,16 @@
 #pragma once
-#include "component.h"
+#include "forward.h"
+#include "utils/mathutils.h"
+
+struct Transform {
+    uint32_t entityID;
+    uint32_t parentEntityID;
+    vec3 localPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat localRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    vec3 localScale = vec3(1.0f, 1.0f, 1.0f);
+    mat4 worldTransform = mat4::sIdentity();
+    std::vector<uint32_t> childEntityIds;
+};
 
 vec3 right(Scene* scene, uint32_t entityID);
 vec3 up(Scene* scene, uint32_t entityID);

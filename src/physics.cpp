@@ -4,6 +4,7 @@
 
 #include "physics.h"
 #include "transform.h"
+#include "scene.h"
 
 using namespace JPH;
 
@@ -94,8 +95,8 @@ void initPhysics(Scene* scene) {
 }
 
 void setAndUpdateObjectPositions(Scene* scene) {
-    float t = scene->physicsAccum / cDeltaTime;
-    JPH::BodyInterface* bodyInterface = scene->bodyInterface;
+    const float t = scene->physicsAccum / cDeltaTime;
+    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (RigidBody& rigidbody : scene->rigidbodies) {
         if (bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
             continue;
@@ -104,7 +105,7 @@ void setAndUpdateObjectPositions(Scene* scene) {
         rigidbody.lastPosition = getPosition(scene, rigidbody.entityID);
         rigidbody.lastRotation = getRotation(scene, rigidbody.entityID);
 
-        vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
+        const vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
         setPosition(scene, rigidbody.entityID, newPos);
 
         if (!rigidbody.rotationLocked) {
@@ -117,14 +118,14 @@ void setAndUpdateObjectPositions(Scene* scene) {
 }
 
 void updateObjectPositions(Scene* scene) {
-    float t = scene->physicsAccum / cDeltaTime;
-    JPH::BodyInterface* bodyInterface = scene->bodyInterface;
+    const float t = scene->physicsAccum / cDeltaTime;
+    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (RigidBody& rigidbody : scene->rigidbodies) {
         if (bodyInterface->GetObjectLayer(rigidbody.joltBody) == Layers::NON_MOVING) {
             continue;
         }
 
-        vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
+        const vec3 newPos = lerp(rigidbody.lastPosition, bodyInterface->GetPosition(rigidbody.joltBody), t);
         setPosition(scene, rigidbody.entityID, newPos);
 
         if (!rigidbody.rotationLocked) {

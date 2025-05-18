@@ -1,5 +1,6 @@
 #pragma once
-#include "component.h"
+#include "utils/mathutils.h"
+struct Scene;
 
 void initEditor(Scene* scene);
 void checkPicker(Scene* scene, glm::dvec2 pickPosition);

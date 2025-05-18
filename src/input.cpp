@@ -1,4 +1,8 @@
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
+
 #include "input.h"
+#include "scene.h"
 
 void updateInput(Scene* scene) {
     InputActions* actions = &scene->input;

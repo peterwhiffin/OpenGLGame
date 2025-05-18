@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include "shader.h"
+#include "scene.h"
 
 void checkShaderCompilation(unsigned int shader, std::string path) {
     int success;

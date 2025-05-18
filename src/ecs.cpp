@@ -1,11 +1,6 @@
-#include "component.h"
-#include "transform.h"
-#include "shader.h"
-#include "physics.h"
-
-vec3 lerp(const vec3 a, const vec3 b, float t) {
-    return a + (b - a) * t;
-}
+#include "ecs.h"
+#include "scene.h"
+#include "loader.h"
 
 uint32_t getEntityID(Scene* scene) {
     uint32_t newID = scene->nextEntityID++;
@@ -18,59 +13,55 @@ uint32_t getEntityID(Scene* scene) {
     return newID;
 }
 
-/* void registerEntityID(Scene* scene, uint32_t id) {
-    scene->usedIds[id] = 0;
-} */
-
-Entity* getEntity(Scene* scene, uint32_t entityID) {
+Entity* getEntity(Scene* scene, const uint32_t entityID) {
     return &scene->entities[scene->entityIndexMap[entityID]];
 }
 
-Transform* getTransform(Scene* scene, uint32_t entityID) {
+Transform* getTransform(Scene* scene, const uint32_t entityID) {
     return &scene->transforms[scene->transformIndexMap[entityID]];
 }
 
-MeshRenderer* getMeshRenderer(Scene* scene, uint32_t entityID) {
-    if (scene->meshRendererIndexMap.count(entityID) == 0) {
+MeshRenderer* getMeshRenderer(Scene* scene, const uint32_t entityID) {
+    if (scene->meshRendererIndexMap.count(entityID)) {
         return nullptr;
     }
 
     return &scene->meshRenderers[scene->meshRendererIndexMap[entityID]];
 }
 
-RigidBody* getRigidbody(Scene* scene, uint32_t entityID) {
-    if (scene->rigidbodyIndexMap.count(entityID) == 0) {
+RigidBody* getRigidbody(Scene* scene, const uint32_t entityID) {
+    if (!scene->rigidbodyIndexMap.count(entityID)) {
         return nullptr;
     }
 
     return &scene->rigidbodies[scene->rigidbodyIndexMap[entityID]];
 }
 
-Animator* getAnimator(Scene* scene, uint32_t entityID) {
-    if (scene->animatorIndexMap.count(entityID) == 0) {
+Animator* getAnimator(Scene* scene, const uint32_t entityID) {
+    if (!scene->animatorIndexMap.count(entityID)) {
         return nullptr;
     }
 
     return &scene->animators[scene->animatorIndexMap[entityID]];
 }
 
-PointLight* getPointLight(Scene* scene, uint32_t entityID) {
-    if (scene->pointLightIndexMap.count(entityID) == 0) {
+PointLight* getPointLight(Scene* scene, const uint32_t entityID) {
+    if (!scene->pointLightIndexMap.count(entityID)) {
         return nullptr;
     }
 
     return &scene->pointLights[scene->pointLightIndexMap[entityID]];
 }
 
-SpotLight* getSpotLight(Scene* scene, uint32_t entityID) {
-    if (scene->spotLightIndexMap.count(entityID) == 0) {
+SpotLight* getSpotLight(Scene* scene, const uint32_t entityID) {
+    if (!scene->spotLightIndexMap.count(entityID)) {
         return nullptr;
     }
 
     return &scene->spotLights[scene->spotLightIndexMap[entityID]];
 }
 
-Camera* getCamera(Scene* scene, uint32_t entityID) {
+Camera* getCamera(Scene* scene, const uint32_t entityID) {
     Camera* foundCamera = nullptr;
 
     for (Camera* camera : scene->cameras) {
@@ -86,6 +77,7 @@ Camera* getCamera(Scene* scene, uint32_t entityID) {
 Transform* addTransform(Scene* scene, uint32_t entityID) {
     Transform transform;
     transform.entityID = entityID;
+    transform.parentEntityID = INVALID_ID;
     size_t index = scene->transforms.size();
     scene->transforms.push_back(transform);
     scene->transformIndexMap[entityID] = index;
@@ -109,37 +101,6 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTra
         addTransform(scene, entity.entityID);
     }
     return &scene->entities[index];
-}
-
-void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
-    for (int i = 0; i < parent->childEntityIds.size(); i++) {
-        Entity* child = getEntity(scene, parent->childEntityIds[i]);
-        if (renderer->mesh->boneNameMap.count(child->name)) {
-            renderer->transformBoneMap[child->entityID] = renderer->mesh->boneNameMap[child->name];
-        }
-
-        findBones(scene, renderer, getTransform(scene, child->entityID));
-    }
-}
-
-void mapBones(Scene* scene, MeshRenderer* renderer) {
-    if (renderer->mesh->boneNameMap.size() == 0) {
-        return;
-    }
-
-    renderer->boneMatrices.reserve(100);
-
-    for (int i = 0; i < 100; i++) {
-        renderer->boneMatrices.push_back(mat4::sIdentity());
-    }
-
-    Transform* parent = getTransform(scene, renderer->entityID);
-
-    if (parent->parentEntityID != INVALID_ID) {
-        parent = getTransform(scene, parent->parentEntityID);
-    }
-
-    findBones(scene, renderer, parent);
 }
 
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {

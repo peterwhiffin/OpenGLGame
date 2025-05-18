@@ -1,6 +1,7 @@
 #include "animation.h"
+#include "scene.h"
 #include "transform.h"
-#include <cmath>
+#include "utils/mathutils.h"
 
 void updateAnimators(Scene* scene) {
     Animator* animator;

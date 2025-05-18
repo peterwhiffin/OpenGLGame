@@ -1,5 +1,34 @@
 #pragma once
-#include "component.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Math/Float2.h>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
+
+#include "utils/mathutils.h"
+#include "forward.h"
+
+JPH_SUPPRESS_WARNINGS
+
+struct RigidBody {
+    uint32_t entityID;
+    JPH::Color color;
+    JPH::BodyID joltBody;
+    vec3 lastPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat lastRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    bool rotationLocked = false;
+};
 
 namespace Layers {
 static constexpr JPH::ObjectLayer NON_MOVING = 0;

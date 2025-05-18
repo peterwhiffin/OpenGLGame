@@ -1,8 +1,10 @@
 #pragma once
-#include "component.h"
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
 
 constexpr char* shaderPath = "../src/shaders/";
 
+struct Scene;
 void loadShaders(Scene* scene);
 
 namespace vertex_attribute_location {

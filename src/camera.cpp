@@ -1,6 +1,6 @@
-#include "transform.h"
 #include "camera.h"
-#include "player.h"
+#include "scene.h"
+#include "transform.h"
 
 void updateCamera(Scene* scene) {
     Camera* camera = scene->cameras[0];
@@ -14,5 +14,4 @@ void updateCamera(Scene* scene) {
 
     scene->matricesUBOData.view = mat4::sLookAt(newPosition, newPosition + forward(scene, cameraID), up(scene, cameraID));
     scene->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, camera->aspectRatio, camera->nearPlane, camera->farPlane);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
 }

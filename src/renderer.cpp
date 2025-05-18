@@ -1,9 +1,14 @@
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
 #include <random>
+#include <iostream>
 
 #include "renderer.h"
+#include "scene.h"
 #include "transform.h"
 #include "shader.h"
-
+#include "ecs.h"
+#include "camera.h"
 #define M_PI 3.14159265358979323846
 
 void setInitialFlags() {
@@ -76,7 +81,7 @@ void drawShadowMaps(Scene* scene) {
                 uint32_t index;
                 mat4 offset;
 
-                for (auto& pair : renderer.transformBoneMap) {
+                for (const auto& pair : renderer.transformBoneMap) {
                     boneTransform = getTransform(scene, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
@@ -111,8 +116,8 @@ void drawScene(Scene* scene) {
     uint32_t offset;
     mat4 model;
 
-    Camera* camera = scene->cameras[0];
-    std::vector<MeshRenderer>& meshRenderers = scene->meshRenderers;
+    const Camera* camera = scene->cameras[0];
+    const std::vector<MeshRenderer>& meshRenderers = scene->meshRenderers;
 
     glBindFramebuffer(GL_FRAMEBUFFER, scene->litFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -123,7 +128,7 @@ void drawScene(Scene* scene) {
     glUniform1f(35, scene->ambient);
 
     for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
-        PointLight& pointLight = scene->pointLights[i];
+        const PointLight& pointLight = scene->pointLights[i];
         offset = i * 4;
         glUniform3fv(36 + 0 + offset, 1, getPosition(scene, pointLight.entityID).mF32);
         glUniform3fv(36 + 1 + offset, 1, pointLight.color.mF32);
@@ -160,7 +165,7 @@ void drawScene(Scene* scene) {
 
         for (SubMesh& subMesh : mesh->subMeshes) {
             material = subMesh.material;
-            std::vector<Texture>& textures = material->textures;
+            const std::vector<Texture>& textures = material->textures;
 
             glUniform1f(10, material->metalness);
             glUniform1f(11, material->roughness);
@@ -208,7 +213,7 @@ void drawSSAO(Scene* scene) {
 
 void drawBlurPass(Scene* scene) {
     scene->horizontalBlur = false;
-    uint32_t amount = 10;
+    const uint32_t amount = 10;
     glUseProgram(scene->blurShader);
     glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->blurFBO[1]);
@@ -732,6 +737,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
 }
 
 void renderScene(Scene* scene) {
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
     drawShadowMaps(scene);
     drawScene(scene);
     drawSSAO(scene);
@@ -739,6 +745,36 @@ void renderScene(Scene* scene) {
     drawFullScreenQuad(scene);
 }
 
+void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
+    for (int i = 0; i < parent->childEntityIds.size(); i++) {
+        Entity* child = getEntity(scene, parent->childEntityIds[i]);
+        if (renderer->mesh->boneNameMap.count(child->name)) {
+            renderer->transformBoneMap[child->entityID] = renderer->mesh->boneNameMap[child->name];
+        }
+
+        findBones(scene, renderer, getTransform(scene, child->entityID));
+    }
+}
+
+void mapBones(Scene* scene, MeshRenderer* renderer) {
+    if (renderer->mesh->boneNameMap.size() == 0) {
+        return;
+    }
+
+    renderer->boneMatrices.reserve(100);
+
+    for (int i = 0; i < 100; i++) {
+        renderer->boneMatrices.push_back(mat4::sIdentity());
+    }
+
+    Transform* parent = getTransform(scene, renderer->entityID);
+
+    if (parent->parentEntityID != INVALID_ID) {
+        parent = getTransform(scene, parent->parentEntityID);
+    }
+
+    findBones(scene, renderer, parent);
+}
 void createCameraUBO(Scene* scene) {
     glGenBuffers(1, &scene->matricesUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);

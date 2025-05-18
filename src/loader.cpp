@@ -5,26 +5,14 @@
 #include <iostream>
 
 #include "loader.h"
+#include "scene.h"
 #include "shader.h"
 #include "transform.h"
+#include "animation.h"
+#include "renderer.h"
 #include "assimp/material.h"
 #include "assimp/types.h"
 #include "utils/stb_image.h"
-#include "glm/ext/quaternion_float.hpp"
-
-inline vec3 min(const vec3& a, const vec4& b) {
-    return vec3(
-        std::min(a.GetX(), b.GetX()),
-        std::min(a.GetY(), b.GetY()),
-        std::min(a.GetZ(), b.GetZ()));
-}
-
-inline vec3 max(const vec3& a, const vec4& b) {
-    return vec3(
-        std::max(a.GetX(), b.GetX()),
-        std::max(a.GetY(), b.GetY()),
-        std::max(a.GetZ(), b.GetZ()));
-}
 
 JPH::Mat44 transpose(const aiMatrix4x4& m) {
     return JPH::Mat44(

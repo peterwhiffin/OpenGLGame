@@ -1,10 +1,10 @@
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "sceneloader.h"
-#include "transform.h"
-#include "physics.h"
-#include "player.h"
+#include "scene.h"
+#include "loader.h"
 
 void parseList(std::string memberString, std::vector<uint32_t>* out) {
     size_t currentPos = 0;
@@ -785,8 +785,8 @@ void loadDefaultScene(Scene* scene) {
     spotLight->shadowWidth = 800;
     spotLight->shadowHeight = 600;
 
-    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
-    uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+    const uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
+    const uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
     Transform* armsTransform = getTransform(scene, armsID);
     addAnimator(scene, armsID, scene->wrenchArms);
 

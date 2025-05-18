@@ -1,22 +1,16 @@
 #include "transform.h"
+#include "scene.h"
+#include "ecs.h"
 
 void updateTransformMatrices(Scene* scene, Transform* transform) {
     mat4 worldTransform;
     uint32_t parentID;
     Transform* childTransform;
 
-    /* worldTransform = glm::translate(glm::mat4(1.0f), transform->localPosition);
-    worldTransform *= glm::mat4_cast(transform->localRotation);
-    worldTransform = glm::scale(worldTransform, transform->localScale);
- */
-
     mat4 translation = mat4::sTranslation(transform->localPosition);
     mat4 rotation = mat4::sRotation(transform->localRotation);
     mat4 scale = mat4::sScale(transform->localScale);
-
     worldTransform = translation * rotation * scale;
-
-    // Final transform: T * R * S, like in GLM
     parentID = transform->parentEntityID;
 
     if (parentID != INVALID_ID) {
@@ -33,29 +27,6 @@ void updateTransformMatrices(Scene* scene, Transform* transform) {
 
 vec3 QuaternionByVector3(quat rotation, vec3 point) {
     return rotation.Normalized() * point.Normalized();  // who knows
-    /* float num = rotation.x + rotation.x;
-    float num2 = rotation.y + rotation.y;
-    float num3 = rotation.z + rotation.z;
-
-    float num4 = rotation.x * num;
-    float num5 = rotation.y * num2;
-    float num6 = rotation.z * num3;
-
-    float num7 = rotation.x * num2;
-    float num8 = rotation.x * num3;
-    float num9 = rotation.y * num3;
-
-    float num10 = rotation.w * num;
-    float num11 = rotation.w * num2;
-    float num12 = rotation.w * num3;
-
-    glm::vec3 result = glm::vec3(0.0f, 0.0f, 0.0f);
-
-    result.x = (1.0f - (num5 + num6)) * point.x + (num7 - num12) * point.y + (num8 + num11) * point.z;
-    result.y = (num7 + num12) * point.x + (1.0f - (num4 + num6)) * point.y + (num9 - num10) * point.z;
-    result.z = (num8 - num11) * point.x + (num9 + num10) * point.y + (1.0f - (num4 + num5)) * point.z;
-
-    return result; */
 }
 
 vec3 right(Scene* scene, uint32_t entityID) {
@@ -87,7 +58,7 @@ vec3 scaleFromMatrix(mat4& matrix) {
 }
 
 vec3 getPosition(Scene* scene, uint32_t entityID) {
-    Transform* transform = getTransform(scene, entityID);
+    const Transform* transform = getTransform(scene, entityID);
     return transform->worldTransform.GetTranslation();
 }
 

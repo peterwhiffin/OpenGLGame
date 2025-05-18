@@ -1,7 +1,16 @@
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
+
 #include "player.h"
-#include "transform.h"
-#include "animation.h"
+#include "scene.h"
+#include "loader.h"
 #include "physics.h"
+#include "transform.h"
+#include "renderer.h"
+#include "input.h"
+#include "camera.h"
+#include "animation.h"
+#include "ecs.h"
 
 void spawnTrashCan(Scene* scene, Player* player) {
     uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
