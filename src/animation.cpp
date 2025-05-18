@@ -89,26 +89,25 @@ void updateAnimators(Scene* scene) {
 }
 
 void playAnimation(Animator* animator, std::string name) {
-    if (!animator->animationMap.count(name)) {
-        std::cerr << "ERROR::MISSING_ANIMATION::No animation with name: " << name << std::endl;
-        return;
-    }
+    assert(animator->animationMap.count(name));
 
     Animation* currentAnim = animator->currentAnimation;
     Animation* newAnim = animator->animationMap[name];
 
-    if (currentAnim != newAnim) {
-        animator->playbackTime = 0.0f;
-        currentAnim = newAnim;
-        AnimationChannel* channel;
-
-        for (int i = 0; i < currentAnim->channels.size(); i++) {
-            channel = currentAnim->channels[i];
-            channel->nextPositionKey = 0;
-            channel->nextRotationKey = 0;
-            channel->nextScaleKey = 0;
-        }
-
-        animator->currentAnimation = currentAnim;
+    if (currentAnim == newAnim) {
+        return;
     }
+
+    animator->playbackTime = 0.0f;
+    currentAnim = newAnim;
+    AnimationChannel* channel;
+
+    for (int i = 0; i < currentAnim->channels.size(); i++) {
+        channel = currentAnim->channels[i];
+        channel->nextPositionKey = 0;
+        channel->nextRotationKey = 0;
+        channel->nextScaleKey = 0;
+    }
+
+    animator->currentAnimation = currentAnim;
 }

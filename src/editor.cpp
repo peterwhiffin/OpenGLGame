@@ -5,6 +5,7 @@
 #include "transform.h"
 #include "sceneloader.h"
 #include "physics.h"
+#include "renderer.h"
 
 void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     if (!scene->isPicking) {

@@ -1,8 +1,8 @@
 #include <random>
+
+#include "renderer.h"
 #include "transform.h"
 #include "shader.h"
-#include "renderer.h"
-#include <Jolt/Math/MathTypes.h>
 
 #define M_PI 3.14159265358979323846
 
@@ -226,12 +226,28 @@ void drawBlurPass(Scene* scene) {
     }
 }
 
+void MyDebugRenderer::DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) {
+    lines.push_back({inFrom, inTo, inColor});
+}
+
+void MyDebugRenderer::DrawTriangle(JPH::RVec3Arg inV1, const JPH::RVec3Arg inV2, const JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) {
+    triangles.push_back({inV1, inV2, inV3, inColor});
+}
+
+void MyDebugRenderer::DrawText3D(JPH::RVec3Arg inPosition, const std::string_view& inString, JPH::ColorArg inColor, float inHeight) {
+    // Implement
+}
+
+void MyDebugRenderer::Clear() {
+    lines.clear();
+    triangles.clear();
+}
+
 void renderDebug(Scene* scene) {
     glUseProgram(scene->debugShader);
-
-    MyDebugRenderer* debug = scene->debugRenderer;
-
+    MyDebugRenderer* debug = static_cast<MyDebugRenderer*>(scene->debugRenderer);
     std::vector<DebugVertex> lineVerts;
+
     for (DebugLine& line : debug->lines) {
         lineVerts.push_back({line.start, line.color.ToVec4()});
         lineVerts.push_back({line.end, line.color.ToVec4()});
@@ -741,8 +757,8 @@ void initRenderer(Scene* scene) {
     createFullScreenQuad(scene);
     createEditorBuffer(scene);
     generateSSAOKernel(scene);
-    initializeLights(scene, scene->lightingShader);
     createCameraUBO(scene);
+    initializeLights(scene, scene->lightingShader);
 }
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
@@ -770,7 +786,6 @@ void createContext(Scene* scene) {
 
     if (scene->window == NULL) {
         std::cout << "Failed to create window" << std::endl;
-        // exitProgram(scene, -1);
         exit(0);
     }
 
@@ -778,7 +793,6 @@ void createContext(Scene* scene) {
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to load GLAD" << std::endl;
-        // exitProgram(scene, -1);
         exit(0);
     }
 

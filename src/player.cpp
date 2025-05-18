@@ -5,12 +5,8 @@
 
 void spawnTrashCan(Scene* scene, Player* player) {
     uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
-    // RigidBody* rb = getRigidbody(scene, trashcanID);
     Transform* transform = getTransform(scene, trashcanID);
-    // getBoxCollider(scene, transform->childEntityIds[0])->isActive = false;
     JPH::CylinderShapeSettings floor_shape_settings(scene->trashcanModel->rootNode->mesh->extent.GetY(), scene->trashcanModel->rootNode->mesh->extent.GetX());
-    // floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.
-
     JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
     JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
     JPH::ObjectLayer layer = Layers::MOVING;
@@ -22,12 +18,7 @@ void spawnTrashCan(Scene* scene, Player* player) {
 
     RigidBody* rb = addRigidbody(scene, trashcanID);
     rb->joltBody = floor->GetID();
-    // rb->mass = 10.0f;
-    // rb->linearDrag = 3.0f;
-    // rb->friction = 10.0f;
     vec3 camForward = forward(scene, player->cameraController->camera->entityID);
-    // rb->linearVelocity = camForward * 20.0f;
-    // setPosition(scene, trashcanID, getPosition(scene, player->cameraController->camera->entityID) + camForward);
     scene->bodyInterface->SetPosition(rb->joltBody, getPosition(scene, player->cameraController->camera->entityID) + camForward, JPH::EActivation::Activate);
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, camForward * 20);
     rb->lastPosition = getPosition(scene, trashcanID);

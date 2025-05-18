@@ -288,34 +288,6 @@ struct DebugTri {
     JPH::Color color;
 };
 
-class MyDebugRenderer : public JPH::DebugRendererSimple {
-   public:
-    std::vector<DebugLine> lines;
-    std::vector<DebugTri> triangles;
-
-    void DrawLine(JPH::RVec3Arg inFrom, JPH::RVec3Arg inTo, JPH::ColorArg inColor) override {
-        lines.push_back({inFrom,
-                         inTo,
-                         inColor});
-    }
-
-    void DrawTriangle(JPH::RVec3Arg inV1, const JPH::RVec3Arg inV2, const JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow) override {
-        triangles.push_back({inV1,
-                             inV2,
-                             inV3,
-                             inColor});
-    }
-
-    virtual void DrawText3D(JPH::RVec3Arg inPosition, const std::string_view& inString, JPH::ColorArg inColor, float inHeight) override {
-        // Implement
-    }
-
-    void Clear() {
-        lines.clear();
-        triangles.clear();
-    }
-};
-
 struct InputActions {
     glm::vec2 movement = glm::vec2(0.0f, 0.0f);
     glm::dvec2 cursorPosition = glm::dvec2(0, 0);
@@ -346,7 +318,7 @@ struct Scene {
     JPH::BroadPhaseLayerInterface* broad_phase_layer_interface;
     JPH::ObjectVsBroadPhaseLayerFilter* object_vs_broadphase_layer_filter;
     JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
-    MyDebugRenderer* debugRenderer;
+    JPH::DebugRendererSimple* debugRenderer;
 
     uint32_t trashCanEntity;
     GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
