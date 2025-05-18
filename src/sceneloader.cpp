@@ -4,6 +4,7 @@
 #include "sceneloader.h"
 #include "transform.h"
 #include "physics.h"
+#include "player.h"
 
 void parseList(std::string memberString, std::vector<uint32_t>* out) {
     size_t currentPos = 0;
@@ -31,17 +32,17 @@ void parseList(std::string memberString, float* out) {
     }
 }
 
-bool findLastScene(std::string* outScene) {
-    std::string path = "../data/scenes/";
+bool findLastScene(Scene* scene) {
+    // std::string path = "../data/scenes/";
 
-    if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-        std::cerr << "ERROR::BAD_PATH::No directory found at: " << path << std::endl;
+    if (!std::filesystem::exists(scenePath) || !std::filesystem::is_directory(scenePath)) {
+        std::cerr << "ERROR::BAD_PATH::No directory found at: " << scenePath << std::endl;
         return false;
     }
 
-    for (const auto& file : std::filesystem::directory_iterator(path)) {
+    for (const auto& file : std::filesystem::directory_iterator(scenePath)) {
         if (file.path().extension() == ".scene") {
-            *outScene = file.path().string();
+            scene->scenePath = file.path().string();
             return true;
         }
     }
@@ -764,9 +765,52 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
     }
 }
 
-void loadScene(Scene* scene, std::string path) {
-    scene->name = path;
-    std::ifstream stream(path);
+void loadDefaultScene(Scene* scene) {
+    for (int i = 0; i < 2; i++) {
+        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
+        PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
+        setPosition(scene, pointLightEntity->entityID, vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
+        pointLight->color = vec3(1.0f, 1.0f, 1.0f);
+        pointLight->isActive = true;
+        pointLight->brightness = 1.0f;
+    }
+
+    uint32_t spotLightEntityID = getNewEntity(scene, "SpotLight")->entityID;
+    SpotLight* spotLight = addSpotLight(scene, spotLightEntityID);
+    spotLight->isActive = true;
+    spotLight->color = vec3(1.0f, 1.0f, 1.0f);
+    spotLight->brightness = 6.0f;
+    spotLight->cutoff = 15.5f;
+    spotLight->outerCutoff = 55.5f;
+    spotLight->shadowWidth = 800;
+    spotLight->shadowHeight = 600;
+
+    uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
+    uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+    Transform* armsTransform = getTransform(scene, armsID);
+    addAnimator(scene, armsID, scene->wrenchArms);
+
+    Entity* wrenchParent = getNewEntity(scene, "WrenchParent");
+    Player* player = buildPlayer(scene);
+    player->armsID = armsID;
+    setParent(scene, armsID, wrenchParent->entityID);
+    setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
+    setParent(scene, spotLightEntityID, player->cameraController->cameraEntityID);
+    setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
+    setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
+    setLocalRotation(scene, spotLightEntityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
+    setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
+}
+
+void loadScene(Scene* scene) {
+    if (!findLastScene(scene)) {
+        loadDefaultScene(scene);
+        return;
+    }
+
+    std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
+    scene->name = fileName.substr(0, fileName.find('.'));
+    std::ifstream stream(scene->scenePath);
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
@@ -783,6 +827,10 @@ void loadScene(Scene* scene, std::string path) {
         scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
         rb->lastPosition = getPosition(scene, rb->entityID);
         rb->lastRotation = getRotation(scene, rb->entityID);
+    }
+
+    for (MeshRenderer& renderer : scene->meshRenderers) {
+        mapBones(scene, &renderer);
     }
 
     if (scene->player != nullptr) {

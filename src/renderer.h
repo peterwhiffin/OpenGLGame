@@ -1,21 +1,7 @@
 #pragma once
 #include "component.h"
 
-void renderDebug(Scene* scene);
-void setFlags();
-void drawPickingScene(Scene* scene);
-void drawScene(Scene* scene);
-void createPickingFBO(Scene* scene);
-void createFullScreenQuad(Scene* scene);
-void drawFullScreenQuad(Scene* scene);
-void createForwardBuffer(Scene* scene);
-void createBlurBuffers(Scene* scene);
-void drawBlurPass(Scene* scene);
-void generateSSAOKernel(Scene* scene);
-void resizeBuffers(Scene* scene);
-void createShadowMapDepthBuffers(Scene* scene);
-void drawShadowMaps(Scene* scene);
-void createSSAOBuffer(Scene* scene);
-void drawSSAO(Scene* scene);
+void createContext(Scene* scene);
+void initRenderer(Scene* scene);
+void renderScene(Scene* scene);
 void deleteBuffers(Scene* scene);
-void createEditorBuffer(Scene* scene);

@@ -6,7 +6,7 @@
 
 #define M_PI 3.14159265358979323846
 
-void setFlags() {
+void setInitialFlags() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -226,31 +226,6 @@ void drawBlurPass(Scene* scene) {
     }
 }
 
-void drawFullScreenQuad(Scene* scene) {
-    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glUseProgram(scene->postProcessShader);
-    glUniform1f(uniform_location::kPExposure, scene->exposure);
-    glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
-    glUniform1f(uniform_location::kAOAmount, scene->AOAmount);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, scene->litColorTex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, scene->blurSwapTex[scene->horizontalBlur]);
-    glBindVertexArray(scene->fullscreenVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    // renderDebug(scene);
-    glDisable(GL_DEPTH_TEST);
-    renderDebug(scene);
-    glEnable(GL_DEPTH_TEST);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 void renderDebug(Scene* scene) {
     glUseProgram(scene->debugShader);
 
@@ -305,6 +280,31 @@ void renderDebug(Scene* scene) {
     glDeleteVertexArrays(1, &triVAO);
 
     debug->Clear();
+}
+
+void drawFullScreenQuad(Scene* scene) {
+    glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(scene->postProcessShader);
+    glUniform1f(uniform_location::kPExposure, scene->exposure);
+    glUniform1f(uniform_location::kPBloomAmount, scene->bloomAmount);
+    glUniform1f(uniform_location::kAOAmount, scene->AOAmount);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->litColorTex);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, scene->blurSwapTex[scene->horizontalBlur]);
+    glBindVertexArray(scene->fullscreenVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    // renderDebug(scene);
+    glDisable(GL_DEPTH_TEST);
+    renderDebug(scene);
+    glEnable(GL_DEPTH_TEST);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void createPickingFBO(Scene* scene) {
@@ -679,4 +679,109 @@ void deleteBuffers(Scene* scene) {
         glDeleteBuffers(1, &mesh->VBO);
         glDeleteVertexArrays(1, &mesh->VAO);
     }
+}
+
+void initializeLights(Scene* scene, unsigned int shader) {
+    glUseProgram(shader);
+    int numPointLights = scene->pointLights.size();
+    int numSpotLights = scene->spotLights.size();
+    glUniform1i(6, numSpotLights);
+    glUniform1i(7, numPointLights);
+
+    for (int i = 0; i < numPointLights; i++) {
+        PointLight* pointLight = &scene->pointLights[i];
+        std::string base = "pointLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, getPosition(scene, pointLight->entityID).mF32);
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, pointLight->color.mF32);
+        glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), pointLight->brightness);
+    }
+
+    for (int i = 0; i < numSpotLights; i++) {
+        SpotLight* spotLight = &scene->spotLights[i];
+        std::string base = "spotLights[" + std::to_string(i) + "]";
+        glUniform3fv(glGetUniformLocation(shader, (base + ".position").c_str()), 1, getPosition(scene, spotLight->entityID).mF32);
+        glUniform3fv(glGetUniformLocation(shader, (base + ".color").c_str()), 1, spotLight->color.mF32);
+        glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
+        glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
+        glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
+        // glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
+    }
+
+    glUseProgram(scene->ssaoShader);
+    vec2 v(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f);
+    glUniform2fv(8, 1, &v.x);
+    scene->AORadius = 0.06f;
+    scene->AOBias = 0.04f;
+    scene->AOPower = 2.02f;
+}
+
+void renderScene(Scene* scene) {
+    drawShadowMaps(scene);
+    drawScene(scene);
+    drawSSAO(scene);
+    drawBlurPass(scene);
+    drawFullScreenQuad(scene);
+}
+
+void createCameraUBO(Scene* scene) {
+    glGenBuffers(1, &scene->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(mat4), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+}
+
+void initRenderer(Scene* scene) {
+    setInitialFlags();
+    // createPickingFBO(scene);
+    createSSAOBuffer(scene);
+    createShadowMapDepthBuffers(scene);
+    createForwardBuffer(scene);
+    createBlurBuffers(scene);
+    createFullScreenQuad(scene);
+    createEditorBuffer(scene);
+    generateSSAOKernel(scene);
+    initializeLights(scene, scene->lightingShader);
+    createCameraUBO(scene);
+}
+
+void onScreenChanged(GLFWwindow* window, int width, int height) {
+    Scene* scene = (Scene*)glfwGetWindowUserPointer(window);
+    glViewport(0, 0, width, height);
+    glUseProgram(scene->ssaoShader);
+    vec2 v(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f);
+    glUniform2fv(8, 1, &v.x);
+
+    for (int i = 0; i < scene->cameras.size(); i++) {
+        scene->cameras[i]->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
+    }
+
+    resizeBuffers(scene);
+}
+
+void createContext(Scene* scene) {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwSwapInterval(1);
+    scene->window = glfwCreateWindow(scene->windowData.width, scene->windowData.height, "Pete's Game", NULL, NULL);
+
+    if (scene->window == NULL) {
+        std::cout << "Failed to create window" << std::endl;
+        // exitProgram(scene, -1);
+        exit(0);
+    }
+
+    glfwMakeContextCurrent(scene->window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Failed to load GLAD" << std::endl;
+        // exitProgram(scene, -1);
+        exit(0);
+    }
+
+    glfwSetFramebufferSizeCallback(scene->window, onScreenChanged);
+    glfwSetWindowUserPointer(scene->window, scene);
 }

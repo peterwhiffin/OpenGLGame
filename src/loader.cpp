@@ -413,3 +413,65 @@ Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTe
     newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, mat4::sIdentity(), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);
     return newModel;
 }
+
+void createDefaultResources(Scene* scene) {
+    GLuint whiteTexture;
+    GLuint blackTexture;
+    GLuint blueTexture;
+
+    unsigned char whitePixel[4] = {255, 255, 255, 255};
+    unsigned char blackPixel[4] = {0, 0, 0, 255};
+    unsigned char bluePixel[4] = {0, 0, 255, 255};
+
+    glGenTextures(1, &whiteTexture);
+    glGenTextures(1, &blackTexture);
+    glGenTextures(1, &blueTexture);
+
+    glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+    glBindTexture(GL_TEXTURE_2D, blackTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, blackPixel);
+    glBindTexture(GL_TEXTURE_2D, blueTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bluePixel);
+
+    Texture white;
+    Texture black;
+    Texture blue;
+
+    white.id = whiteTexture;
+    black.id = blackTexture;
+    blue.id = blueTexture;
+
+    white.path = "white";
+    white.name = "white";
+    black.path = "black";
+    black.name = "black";
+    blue.path = "blue";
+    blue.name = "blue";
+
+    scene->textures.push_back(black);
+    scene->textures.push_back(white);
+    scene->textures.push_back(blue);
+
+    scene->textureMap[white.name] = white;
+    scene->textureMap[black.name] = black;
+    scene->textureMap[blue.name] = blue;
+
+    Material* defaultMaterial = new Material();
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(black);
+    defaultMaterial->textures.push_back(white);
+    defaultMaterial->textures.push_back(blue);
+    defaultMaterial->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    defaultMaterial->shader = scene->lightingShader;
+    defaultMaterial->name = "default";
+    scene->materialMap[defaultMaterial->name] = defaultMaterial;
+}
+
+void loadResources(Scene* scene) {
+    createDefaultResources(scene);
+    scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
+    scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
+}

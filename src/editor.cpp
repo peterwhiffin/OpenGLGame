@@ -1,7 +1,8 @@
-#include <sstream>
-#include "debug.h"
+#include "utils/imgui.h"
+#include "utils/imgui_impl_glfw.h"
+#include "utils/imgui_impl_opengl3.h"
+#include "editor.h"
 #include "transform.h"
-#include "player.h"
 #include "sceneloader.h"
 #include "physics.h"
 
@@ -32,37 +33,6 @@ void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-/* void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiMultiSelectIO* ms_io) {
-    Entity* entity = getEntity(scene, entityID);
-    Transform* transform = getTransform(scene, entityID);
-
-    ImGui::PushID(entityID);
-
-    node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
-
-    if (transform->childEntityIds.size() == 0) {
-        node_flags |= ImGuiTreeNodeFlags_Leaf;
-    }
-    if (scene->nodeClicked == entityID) {
-        node_flags |= ImGuiTreeNodeFlags_Selected;
-    }
-
-    std::string title = entity->name;
-    bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
-    if (ImGui::IsItemClicked()) {
-        scene->nodeClicked = entity->entityID;
-    }
-    if (node_open) {
-        for (uint32_t childEntityID : transform->childEntityIds) {
-            createImGuiEntityTree(scene, childEntityID, node_flags, ms_io);
-        }
-
-        ImGui::TreePop();
-    }
-
-    ImGui::PopID();
-} */
 
 static void ShowExampleMenuFile(Scene* scene) {
     ImGui::MenuItem("(demo menu)", NULL, false, false);
@@ -176,7 +146,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
     ImGui::PopID();
 }
 
-void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
+void buildImGui(Scene* scene) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -239,14 +209,11 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui::End();
 
     flags = ImGuiConfigFlags_DockingEnable;
-
     ImGui::PopStyleVar();
-    /////////////////////////////////////////////////////////////////////
 
     static ImGuiSelectionBasicStorage selection;
 
     ImGui::Begin("SceneHierarchy");
-
     ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
     ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, scene->entities.size());
     selection.ApplyRequests(ms_io);
@@ -289,37 +256,9 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     }
 
     ImGui::End();
-    /////////////////////////////////////////////////////////////////////
-    /* ImGui::Begin("SceneHierarchy");
-
-    ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
-    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags);
-
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
-        }
-    }
-
-    ms_io = ImGui::EndMultiSelect();
-
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-        ImGui::OpenPopup("HierarchyContextMenu");
-    }
-    if (ImGui::BeginPopup("HierarchyContextMenu")) {
-        ImGui::Text("Inspector menu");
-        if (ImGui::MenuItem("Create Entity")) {
-            getNewEntity(scene, "NewEntity");
-        }
-
-        ImGui::EndPopup();
-    }
-
-    ImGui::End(); */
 
     ImGui::Begin("Inspector");
 
-    // unsigned int entityID = scene->nodeClicked;
     unsigned int entityID = scene->nodeClicked;
     if (entityID != INVALID_ID) {
         if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -699,34 +638,102 @@ void buildImGui(Scene* scene, ImGuiTreeNodeFlags node_flags, Player* player) {
     ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
     ImGui::DragFloat("SSAO power", &scene->AOPower, 0.001f, 0.0f, 50.0f);
     ImGui::End();
-    /* ImGui::Text("FPS: %.0f / FrameTime: %.6f", scene->FPS, scene->frameTime);
-    ImGui::SliderFloat("Move Speed", &player->moveSpeed, 0.0f, 45.0f);
-    ImGui::InputFloat("jump height", &player->jumpHeight);
-    ImGui::InputFloat("gravity", &scene->gravity);
-    ImGui::DragFloat("Normal Strength", &scene->normalStrength, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Exposure", &scene->exposure, 0.01f, 0, 1000.0f);
-    ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Bloom Amount", &scene->bloomAmount, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Ambient", &scene->ambient, 0.001f, 0, 100.0f);
-    ImGui::DragFloat("SSAO radius", &scene->AORadius, 0.001f, 0.0f, 90.0f);
-    ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
-    ImGui::DragFloat("SSAO power", &scene->AOPower, 0.001f, 0.0f, 50.0f);
-
-    if (ImGui::Button("Save Scene", ImVec2(75, 40))) {
-        saveScene(scene);
-    }
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createImGuiEntityTree(scene, scene->transforms[i].entityID, node_flags);
-        }
-    } */
 }
 
-void drawDebug(Scene* scene, ImGuiTreeNodeFlags nodeFlags, Player* player) {
-    buildImGui(scene, nodeFlags, player);
-    // ImGui::BeginMainMenuBar();
-    // ImGui::Image((ImTextureID)(intptr_t)scene->editorTex, ImVec2(800, 600));
-    // ImGui::EndMainMenuBar();
+void drawEditor(Scene* scene) {
+    // drawPickingScene(scene);
+    // checkPicker(scene, input.cursorPosition);
+
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+    buildImGui(scene);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void initEditor(Scene* scene) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    float aspectRatio = 1920.0f / 1080.0f;
+    io.Fonts->AddFontFromFileTTF("../resources/fonts/Karla-Regular.ttf", aspectRatio * 8);
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(scene->window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");
+
+    scene->debugRenderer = new MyDebugRenderer();
+    JPH::DebugRenderer::sInstance = scene->debugRenderer;
+    JPH::BodyManager::DrawSettings drawSettings;
+    drawSettings.mDrawShape = true;
+    drawSettings.mDrawShapeWireframe = true;
+    drawSettings.mDrawShapeColor = JPH::BodyManager::EShapeColor::MotionTypeColor;
+
+    ImVec4* colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.12f, 1.00f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+    colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.29f, 0.48f, 0.54f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
+    colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.20f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_InputTextCursor] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TabHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_Tab] = ImVec4(0.18f, 0.35f, 0.58f, 0.86f);
+    colors[ImGuiCol_TabSelected] = ImVec4(0.20f, 0.41f, 0.68f, 1.00f);
+    colors[ImGuiCol_TabSelectedOverline] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_TabDimmed] = ImVec4(0.07f, 0.10f, 0.15f, 0.97f);
+    colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.14f, 0.26f, 0.42f, 1.00f);
+    colors[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0.50f, 0.50f, 0.50f, 0.00f);
+    colors[ImGuiCol_DockingPreview] = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+    colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+    colors[ImGuiCol_TableHeaderBg] = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
+    colors[ImGuiCol_TableBorderStrong] = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
+    colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
+    colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+    colors[ImGuiCol_TextLink] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_TreeLines] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_NavCursor] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+}
+
+void destroyEditor() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }

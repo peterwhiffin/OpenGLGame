@@ -1,17 +1,14 @@
 #pragma once
-#include <glad/glad.h>
-#include <glfw/glfw3.h>
-/* #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/ext/quaternion_float.hpp> */
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <string_view>
-/* #include <glm/gtx/string_cast.hpp> */
-
+#include <glad/glad.h>
+#include <glfw/glfw3.h>
+#include <glm/vec2.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <Jolt/Jolt.h>
 #include <Jolt/Math/Float2.h>
 #include <Jolt/RegisterTypes.h>
@@ -28,19 +25,17 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
-#include <glm/vec2.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <unordered_set>
-#include "input.h"
 
 JPH_SUPPRESS_WARNINGS
-constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
+
 using namespace JPH::literals;
 using mat4 = JPH::Mat44;
 using vec2 = JPH::Float2;
 using vec3 = JPH::Vec3;
 using vec4 = JPH::Vec4;
 using quat = JPH::Quat;
+
+constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 
 struct Vertex {
     vec4 position;
@@ -321,13 +316,38 @@ class MyDebugRenderer : public JPH::DebugRendererSimple {
     }
 };
 
+struct InputActions {
+    glm::vec2 movement = glm::vec2(0.0f, 0.0f);
+    glm::dvec2 cursorPosition = glm::dvec2(0, 0);
+
+    double lookX = 0;
+    double lookY = 0;
+    double oldX = 0;
+    double oldY = 0;
+
+    bool menu = true;
+    bool spawn = false;
+    bool jump = false;
+    bool fire = false;
+    bool altFire = false;
+    bool deleteKey = false;
+};
+
 struct Scene {
-    std::string name = "../data/scenes/default.scene";
+    std::string name = "default";
+    std::string scenePath = "";
+    GLFWwindow* window;
     WindowData windowData;
     InputActions input;
-    MyDebugRenderer* debugRenderer;
+    JPH::PhysicsSystem physicsSystem;
     JPH::BodyInterface* bodyInterface;
-    JPH::PhysicsSystem* physicsSystem;
+    JPH::TempAllocatorImpl* tempAllocator;
+    JPH::JobSystemThreadPool* jobSystem;
+    JPH::BroadPhaseLayerInterface* broad_phase_layer_interface;
+    JPH::ObjectVsBroadPhaseLayerFilter* object_vs_broadphase_layer_filter;
+    JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
+    MyDebugRenderer* debugRenderer;
+
     uint32_t trashCanEntity;
     GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
     GLuint pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
@@ -335,9 +355,9 @@ struct Scene {
     GLuint fullscreenVAO, fullscreenVBO;
     GLuint editorFBO, editorRBO, editorTex;
     GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
+
     uint32_t nodeClicked = INVALID_ID;
 
-    const float cDeltaTime = 1.0f / 60.0f;
     float FPS = 0.0f;
     float frameTime = 0.0f;
     float timeAccum = 0.0f;
@@ -363,7 +383,6 @@ struct Scene {
     bool horizontalBlur = true;
     bool isPicking = false;
     bool canPick = true;
-    bool physicsTicked = false;
     bool canDelete = true;
 
     GLuint matricesUBO;

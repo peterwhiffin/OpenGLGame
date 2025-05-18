@@ -1,10 +1,9 @@
-// #include "component.h"
 #include "input.h"
 
-double oldX = 0;
-double oldY = 0;
+void updateInput(Scene* scene) {
+    InputActions* actions = &scene->input;
+    GLFWwindow* window = scene->window;
 
-void updateInput(GLFWwindow* window, InputActions* actions) {
     actions->movement.x = 0;
     actions->movement.y = 0;
 
@@ -27,10 +26,8 @@ void updateInput(GLFWwindow* window, InputActions* actions) {
 
     glfwGetCursorPos(window, &actions->cursorPosition.x, &actions->cursorPosition.y);
 
-    // actions->lookX = actions->cursorPosition.x - oldX;
-    // actions->lookY = actions->cursorPosition.y - oldY;
-    actions->lookX = actions->cursorPosition.x - oldX;
-    actions->lookY = oldY - actions->cursorPosition.y;
-    oldX = actions->cursorPosition.x;
-    oldY = actions->cursorPosition.y;
+    actions->lookX = actions->cursorPosition.x - actions->oldX;
+    actions->lookY = actions->oldY - actions->cursorPosition.y;
+    actions->oldX = actions->cursorPosition.x;
+    actions->oldY = actions->cursorPosition.y;
 }

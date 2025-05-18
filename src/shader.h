@@ -1,7 +1,9 @@
 #pragma once
 #include "component.h"
 
-unsigned int loadShader(const char *vertexPath, const char *fragmentPath);
+constexpr char* shaderPath = "../src/shaders/";
+
+void loadShaders(Scene* scene);
 
 namespace vertex_attribute_location {
 constexpr unsigned int kVertexPosition = 0;

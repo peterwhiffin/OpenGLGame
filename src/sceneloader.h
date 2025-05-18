@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include "component.h"
 
+constexpr char* scenePath = "../data/scenes/";
+
 enum TokenType {
     Value,
     BlockOpen,
@@ -22,6 +24,6 @@ struct ComponentBlock {
     std::unordered_map<std::string, std::string> memberValueMap;
 };
 
-void loadScene(Scene* scene, std::string path);
-bool findLastScene(std::string* outScene);
+void loadScene(Scene* scene);
+bool findLastScene(Scene* scene);
 void saveScene(Scene* scene);

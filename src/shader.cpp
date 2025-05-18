@@ -3,7 +3,7 @@
 #include <iostream>
 #include "shader.h"
 
-void checkShaderCompilation(unsigned int shader, const char *path) {
+void checkShaderCompilation(unsigned int shader, std::string path) {
     int success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
@@ -17,7 +17,7 @@ void checkShaderCompilation(unsigned int shader, const char *path) {
     }
 }
 
-void checkProgramLink(unsigned int program, const char *vertexPath, const char *fragmentPath) {
+void checkProgramLink(unsigned int program, std::string vertexPath, std::string fragmentPath) {
     int success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
@@ -31,19 +31,22 @@ void checkProgramLink(unsigned int program, const char *vertexPath, const char *
     }
 }
 
-unsigned int loadShader(const char *vertexPath, const char *fragmentPath) {
+unsigned int loadShader(std::string vertexFile, std::string fragmentFile) {
     std::ifstream vertexFileStream;
     std::ifstream fragmentFileStream;
 
     std::string vertexString;
     std::string fragmentString;
 
+    std::string vertexPath = shaderPath + vertexFile;
+    std::string fragmentPath = shaderPath + fragmentFile;
+
     const char *vertexCode;
     const char *fragmentCode;
 
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    unsigned int shaderProgram;
+    GLuint vertexShader;
+    GLuint fragmentShader;
+    GLuint shaderProgram;
 
     vertexFileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     fragmentFileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -87,4 +90,15 @@ unsigned int loadShader(const char *vertexPath, const char *fragmentPath) {
     glDeleteShader(fragmentShader);
 
     return shaderProgram;
+}
+
+void loadShaders(Scene *scene) {
+    scene->pickingShader = loadShader("pickingshader.vs", "pickingshader.fs");
+    scene->depthShader = loadShader("depthprepassshader.vs", "depthprepassshader.fs");
+    scene->lightingShader = loadShader("pbrlitshader.vs", "pbrlitshader.fs");
+    scene->ssaoShader = loadShader("SSAOshader.vs", "SSAOshader.fs");
+    scene->shadowBlurShader = loadShader("SSAOshader.vs", "SSAOblurshader.fs");
+    scene->blurShader = loadShader("gaussianblurshader.vs", "gaussianblurshader.fs");
+    scene->postProcessShader = loadShader("postprocessshader.vs", "postprocessshader.fs");
+    scene->debugShader = loadShader("debugShader.vs", "debugShader.fs");
 }

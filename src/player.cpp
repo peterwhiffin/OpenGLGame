@@ -34,8 +34,12 @@ void spawnTrashCan(Scene* scene, Player* player) {
     rb->lastRotation = getRotation(scene, trashcanID);
 }
 
-void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player* player) {
+void updatePlayer(Scene* scene) {
+    GLFWwindow* window = scene->window;
+    Player* player = scene->player;
+    InputActions* input = &scene->input;
     Transform* transform = getTransform(scene, player->entityID);
+
     if (input->menu) {
         if (scene->menuCanOpen) {
             scene->menuOpen = !scene->menuOpen;
@@ -133,7 +137,7 @@ void updatePlayer(Scene* scene, GLFWwindow* window, InputActions* input, Player*
     // scene->bodyInterface->SetRotation(rb->joltBody, quat::sEulerAngles(playerRotation), JPH::EActivation::Activate);
 }
 
-Player* createPlayer(Scene* scene) {
+Player* buildPlayer(Scene* scene) {
     uint32_t playerEntityID = getNewEntity(scene, "Player")->entityID;
     uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->entityID;
     uint32_t cameraEntityID = getNewEntity(scene, "Camera")->entityID;
