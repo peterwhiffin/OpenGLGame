@@ -13,8 +13,8 @@ void updateAnimators(Scene* scene) {
     float prevTime;
     float totalDuration;
     float timeElapsed;
-    float t;
     float targetTime;
+    float t;
 
     vec3 prevPosition;
     vec3 targetPosition;

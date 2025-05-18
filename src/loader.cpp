@@ -4,50 +4,84 @@
 #include <assimp/Importer.hpp>
 #include <iostream>
 
-#include "utils/stb_image.h"
 #include "loader.h"
-#include "assimp/material.h"
-#include "assimp/types.h"
-#include "glm/ext/quaternion_float.hpp"
 #include "shader.h"
 #include "transform.h"
+#include "assimp/material.h"
+#include "assimp/types.h"
+#include "utils/stb_image.h"
+#include "glm/ext/quaternion_float.hpp"
+
+inline vec3 min(const vec3& a, const vec4& b) {
+    return vec3(
+        std::min(a.GetX(), b.GetX()),
+        std::min(a.GetY(), b.GetY()),
+        std::min(a.GetZ(), b.GetZ()));
+}
+
+inline vec3 max(const vec3& a, const vec4& b) {
+    return vec3(
+        std::max(a.GetX(), b.GetX()),
+        std::max(a.GetY(), b.GetY()),
+        std::max(a.GetZ(), b.GetZ()));
+}
+
+JPH::Mat44 transpose(const aiMatrix4x4& m) {
+    return JPH::Mat44(
+        JPH::Vec4(m.a1, m.b1, m.c1, m.d1),
+        JPH::Vec4(m.a2, m.b2, m.c2, m.d2),
+        JPH::Vec4(m.a3, m.b3, m.c3, m.d3),
+        JPH::Vec4(m.a4, m.b4, m.c4, m.d4));
+}
 
 void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
+    aiAnimation* aiAnim;
+    aiVectorKey aiVecKey;
+    aiQuatKey aiQuatKey;
+    aiVector3D aiVecValue;
+    aiQuaternion aiQuatValue;
+
+    Animation* newAnimation;
+    AnimationChannel* channel;
+    KeyFramePosition posKey;
+    KeyFrameRotation rotKey;
+    KeyFrameScale scaleKey;
+
+    double ticksPerSecond;
+
     for (uint32_t i = 0; i < scene->mNumAnimations; i++) {
-        aiAnimation* aiAnim = scene->mAnimations[i];
-        Animation* newAnimation = new Animation();
+        aiAnim = scene->mAnimations[i];
+        ticksPerSecond = aiAnim->mTicksPerSecond;
+        newAnimation = new Animation();
         newAnimation->name = aiAnim->mName.C_Str();
         newAnimation->duration = aiAnim->mDuration / aiAnim->mTicksPerSecond;
 
         for (uint32_t j = 0; j < aiAnim->mNumChannels; j++) {
-            AnimationChannel* channel = new AnimationChannel();
+            channel = new AnimationChannel();
             channel->name = aiAnim->mChannels[j]->mNodeName.C_Str();
 
             for (uint32_t k = 0; k < aiAnim->mChannels[j]->mNumPositionKeys; k++) {
-                aiVector3D aiPosition(aiAnim->mChannels[j]->mPositionKeys[k].mValue);
-                vec3 position(aiPosition.x, aiPosition.y, aiPosition.z);
-                KeyFramePosition keyFrame;
-                keyFrame.position = position;
-                keyFrame.time = aiAnim->mChannels[j]->mPositionKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel->positions.push_back(keyFrame);
+                aiVecKey = aiAnim->mChannels[j]->mPositionKeys[k];
+                aiVecValue = aiVecKey.mValue;
+                posKey.position = vec3(aiVecValue.x, aiVecValue.y, aiVecValue.z);
+                posKey.time = aiVecKey.mTime / ticksPerSecond;
+                channel->positions.push_back(posKey);
             }
 
             for (uint32_t k = 0; k < aiAnim->mChannels[j]->mNumRotationKeys; k++) {
-                aiQuaternion aiRotation(aiAnim->mChannels[j]->mRotationKeys[k].mValue);
-                quat rotation(aiRotation.x, aiRotation.y, aiRotation.z, aiRotation.w);
-                KeyFrameRotation keyFrame;
-                keyFrame.rotation = rotation;
-                keyFrame.time = aiAnim->mChannels[j]->mRotationKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel->rotations.push_back(keyFrame);
+                aiQuatKey = aiAnim->mChannels[j]->mRotationKeys[k];
+                aiQuatValue = aiQuatKey.mValue;
+                rotKey.rotation = quat(aiQuatValue.x, aiQuatValue.y, aiQuatValue.z, aiQuatValue.w);
+                rotKey.time = aiQuatKey.mTime / ticksPerSecond;
+                channel->rotations.push_back(rotKey);
             }
 
             for (uint32_t k = 0; k < aiAnim->mChannels[j]->mNumScalingKeys; k++) {
-                aiVector3D aiScale(aiAnim->mChannels[j]->mScalingKeys[k].mValue);
-                vec3 scale(aiScale.x, aiScale.y, aiScale.z);
-                KeyFrameScale keyFrame;
-                keyFrame.scale = scale;
-                keyFrame.time = aiAnim->mChannels[j]->mScalingKeys[k].mTime / aiAnim->mTicksPerSecond;
-                channel->scales.push_back(keyFrame);
+                aiVecKey = aiAnim->mChannels[j]->mScalingKeys[k];
+                aiVecValue = aiVecKey.mValue;
+                scaleKey.scale = vec3(aiVecValue.x, aiVecValue.y, aiVecValue.z);
+                scaleKey.time = aiVecKey.mTime / ticksPerSecond;
+                channel->scales.push_back(scaleKey);
             }
 
             newAnimation->channels.push_back(channel);
@@ -109,19 +143,11 @@ GLuint loadTextureFromFile(const char* path, bool gamma, bool isNormal, GLint fi
         if (componentCount == 3) {
             format = GL_RGB;
             internalFormat = gamma ? GL_SRGB : GL_RGB;
-            // internalFormat = GL_RGB;
         } else if (componentCount == 4) {
             format = GL_RGBA;
             internalFormat = gamma ? GL_SRGB_ALPHA : GL_RGBA;
-            // internalFormat = GL_RGBA;
         }
 
-        /*         if (isNormal) {
-                    format = GL_RGBA;
-                    internalFormat = GL_RGBA;
-                    dataType = GL_UNSIGNED_BYTE;
-                }
-         */
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -191,24 +217,12 @@ Texture loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std::
     return newTexture;
 }
 
-inline vec3 min(const vec3& a, const vec4& b) {
-    return vec3(
-        std::min(a.GetX(), b.GetX()),
-        std::min(a.GetY(), b.GetY()),
-        std::min(a.GetZ(), b.GetZ()));
-}
-
-inline vec3 max(const vec3& a, const vec4& b) {
-    return vec3(
-        std::max(a.GetX(), b.GetX()),
-        std::max(a.GetY(), b.GetY()),
-        std::max(a.GetZ(), b.GetZ()));
-}
-
 void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const mat4 transform, std::string* directory, std::vector<Texture>* allTextures, GLuint shader, bool whiteIsDefault) {
     SubMesh subMesh;
-
+    aiFace face;
     size_t baseVertex = parentMesh->vertices.size();
+    aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    Material* newMaterial = gameScene->materialMap["default"];
 
     for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
@@ -219,7 +233,6 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
         }
 
         vertex.position = vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
-        // vertex.normal = glm::normalize(glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f));
         vertex.normal = vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         vertex.texCoord = vec2(0.0f, 0.0f);
         vertex.tangent = vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
@@ -238,7 +251,7 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
     subMesh.indexOffset = parentMesh->indices.size();
 
     for (uint32_t i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face = mesh->mFaces[i];
+        face = mesh->mFaces[i];
 
         for (uint32_t j = 0; j < face.mNumIndices; j++) {
             parentMesh->indices.push_back(face.mIndices[j] + baseVertex);
@@ -246,9 +259,6 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
     }
 
     subMesh.indexCount = parentMesh->indices.size() - subMesh.indexOffset;
-
-    aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    Material* newMaterial = nullptr;
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -258,6 +268,7 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
             newMaterial = gameScene->materialMap[name];
         } else {
             newMaterial = new Material();
+
             Texture albedoTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE, directory, allTextures, whiteIsDefault, true);
             Texture roughnessTexture = loadTexture(gameScene, material, aiTextureType_METALNESS, directory, allTextures, whiteIsDefault, true);
             Texture metallicTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE_ROUGHNESS, directory, allTextures, whiteIsDefault, true);
@@ -266,6 +277,7 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
 
             material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
 
+            newMaterial->name = material->GetName().C_Str();
             newMaterial->shader = shader;
             newMaterial->baseColor = vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
             newMaterial->textures.push_back(albedoTexture);
@@ -273,29 +285,19 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
             newMaterial->textures.push_back(metallicTexture);
             newMaterial->textures.push_back(aoTexture);
             newMaterial->textures.push_back(normalTexture);
-            newMaterial->name = material->GetName().C_Str();
             gameScene->materialMap[name] = newMaterial;
         }
-    } else {
-        newMaterial = gameScene->materialMap["default"];
     }
 
     subMesh.material = newMaterial;
     parentMesh->subMeshes.push_back(subMesh);
 }
 
-JPH::Mat44 transpose(const aiMatrix4x4& m) {
-    return JPH::Mat44(
-        JPH::Vec4(m.a1, m.b1, m.c1, m.d1),
-        JPH::Vec4(m.a2, m.b2, m.c2, m.d2),
-        JPH::Vec4(m.a3, m.b3, m.c3, m.d3),
-        JPH::Vec4(m.a4, m.b4, m.c4, m.d4));
-}
-
 ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory, std::vector<Texture>* allTextures, GLuint shader, bool whiteIsDefault) {
     mat4 nodeTransform = transpose(node->mTransformation);
     mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
+
     childNode->transform = globalTransform;
     childNode->localTransform = nodeTransform;
     childNode->parent = parentNode;
@@ -304,35 +306,23 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat
 
     for (Animation* animation : model->animations) {
         for (AnimationChannel* channel : animation->channels) {
-            if (node->mName.C_Str() == channel->name) {
+            if (channel->name == node->mName.C_Str()) {
                 model->channelMap[childNode] = channel;
-
-                /* for (int i = 0; i < channel->positions.size(); i++) {
-                    channel->positions[i].position = childNode->transform * glm::vec4(channel->positions[i].position, 1.0f);
-                }
-
-                for (int i = 0; i < channel->rotations.size(); i++) {
-                    glm::quat nodeRotation = quatFromMatrix(childNode->transform);
-                    channel->rotations[i].rotation = nodeRotation * channel->rotations[i].rotation;
-                }
-
-                for (int i = 0; i < channel->scales.size(); i++) {
-                    glm::vec3 nodeScale = scaleFromMatrix(childNode->transform);
-                    channel->scales[i].scale = channel->scales[i].scale / nodeScale;
-                } */
             }
         }
     }
+
     if (node->mNumMeshes != 0) {
+        aiMesh* mesh;
         childNode->mesh = new Mesh();
         childNode->mesh->min = vec3(scene->mMeshes[node->mMeshes[0]]->mVertices[0].x, scene->mMeshes[node->mMeshes[0]]->mVertices[0].y, scene->mMeshes[node->mMeshes[0]]->mVertices[0].z);
         childNode->mesh->max = childNode->mesh->min;
         childNode->mesh->name = node->mName.C_Str();
         childNode->mesh->globalInverseTransform = model->RootNodeTransform.Inversed();
         childNode->mesh->globalInverseTransform = childNode->transform;
-        for (uint32_t i = 0; i < node->mNumMeshes; i++) {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
+        for (uint32_t i = 0; i < node->mNumMeshes; i++) {
+            mesh = scene->mMeshes[node->mMeshes[i]];
             processSubMesh(gameScene, mesh, scene, childNode->mesh, globalTransform, directory, allTextures, shader, whiteIsDefault);
 
             if (mesh->mNumBones == 0) {
@@ -345,25 +335,27 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat
 
             for (uint32_t k = 0; k < mesh->mNumBones; k++) {
                 BoneInfo bone;
-                auto assimpBone = mesh->mBones[k];
-                bone.id = k;
-                bone.offset = transpose(assimpBone->mOffsetMatrix);
+                uint32_t vertexID;
+                Vertex* vertex;
+                float weight;
 
-                // bone.offset = childNode->transform * bone.offset;
-                childNode->mesh->boneNameMap[assimpBone->mName.C_Str()] = bone;
-
-                auto weights = assimpBone->mWeights;
+                aiBone* assimpBone = mesh->mBones[k];
+                aiVertexWeight* weights = assimpBone->mWeights;
                 uint32_t numWeights = assimpBone->mNumWeights;
 
+                bone.id = k;
+                bone.offset = transpose(assimpBone->mOffsetMatrix);
+                childNode->mesh->boneNameMap[assimpBone->mName.C_Str()] = bone;
+
                 for (uint32_t l = 0; l < numWeights; l++) {
-                    uint32_t vertexID = weights[l].mVertexId;
-                    float weight = weights[l].mWeight;
-                    Vertex& vertex = childNode->mesh->vertices[vertexID];
+                    vertexID = weights[l].mVertexId;
+                    vertex = &childNode->mesh->vertices[vertexID];
+                    weight = weights[l].mWeight;
 
                     for (uint32_t m = 0; m < 4; m++) {
-                        if (vertex.boneIDs[m] < 0) {
-                            vertex.weights[m] = weight;
-                            vertex.boneIDs[m] = bone.id;
+                        if (vertex->boneIDs[m] < 0) {
+                            vertex->weights[m] = weight;
+                            vertex->boneIDs[m] = bone.id;
                             break;
                         }
                     }
@@ -373,7 +365,6 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat
 
         childNode->mesh->center = (childNode->mesh->min + childNode->mesh->max) * 0.5f;
         childNode->mesh->extent = (childNode->mesh->max - childNode->mesh->min) * 0.5f;
-
         model->meshes.push_back(childNode->mesh);
 
         for (int i = 0; i < childNode->mesh->subMeshes.size(); i++) {
@@ -402,12 +393,12 @@ Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTe
         return nullptr;
     }
 
+    Model* newModel = new Model();
     directory = path.substr(0, path.find_last_of('/'));
     std::string name = scene->mRootNode->mName.C_Str();
     name = name.substr(0, name.find_last_of('.'));
-
-    Model* newModel = new Model();
     newModel->name = name;
+
     processAnimations(gameScene, scene, newModel);
     newModel->RootNodeTransform = transpose(scene->mRootNode->mTransformation);
     newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, mat4::sIdentity(), newModel, nullptr, &directory, allTextures, shader, whiteIsDefault);

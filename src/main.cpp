@@ -26,11 +26,6 @@ void updateTime(Scene* scene) {
 
 int main() {
     Scene* scene = new Scene();
-    scene->windowData.width = 1920;
-    scene->windowData.height = 1080;
-    scene->windowData.viewportWidth = 1920;
-    scene->windowData.viewportHeight = 1080;
-
     createContext(scene);
     loadShaders(scene);
     loadResources(scene);

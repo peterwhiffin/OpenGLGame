@@ -780,8 +780,12 @@ void createContext(Scene* scene) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
     glfwSwapInterval(1);
+
+    scene->windowData.width = 1920;
+    scene->windowData.height = 1080;
+    scene->windowData.viewportWidth = 1920;
+    scene->windowData.viewportHeight = 1080;
     scene->window = glfwCreateWindow(scene->windowData.width, scene->windowData.height, "Pete's Game", NULL, NULL);
 
     if (scene->window == NULL) {
