@@ -22,7 +22,7 @@ Transform* getTransform(Scene* scene, const uint32_t entityID) {
 }
 
 MeshRenderer* getMeshRenderer(Scene* scene, const uint32_t entityID) {
-    if (scene->meshRendererIndexMap.count(entityID)) {
+    if (!scene->meshRendererIndexMap.count(entityID)) {
         return nullptr;
     }
 
@@ -190,6 +190,9 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
 
     RigidBody* rb = getRigidbody(scene, entityID);
     if (rb != nullptr) {
+        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            scene->movingRigidbodies.erase(rb->entityID);
+        }
         scene->bodyInterface->RemoveBody(rb->joltBody);
         scene->bodyInterface->DestroyBody(rb->joltBody);
     }

@@ -797,7 +797,7 @@ void loadDefaultScene(Scene* scene) {
     setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
     setParent(scene, spotLightEntityID, player->cameraController->cameraEntityID);
     setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
-    setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
+    // setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
     setLocalRotation(scene, spotLightEntityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
     setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
 }
@@ -827,6 +827,10 @@ void loadScene(Scene* scene) {
         scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
         rb->lastPosition = getPosition(scene, rb->entityID);
         rb->lastRotation = getRotation(scene, rb->entityID);
+
+        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            scene->movingRigidbodies.insert(rb->entityID);
+        }
     }
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
@@ -1151,19 +1155,7 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
 }
 
 void saveScene(Scene* scene) {
-    /* std::vector<uint32_t> temp;
-
-    for (Entity& entity : scene->entities) {
-        if (entity.name == "TrashcanBase") {
-            temp.push_back(entity.entityID);
-        }
-    }
-
-    for (uint32_t id : temp) {
-        destroyEntity(scene, id);
-    } */
-
-    std::ofstream stream(scene->name);
+    std::ofstream stream(scene->scenePath);
     writeEntities(scene, stream);
     writeTransforms(scene, stream);
     writeMeshRenderers(scene, stream);

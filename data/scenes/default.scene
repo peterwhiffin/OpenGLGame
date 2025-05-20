@@ -3144,14 +3144,200 @@ isActive: false
 
 Entity {
 id: 525
+name: NewEntity
+isActive: false
+}
+
+Entity {
+id: 526
 name: TrashcanBase
 isActive: true
 }
 
 Entity {
-id: 526
+id: 527
 name: TrashcanLid
 isActive: true
+}
+
+Entity {
+id: 528
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 529
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 530
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 531
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 532
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 533
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 534
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 535
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 536
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 537
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 538
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 539
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 540
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 541
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 542
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 543
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 544
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 545
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 546
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 547
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 548
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 549
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 550
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 551
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 552
+name: NewEntity
+isActive: false
+}
+
+Entity {
+id: 553
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 554
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 555
+name: TrashcanBase
+isActive: true
+}
+
+Entity {
+id: 556
+name: TrashcanLid
+isActive: true
+}
+
+Entity {
+id: 557
+name: NewEntity
+isActive: false
 }
 
 Transform {
@@ -3257,7 +3443,7 @@ Transform {
 entityID: 12
 parentEntityID: 4
 childEntityIds: None
-localPosition: 0.000000, 3.260000, 6.000000
+localPosition: 0.000000, 0.200000, 6.000000
 localRotation: 0.000000, 0.000000, 0.000000, 1.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7487,7 +7673,7 @@ Transform {
 entityID: 482
 parentEntityID: 480
 childEntityIds: 483
-localPosition: 0.370589, 0.376510, -0.718286
+localPosition: 0.370589, 0.376528, -0.718286
 localRotation: -0.124429, -0.293109, -0.945846, 0.063085
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7496,8 +7682,8 @@ Transform {
 entityID: 483
 parentEntityID: 482
 childEntityIds: 484
-localPosition: -0.000000, 0.492474, -0.000000
-localRotation: 0.596174, 0.151425, -0.100030, 0.782075
+localPosition: 0.000000, 0.492474, 0.000000
+localRotation: 0.541761, -0.037388, -0.308777, 0.780867
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7523,7 +7709,7 @@ Transform {
 entityID: 486
 parentEntityID: 485
 childEntityIds: 487
-localPosition: -0.000000, 0.107024, 0.000000
+localPosition: 0.000000, 0.107024, 0.000000
 localRotation: -0.155999, 0.076925, -0.092879, 0.980368
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7532,7 +7718,7 @@ Transform {
 entityID: 487
 parentEntityID: 486
 childEntityIds: None
-localPosition: 0.000000, 0.048880, 0.000000
+localPosition: 0.000000, 0.048880, -0.000000
 localRotation: -0.026568, 0.007733, 0.004450, 0.999607
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7542,7 +7728,7 @@ entityID: 488
 parentEntityID: 484
 childEntityIds: 489
 localPosition: 0.036649, 0.223260, 0.053866
-localRotation: -0.092842, -0.392521, -0.086449, 0.910953
+localRotation: -0.386441, -0.342465, -0.210389, 0.830131
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7551,7 +7737,7 @@ entityID: 489
 parentEntityID: 488
 childEntityIds: 490
 localPosition: -0.000000, 0.057069, -0.000000
-localRotation: -0.202934, 0.002548, -0.012294, 0.979112
+localRotation: -0.813467, 0.010214, -0.007301, 0.581475
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7559,8 +7745,8 @@ Transform {
 entityID: 490
 parentEntityID: 489
 childEntityIds: None
-localPosition: -0.000000, 0.048671, 0.000000
-localRotation: -0.083388, -0.000780, 0.009326, 0.996473
+localPosition: -0.000000, 0.048671, -0.000000
+localRotation: -0.659492, -0.006172, 0.007035, 0.751653
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7569,7 +7755,7 @@ entityID: 491
 parentEntityID: 484
 childEntityIds: 492
 localPosition: -0.005289, 0.222849, 0.017762
-localRotation: -0.212180, -0.448623, -0.099102, 0.862494
+localRotation: -0.212179, -0.448623, -0.099102, 0.862494
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7578,7 +7764,7 @@ entityID: 492
 parentEntityID: 491
 childEntityIds: 493
 localPosition: -0.000000, 0.054666, 0.000000
-localRotation: -0.381367, -0.010676, 0.025870, 0.924000
+localRotation: -0.191475, -0.005360, 0.027468, 0.981098
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7586,8 +7772,8 @@ Transform {
 entityID: 493
 parentEntityID: 492
 childEntityIds: None
-localPosition: 0.000000, 0.049470, -0.000000
-localRotation: -0.169396, -0.004513, 0.026236, 0.985188
+localPosition: -0.000000, 0.049470, -0.000000
+localRotation: 0.020679, 0.000549, 0.026616, 0.999432
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7595,7 +7781,7 @@ Transform {
 entityID: 494
 parentEntityID: 484
 childEntityIds: 495
-localPosition: -0.024745, 0.215326, -0.030904
+localPosition: -0.024744, 0.215326, -0.030904
 localRotation: -0.321021, -0.525862, -0.067512, 0.784765
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7604,8 +7790,8 @@ Transform {
 entityID: 495
 parentEntityID: 494
 childEntityIds: 496
-localPosition: -0.000000, 0.043627, 0.000000
-localRotation: -0.430746, 0.001826, -0.003828, 0.902463
+localPosition: -0.000000, 0.043627, -0.000000
+localRotation: -0.725435, 0.003076, -0.002920, 0.688278
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7613,8 +7799,8 @@ Transform {
 entityID: 496
 parentEntityID: 495
 childEntityIds: None
-localPosition: 0.000000, 0.040439, -0.000000
-localRotation: -0.338839, 0.002325, -0.006450, 0.940819
+localPosition: -0.000000, 0.040439, -0.000000
+localRotation: -0.532623, 0.003654, -0.005802, 0.846325
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7631,8 +7817,8 @@ Transform {
 entityID: 498
 parentEntityID: 497
 childEntityIds: 499
-localPosition: -0.000000, 0.045948, 0.000000
-localRotation: -0.446048, -0.021167, 0.042411, 0.893753
+localPosition: 0.000000, 0.045948, 0.000000
+localRotation: -0.752719, -0.035719, 0.031159, 0.656633
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7640,8 +7826,8 @@ Transform {
 entityID: 499
 parentEntityID: 498
 childEntityIds: None
-localPosition: 0.000000, 0.034896, -0.000000
-localRotation: -0.278528, -0.004104, 0.014154, 0.960315
+localPosition: 0.000000, 0.034896, 0.000000
+localRotation: -0.516114, -0.007606, 0.012622, 0.856393
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7649,7 +7835,7 @@ Transform {
 entityID: 500
 parentEntityID: 480
 childEntityIds: 501
-localPosition: -0.235946, 0.224588, -0.858149
+localPosition: -0.235946, 0.224602, -0.858149
 localRotation: -0.008642, 0.447557, 0.841314, 0.302999
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7658,8 +7844,8 @@ Transform {
 entityID: 501
 parentEntityID: 500
 childEntityIds: 502
-localPosition: -0.000000, 0.492474, -0.000000
-localRotation: 0.471878, -0.186261, 0.083141, 0.857744
+localPosition: 0.000000, 0.492474, -0.000000
+localRotation: 0.475978, -0.184752, 0.079497, 0.856149
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7668,7 +7854,7 @@ entityID: 502
 parentEntityID: 501
 childEntityIds: 503, 506, 509, 512, 515, 518
 localPosition: -0.000000, 0.524044, 0.000000
-localRotation: -0.055103, 0.477945, -0.153916, 0.863042
+localRotation: -0.055102, 0.477929, -0.153912, 0.863052
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7802,7 +7988,7 @@ Transform {
 entityID: 517
 parentEntityID: 516
 childEntityIds: None
-localPosition: -0.000000, 0.034896, -0.000000
+localPosition: 0.000000, 0.034896, 0.000000
 localRotation: -0.345979, 0.005100, -0.013826, 0.938127
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7847,8 +8033,8 @@ Transform {
 entityID: 522
 parentEntityID: -1
 childEntityIds: 523
-localPosition: 9.925336, 1.280000, 2.068015
-localRotation: -0.000000, 0.546836, -0.000000, -0.837240
+localPosition: 2.845785, 1.280000, -18.508383
+localRotation: 0.000000, 0.418675, 0.000000, 0.908136
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7857,7 +8043,7 @@ entityID: 523
 parentEntityID: 522
 childEntityIds: 521
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.027922, 0.000000, 0.000000, 0.999610
+localRotation: 0.700909, 0.000000, 0.000000, 0.713250
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7865,26 +8051,305 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 9.925336, 1.980000, 2.068015
-localRotation: 0.023377, -0.546623, 0.015269, 0.836913
+localPosition: 2.845785, 1.980000, -18.508383
+localRotation: 0.636521, 0.298620, -0.293453, 0.647729
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
 entityID: 525
 parentEntityID: -1
-childEntityIds: 526
-localPosition: 49.945663, 0.999998, -9.062659
-localRotation: 0.000005, 0.805465, 0.000001, 0.592643
+childEntityIds: None
+localPosition: -4.000000, 2.370000, 13.880000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 Transform {
 entityID: 526
-parentEntityID: 525
+parentEntityID: -1
+childEntityIds: 527
+localPosition: 50.349930, 0.804380, 8.510211
+localRotation: 0.675880, -0.260241, 0.208666, -0.657206
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 527
+parentEntityID: 526
 childEntityIds: None
 localPosition: 0.000000, 0.000000, 0.000000
 localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 528
+parentEntityID: -1
+childEntityIds: 529
+localPosition: -11.812944, 0.999997, 17.172649
+localRotation: -0.000004, 0.989930, -0.000003, -0.141557
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 529
+parentEntityID: 528
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 530
+parentEntityID: -1
+childEntityIds: 531
+localPosition: -26.687906, 0.803123, 20.395241
+localRotation: 0.614866, 0.616539, 0.347263, -0.348179
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 531
+parentEntityID: 530
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 532
+parentEntityID: -1
+childEntityIds: 533
+localPosition: -1.389398, 0.999978, -4.485693
+localRotation: -0.000021, -0.179134, 0.000016, 0.983825
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 533
+parentEntityID: 532
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 534
+parentEntityID: -1
+childEntityIds: 535
+localPosition: -1.354713, 0.983461, 1.139587
+localRotation: 0.004618, -0.389341, -0.000075, 0.921082
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 535
+parentEntityID: 534
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 536
+parentEntityID: -1
+childEntityIds: 537
+localPosition: 6.367385, 0.803727, -38.395233
+localRotation: 0.479206, -0.480019, 0.519149, 0.520026
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 537
+parentEntityID: 536
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 538
+parentEntityID: -1
+childEntityIds: 539
+localPosition: 50.264130, 0.802578, -6.978686
+localRotation: -0.627589, -0.467303, -0.323015, -0.532373
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 539
+parentEntityID: 538
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 540
+parentEntityID: -1
+childEntityIds: 541
+localPosition: -2.953629, 0.804255, -6.026480
+localRotation: -0.609584, -0.458656, 0.359622, 0.537321
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 541
+parentEntityID: 540
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 542
+parentEntityID: -1
+childEntityIds: 543
+localPosition: -1.321397, 0.999999, -2.772463
+localRotation: 0.000003, 0.338246, 0.000000, 0.941058
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 543
+parentEntityID: 542
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 544
+parentEntityID: -1
+childEntityIds: 545
+localPosition: -1.381363, 0.988493, 0.325249
+localRotation: 0.003076, -0.156173, -0.010306, 0.987671
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 545
+parentEntityID: 544
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 546
+parentEntityID: -1
+childEntityIds: 547
+localPosition: -1.404690, 0.982245, -0.492742
+localRotation: 0.000004, 0.999144, -0.000845, 0.041355
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 547
+parentEntityID: 546
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 548
+parentEntityID: -1
+childEntityIds: 549
+localPosition: 18.366812, 0.998169, 16.778868
+localRotation: -0.001025, 0.456562, 0.002693, -0.889687
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 549
+parentEntityID: 548
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 550
+parentEntityID: -1
+childEntityIds: 551
+localPosition: -4.857015, 0.784959, 20.397285
+localRotation: 0.701987, -0.701444, -0.085866, -0.088416
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 551
+parentEntityID: 550
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 552
+parentEntityID: -1
+childEntityIds: None
+localPosition: 0.000000, 6.800000, 0.000000
+localRotation: 0.707107, 0.000000, 0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 553
+parentEntityID: -1
+childEntityIds: 554
+localPosition: 28.794380, 0.804479, -21.648605
+localRotation: 0.625331, 0.170111, -0.330410, 0.686187
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 554
+parentEntityID: 553
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 555
+parentEntityID: -1
+childEntityIds: 556
+localPosition: -0.636587, 0.803442, -4.855158
+localRotation: 0.363965, -0.527781, -0.605355, 0.471723
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 556
+parentEntityID: 555
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 557
+parentEntityID: -1
+childEntityIds: None
+localPosition: 2.100000, 6.700000, -19.000000
+localRotation: 0.707107, 0.000000, 0.000000, 0.707107
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -11242,15 +11707,211 @@ materials: Wrench.001
 }
 
 MeshRenderer {
-entityID: 525
-rootEntity: 525
-mesh: Wrench.002
-materials: Wrench.001
+entityID: 526
+rootEntity: 526
+mesh: TrashcanBase
+materials: Trashcan
 }
 
 MeshRenderer {
-entityID: 526
-rootEntity: 525
+entityID: 527
+rootEntity: 526
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 528
+rootEntity: 528
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 529
+rootEntity: 528
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 530
+rootEntity: 530
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 531
+rootEntity: 530
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 532
+rootEntity: 532
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 533
+rootEntity: 532
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 534
+rootEntity: 534
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 535
+rootEntity: 534
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 536
+rootEntity: 536
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 537
+rootEntity: 536
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 538
+rootEntity: 538
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 539
+rootEntity: 538
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 540
+rootEntity: 540
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 541
+rootEntity: 540
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 542
+rootEntity: 542
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 543
+rootEntity: 542
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 544
+rootEntity: 544
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 545
+rootEntity: 544
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 546
+rootEntity: 546
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 547
+rootEntity: 546
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 548
+rootEntity: 548
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 549
+rootEntity: 548
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 550
+rootEntity: 550
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 551
+rootEntity: 550
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 553
+rootEntity: 553
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 554
+rootEntity: 553
+mesh: TrashcanLid
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 555
+rootEntity: 555
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+MeshRenderer {
+entityID: 556
+rootEntity: 555
 mesh: TrashcanLid
 materials: Trashcan
 }
@@ -16016,9 +16677,163 @@ halfExtents: 0.250000, 0.900000, 0.250000
 }
 
 Rigidbody {
-entityID: 525
+entityID: 526
 layer: MOVING
 mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 528
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 530
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 532
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 534
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 536
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 538
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 540
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 542
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 544
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 546
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 548
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 550
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 553
+layer: MOVING
+mass: 617.541626
+rotationLocked: false
+motionType: dynamic
+shape: cylinder
+halfHeight: 0.600000
+radius: 0.404732
+}
+
+Rigidbody {
+entityID: 555
+layer: MOVING
+mass: 617.541931
 rotationLocked: false
 motionType: dynamic
 shape: cylinder
@@ -16048,12 +16863,45 @@ color: 0.920930, 0.248437, 0.248437
 SpotLight {
 entityID: 3
 isActive: true
-brightness: 10.000000
+brightness: 0.000000
 cutoff: 15.500000
-outerCutoff: 50.400002
+outerCutoff: 23.200001
 color: 1.000000, 1.000000, 1.000000
-shadowWidth: 800
-shadowHeight: 600
+shadowWidth: 512
+shadowHeight: 512
+}
+
+SpotLight {
+entityID: 525
+isActive: true
+brightness: 28.500000
+cutoff: 1.000000
+outerCutoff: 16.150000
+color: 1.000000, 1.000000, 1.000000
+shadowWidth: 512
+shadowHeight: 512
+}
+
+SpotLight {
+entityID: 552
+isActive: false
+brightness: 20.299999
+cutoff: 1.000000
+outerCutoff: 56.200001
+color: 0.404327, 0.745115, 0.976744
+shadowWidth: 512
+shadowHeight: 512
+}
+
+SpotLight {
+entityID: 557
+isActive: false
+brightness: 31.900000
+cutoff: 1.000000
+outerCutoff: 25.900000
+color: 1.000000, 0.283721, 0.283721
+shadowWidth: 512
+shadowHeight: 512
 }
 
 Camera {
@@ -16078,6 +16926,7 @@ cameraControllerSensitivity: 0.300000
 Material {
 name: default
 textures: white, white, black, white, blue
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 1.000000
 metalness: 1.000000
@@ -16088,6 +16937,7 @@ normalStrength: 1.000000
 Material {
 name: Wrench.001
 textures: wrench.png, white, white, white, wrenchNormal.png
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 0.460000
 metalness: 0.170000
@@ -16098,6 +16948,7 @@ normalStrength: 0.810000
 Material {
 name: Mat
 textures: arm1Color.png, white, white, white, white
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 1.000000
 metalness: 0.000000
@@ -16108,6 +16959,7 @@ normalStrength: 0.000000
 Material {
 name: Trashcan
 textures: TrashDiffuse.png, white, white, white, white
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 0.700000
 metalness: 0.400000
@@ -16118,6 +16970,7 @@ normalStrength: 0.000000
 Material {
 name: floorMat
 textures: concrete.png, concreteRoughness.png, white, white, concreteNormal.png
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 0.700000
 metalness: 0.000000
@@ -16128,6 +16981,7 @@ normalStrength: 0.700000
 Material {
 name: Material.003
 textures: concretewalls.png, concretewallsRoughness.png, white, white, concretewallsNormal.png
+textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 1.000000
 metalness: 0.000000

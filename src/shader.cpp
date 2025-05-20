@@ -98,7 +98,8 @@ void loadShaders(Scene *scene) {
     scene->depthShader = loadShader("depthprepassshader.vs", "depthprepassshader.fs");
     scene->lightingShader = loadShader("pbrlitshader.vs", "pbrlitshader.fs");
     scene->ssaoShader = loadShader("SSAOshader.vs", "SSAOshader.fs");
-    scene->shadowBlurShader = loadShader("SSAOshader.vs", "SSAOblurshader.fs");
+    scene->shadowBlurShader = loadShader("SSAOshader.vs", "shadowmapblurshader.fs");
+    scene->simpleBlurShader = loadShader("SSAOshader.vs", "SSAOblurshader.fs");
     scene->blurShader = loadShader("gaussianblurshader.vs", "gaussianblurshader.fs");
     scene->postProcessShader = loadShader("postprocessshader.vs", "postprocessshader.fs");
     scene->debugShader = loadShader("debugShader.vs", "debugShader.fs");

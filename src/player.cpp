@@ -32,6 +32,7 @@ void spawnTrashCan(Scene* scene, Player* player) {
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, camForward * 20);
     rb->lastPosition = getPosition(scene, trashcanID);
     rb->lastRotation = getRotation(scene, trashcanID);
+    scene->movingRigidbodies.insert(rb->entityID);
 }
 
 void updatePlayer(Scene* scene) {
@@ -178,5 +179,6 @@ Player* buildPlayer(Scene* scene) {
     setLocalPosition(scene, cameraTargetEntityID, vec3(0.0f, 0.7f, 0.0f));
 
     scene->player = player;
+    scene->movingRigidbodies.insert(rb->entityID);
     return player;
 }

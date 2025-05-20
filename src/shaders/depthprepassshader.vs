@@ -8,6 +8,7 @@ layout (location = 2) uniform mat4 model;
 
 uniform mat4 finalBoneMatrices[100];
 
+
 void main()
 {
     vec4 totalPosition = vec4(0.0);
@@ -27,7 +28,6 @@ void main()
     }
 
     vec4 modelPos = model * totalPosition;
-
     // gl_Position = viewProjection * model * vec4(aPos, 1.0);
     gl_Position = viewProjection * modelPos;
 }

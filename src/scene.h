@@ -36,9 +36,10 @@ struct Scene {
     GLuint blurFBO[2], blurSwapTex[2];
     GLuint fullscreenVAO, fullscreenVBO;
     GLuint editorFBO, editorRBO, editorTex;
-    GLuint lightingShader, postProcessShader, blurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
+    GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
 
     uint32_t nodeClicked = INVALID_ID;
+    ContextMenuType contextType;
 
     double timeAccum = 0.0f;
     double physicsAccum = 0.0f;
@@ -89,6 +90,8 @@ struct Scene {
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
     std::vector<Camera*> cameras;
+
+    std::unordered_set<uint32_t> movingRigidbodies;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;

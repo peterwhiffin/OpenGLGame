@@ -4,13 +4,14 @@ out vec4 FragColor;
 layout (location = 2) in vec2 TexCoords;
 
 layout (location = 0, binding = 0) uniform sampler2D image;
-  
+layout (binding = 1) uniform sampler2D shadowTex;
+
 layout (location = 3) uniform bool horizontal;
 layout (location = 4) uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
 
 void main()
 {             
-      vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
+    vec2 tex_offset = 1.0 / textureSize(image, 0); // gets size of single texel
     vec4 result = texture(image, TexCoords) * weight[0]; // current fragment's contribution
     if(horizontal)
     {

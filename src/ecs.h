@@ -6,6 +6,15 @@
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 
+enum ContextMenuType {
+    WindowInspector,
+    WindowHierarchy,
+    WindowProject,
+    ItemHierarchy,
+    ItemInspector,
+    ItemProject
+};
+
 struct Entity {
     uint32_t entityID;
     std::string name;

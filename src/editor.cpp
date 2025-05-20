@@ -159,7 +159,7 @@ void buildImGui(Scene* scene) {
 
     if (scene->timeAccum >= 1.0f) {
         scene->FPS = scene->frameCount / scene->timeAccum;
-        scene->frameTime = scene->timeAccum / scene->frameCount;
+        scene->frameTime = (scene->timeAccum / scene->frameCount) * 1000.0f;
         scene->timeAccum = 0.0f;
         scene->frameCount = 0;
     } else {
@@ -193,7 +193,11 @@ void buildImGui(Scene* scene) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("EditViewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
-    ImGui::Text(("FPS: " + std::to_string(scene->FPS) + " / Frame Time: " + std::to_string(scene->frameTime)).c_str());
+    std::string fps = std::to_string(scene->FPS);
+    std::string frameTime = std::to_string(scene->frameTime);
+    fps = fps.substr(0, fps.find_first_of('.'));
+    frameTime = frameTime.substr(0, frameTime.find_first_of('.') + 3);
+    ImGui::Text(("FPS: " + fps + " / Frame Time: " + frameTime + "ms").c_str());
     // ImGui::Combo("Mode", &mode, modes, IM_ARRAYSIZE(modes));
     // ImGui::Button("Options");
     ImGui::Separator();
@@ -235,8 +239,8 @@ void buildImGui(Scene* scene) {
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("HierarchyContextMenu");
     }
+
     if (ImGui::BeginPopup("HierarchyContextMenu")) {
-        ImGui::Text("Inspector menu");
         if (ImGui::MenuItem("Create Entity")) {
             getNewEntity(scene, "NewEntity");
         }
@@ -260,11 +264,24 @@ void buildImGui(Scene* scene) {
         scene->canDelete = true;
     }
 
+    unsigned int entityID = scene->nodeClicked;
+
+    /* if (entityID != INVALID_ID) {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+            ImGui::OpenPopup("HierarchyItemContextMenu");
+        }
+        if (ImGui::BeginPopup("HierarchyItemContextMenu")) {
+            if (ImGui::MenuItem(getEntity(scene, entityID)->name.c_str())) {
+            }
+
+            ImGui::EndPopup();
+        }
+    } */
+
     ImGui::End();
 
     ImGui::Begin("Inspector");
 
-    unsigned int entityID = scene->nodeClicked;
     if (entityID != INVALID_ID) {
         if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::BeginTable("Transform Table", 2, ImGuiTableFlags_SizingFixedSame)) {
@@ -311,6 +328,7 @@ void buildImGui(Scene* scene) {
                     scene->bodyInterface->SetPositionAndRotation(rb->joltBody, newPos, quat::sEulerAngles(radians), JPH::EActivation::Activate);
                     setLocalPosition(scene, entityID, position);
                     setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
+                    setLocalScale(scene, entityID, scale);
                 } else {
                     setLocalPosition(scene, entityID, position);
                     setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
@@ -389,7 +407,7 @@ void buildImGui(Scene* scene) {
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Brightness");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::DragFloat("##brightness", &spotLight->brightness, 0.01f, 0.0f, 100.0f);
+                    ImGui::DragFloat("##brightness", &spotLight->brightness, 0.01f, 0.0f, 1000.0f);
 
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -408,6 +426,24 @@ void buildImGui(Scene* scene) {
                     ImGui::Text("Outer Cutoff");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::DragFloat("##outer cutoff", &spotLight->outerCutoff, 0.01f, spotLight->cutoff + 0.01f, 180.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Range");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::DragFloat("##range", &spotLight->range, 0.01f, 0.0, 1000.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Light Radius");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::DragFloat("##lightRadius", &spotLight->lightRadiusUV, 0.0001f, 0.0f, 180.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Blocker Search");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::DragFloat("##blockerSearch", &spotLight->blockerSearchUV, 0.0001f, 0.00f, 180.0f);
 
                     if (ImGui::CollapsingHeader("Shadow Map")) {
                         ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
@@ -458,13 +494,13 @@ void buildImGui(Scene* scene) {
             }
 
             if (ImGui::CollapsingHeader("Rigidbody", ImGuiTreeNodeFlags_DefaultOpen)) {
-                if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                /* if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                     ImGui::OpenPopup("RigidbodyContext");
                 }
                 if (ImGui::BeginPopup("Rigidbody Stuff")) {
                     ImGui::Text("Remove Rigidbody");
                     ImGui::EndPopup();
-                }
+                } */
 
                 if (ImGui::BeginTable("Rigidbody Table", 2, ImGuiTableFlags_SizingFixedSame)) {
                     const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
@@ -493,40 +529,64 @@ void buildImGui(Scene* scene) {
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Half Extents: ");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::DragFloat3("##halfExtents", halfExtents.mF32, 0.01f, 0.0f, 0.0f);
+                    bool changed = ImGui::DragFloat3("##halfExtents", halfExtents.mF32, 0.01f, 0.0f, 0.0f);
                     ImGui::EndTable();
+
+                    if (changed) {
+                        if (shapeType == JPH::EShapeSubType::Box) {
+                            vec3 newExtent = vec3(std::max(halfExtents.GetX(), 0.0f), std::max(halfExtents.GetY(), 0.0f), std::max(halfExtents.GetZ(), 0.0f));
+                            JPH::BoxShapeSettings boxShapeSettings(newExtent);
+                            JPH::ShapeSettings::ShapeResult boxResult = boxShapeSettings.Create();
+                            JPH::ShapeRefC boxShape = boxResult.Get();
+                            scene->bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
+                        }
+                    }
                 }
             }
         }
 
         MeshRenderer* renderer = getMeshRenderer(scene, entityID);
         if (renderer != nullptr) {
-            if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
-                if (ImGui::IsItemHovered())
-                    if (ImGui::BeginTable("Mesh Renderer Table", 3, ImGuiTableFlags_SizingFixedSame)) {
-                        ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 100.0f);
-                        ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_None, 20.0f);
-                        ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
+            bool isOpen = ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen);
 
-                        ImGui::TableNextRow();
-                        ImGui::TableSetColumnIndex(0);
-                        ImGui::Text("Mesh");
-                        ImGui::TableSetColumnIndex(1);
-                        std::string meshName = renderer->mesh == nullptr ? "None" : renderer->mesh->name;
-                        if (ImGui::BeginCombo("##currentMesh", meshName.c_str())) {
-                            const bool isSelected = false;
+            if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                ImGui::OpenPopup("MeshRendererContextMenu");
+            }
+            if (ImGui::BeginPopup("MeshRendererContextMenu")) {
+                if (ImGui::MenuItem("Remove")) {
+                    destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
+                }
 
-                            for (auto& pair : scene->meshMap) {
-                                if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                                    renderer->mesh = pair.second;
-                                }
+                ImGui::EndPopup();
+            }
+
+            if (isOpen) {
+                if (ImGui::BeginTable("Mesh Renderer Table", 3, ImGuiTableFlags_SizingFixedSame)) {
+                    ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 100.0f);
+                    ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_None, 20.0f);
+                    ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Mesh");
+                    ImGui::TableSetColumnIndex(1);
+                    std::string meshName = renderer->mesh == nullptr ? "None" : renderer->mesh->name;
+                    if (ImGui::BeginCombo("##currentMesh", meshName.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->meshMap) {
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                renderer->mesh = pair.second;
                             }
-
-                            ImGui::EndCombo();
                         }
-                        // ImGui::Text(renderer->mesh->name.c_str());
 
+                        ImGui::EndCombo();
+                    }
+                    // ImGui::Text(renderer->mesh->name.c_str());
+
+                    if (renderer->mesh != nullptr) {
                         Material* material = renderer->mesh->subMeshes[0].material;
+
                         ImGui::TableNextRow();
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("Material");
@@ -578,15 +638,10 @@ void buildImGui(Scene* scene) {
                         ImGui::Text("Tiling");
                         ImGui::TableSetColumnIndex(1);
                         ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
-
-                        ImGui::EndTable();
                     }
+                    ImGui::EndTable();
+                }
             }
-        }
-
-        if (ImGui::Button("Delete Entity", ImVec2(55, 35))) {
-            destroyEntity(scene, entityID);
-            std::cout << "help" << std::endl;
         }
 
         if (ImGui::BeginCombo("##Add Component", "Add Component")) {
@@ -618,17 +673,28 @@ void buildImGui(Scene* scene) {
                     rb->joltBody = body->GetID();
                 }
             }
+
+            if (getSpotLight(scene, entityID) == nullptr) {
+                if (ImGui::Selectable("Spot Light", isSelected)) {
+                    SpotLight* light = addSpotLight(scene, entityID);
+                    light->brightness = 10.0f;
+                    light->color = vec3(1.0f, 1.0f, 1.0f);
+                    light->cutoff = 1.0f;
+                    light->outerCutoff = 15.0f;
+                    createSpotLightShadowMap(scene, light);
+                }
+            }
             ImGui::EndCombo();
         }
     }
 
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+    /* if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("InspectorContextMenu");
     }
     if (ImGui::BeginPopup("InspectorContextMenu")) {
         ImGui::Text("Inspector menu");
         ImGui::EndPopup();
-    }
+    } */
     ImGui::End();
 
     ImGui::Begin("Project");

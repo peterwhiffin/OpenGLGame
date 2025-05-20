@@ -57,7 +57,7 @@ void drawShadowMaps(Scene* scene) {
     for (SpotLight& light : scene->spotLights) {
         position = getPosition(scene, light.entityID);
         viewMatrix = mat4::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
-        projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light.outerCutoff * 2.0f), (float)light.shadowWidth / light.shadowHeight, 1.1f, 800.0f);
+        projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light.outerCutoff) * 2.0f, 1.0f, 2.1f, light.range);
         viewProjection = projectionMatrix * viewMatrix;
         light.lightSpaceMatrix = viewProjection;
 
@@ -67,6 +67,8 @@ void drawShadowMaps(Scene* scene) {
 
         glUseProgram(scene->depthShader);
         glUniformMatrix4fv(1, 1, GL_FALSE, &viewProjection(0, 0));
+        glUniform3fv(glGetUniformLocation(scene->depthShader, "lightPos"), 1, position.mF32);
+        glUniform1f(glGetUniformLocation(scene->depthShader, "farPlane"), 200.0f);
 
         for (MeshRenderer& renderer : scene->meshRenderers) {
             if (renderer.mesh == nullptr) {
@@ -98,13 +100,13 @@ void drawShadowMaps(Scene* scene) {
             }
         }
 
-        /* glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(scene->shadowBlurShader);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
         glBindVertexArray(scene->fullscreenVAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); */
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
@@ -126,6 +128,8 @@ void drawScene(Scene* scene) {
     glUniform3fv(8, 1, getLocalPosition(scene, camera->entityID).mF32);
     glUniform1f(9, scene->bloomThreshold);
     glUniform1f(35, scene->ambient);
+    glUniform1i(6, scene->spotLights.size());
+    glUniform1i(7, scene->pointLights.size());
 
     for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
         const PointLight& pointLight = scene->pointLights[i];
@@ -145,8 +149,10 @@ void drawScene(Scene* scene) {
         glUniform1f(120 + 4 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.cutoff)));
         glUniform1f(120 + 5 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.outerCutoff)));
         glUniformMatrix4fv(15 + i, 1, GL_FALSE, &spotLight.lightSpaceMatrix(0, 0));
+        glUniform1f(glGetUniformLocation(scene->lightingShader, "u_LightRadiusUV"), spotLight.lightRadiusUV);
+        glUniform1f(glGetUniformLocation(scene->lightingShader, "u_BlockerSearchUV"), spotLight.blockerSearchUV);
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
-        glBindTexture(GL_TEXTURE_2D, spotLight.depthTex);
+        glBindTexture(GL_TEXTURE_2D, spotLight.blurDepthTex);
     }
 
     for (MeshRenderer& renderer : scene->meshRenderers) {
@@ -353,13 +359,96 @@ void createPickingFBO(Scene* scene) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light) {
+    light->shadowWidth = 512.0f;
+    light->shadowHeight = 512.0f;
+    glGenFramebuffers(1, &light->depthFrameBuffer);
+    glGenTextures(1, &light->depthTex);
+    glBindTexture(GL_TEXTURE_2D, light->depthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light->shadowWidth, light->shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->depthFrameBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light->depthTex, 0);
 
-void createShadowMapDepthBuffers(Scene* scene) {
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+    }
+
+    glGenFramebuffers(1, &light->blurDepthFrameBuffer);
+    glGenTextures(1, &light->blurDepthTex);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->blurDepthFrameBuffer);
+    glBindTexture(GL_TEXTURE_2D, light->blurDepthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light->shadowWidth, light->shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light->blurDepthTex, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void createSpotLightShadowMap(Scene* scene, SpotLight* light) {
+    light->shadowWidth = 512.0f;
+    light->shadowHeight = 512.0f;
+    glGenFramebuffers(1, &light->depthFrameBuffer);
+    glGenTextures(1, &light->depthTex);
+    glBindTexture(GL_TEXTURE_2D, light->depthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, light->shadowWidth, light->shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->depthFrameBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light->depthTex, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+    }
+
+    glGenFramebuffers(1, &light->blurDepthFrameBuffer);
+    glGenTextures(1, &light->blurDepthTex);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->blurDepthFrameBuffer);
+    glBindTexture(GL_TEXTURE_2D, light->blurDepthTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light->shadowWidth, light->shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light->blurDepthTex, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be callable per light, not looping over every light.
     for (SpotLight& light : scene->spotLights) {
+        light.shadowWidth = 512.0f;
+        light.shadowHeight = 512.0f;
         glGenFramebuffers(1, &light.depthFrameBuffer);
         glGenTextures(1, &light.depthTex);
         glBindTexture(GL_TEXTURE_2D, light.depthTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light.shadowWidth, light.shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, light.shadowWidth, light.shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -379,7 +468,7 @@ void createShadowMapDepthBuffers(Scene* scene) {
         glGenTextures(1, &light.blurDepthTex);
         glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
         glBindTexture(GL_TEXTURE_2D, light.blurDepthTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, light.shadowWidth, light.shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light.shadowWidth, light.shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -728,9 +817,10 @@ void initializeLights(Scene* scene, unsigned int shader) {
         // glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
     }
 
-    glUseProgram(scene->ssaoShader);
     vec2 v(scene->windowData.viewportWidth / 4.0f, scene->windowData.viewportHeight / 4.0f);
+    glUseProgram(scene->ssaoShader);
     glUniform2fv(8, 1, &v.x);
+
     scene->AORadius = 0.06f;
     scene->AOBias = 0.04f;
     scene->AOPower = 2.02f;
@@ -788,6 +878,9 @@ void initRenderer(Scene* scene) {
     // createPickingFBO(scene);
     createSSAOBuffer(scene);
     createShadowMapDepthBuffers(scene);
+    for (SpotLight& light : scene->spotLights) {
+        createSpotLightShadowMap(scene, &light);
+    }
     createForwardBuffer(scene);
     createBlurBuffers(scene);
     createFullScreenQuad(scene);

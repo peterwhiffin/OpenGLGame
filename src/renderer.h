@@ -123,6 +123,9 @@ struct SpotLight {
     float brightness;
     float cutoff;
     float outerCutoff;
+    float lightRadiusUV = 0.005f;
+    float blockerSearchUV = 0.0025f;
+    float range = 20.0f;
     bool enableShadows = true;
     bool isActive;
 };
@@ -144,6 +147,8 @@ void initRenderer(Scene* scene);
 void mapBones(Scene* scene, MeshRenderer* renderer);
 void renderScene(Scene* scene);
 void deleteBuffers(Scene* scene);
+void createSpotLightShadowMap(Scene* scene, SpotLight* light);
+void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light);
 
 class MyDebugRenderer : public JPH::DebugRendererSimple {
    public:

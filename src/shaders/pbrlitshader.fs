@@ -42,6 +42,26 @@ const float kernel3[3][3] = float[3][3](
     float[](1, 4, 7, 4, 1)
 ); */
 
+/* const int POISSON_SAMPLE_COUNT = 16;
+const vec2 poissonDisk[POISSON_SAMPLE_COUNT] = vec2[](
+    vec2(-0.94201624, -0.39906216),
+    vec2(0.94558609, -0.76890725),
+    vec2(-0.094184101, -0.92938870),
+    vec2(0.34495938, 0.29387760),
+    vec2(-0.91588581, 0.45771432),
+    vec2(-0.81544232, -0.87912464),
+    vec2(-0.38277543, 0.27676845),
+    vec2(0.97484398, 0.75648379),
+    vec2(0.44323325, -0.97511554),
+    vec2(0.53742981, -0.47373420),
+    vec2(-0.26496911, -0.41893023),
+    vec2(0.79197514, 0.19090188),
+    vec2(-0.24188840, 0.99706507),
+    vec2(-0.81409955, 0.91437590),
+    vec2(0.19984126, 0.78641367),
+    vec2(0.14383161, -0.14100790)
+); */
+
 in VertToFrag{
     vec2 texCoord;
     vec3 fragPos;
@@ -59,6 +79,7 @@ layout (binding = 1) uniform sampler2D roughnessMap;
 layout (binding = 2) uniform sampler2D metallicMap;
 layout (binding = 3) uniform sampler2D aoMap;
 layout (binding = 4) uniform sampler2D normalMap;
+// layout (binding = 5) uniform sampler2D spotLightShadowMaps[16];
 layout (binding = 5) uniform sampler2D spotLightShadowMaps[16];
 
 layout (location = 8) uniform vec3 camPos;
@@ -80,7 +101,170 @@ layout (location = 2) out vec3 ViewPosition;
 layout (location = 3) out vec3 ViewNormal;
 
 
-float ShadowCalculation(int index, vec3 N)
+// ─────────────────────────────────────────────────────
+// CONSTANTS & UNIFORMS
+// ─────────────────────────────────────────────────────
+const int POISSON_SAMPLES = 16;
+const vec2 poissonDisk[POISSON_SAMPLES] = vec2[](
+    vec2(-0.94201624, -0.39906216),  vec2(0.94558609, -0.76890725),
+    vec2(-0.09418410, -0.92938870),  vec2(0.34495938,  0.29387760),
+    vec2(-0.91588581,  0.45771432),  vec2(-0.81544232, -0.87912464),
+    vec2(-0.38277543,  0.27676845),  vec2(0.97484398,  0.75648379),
+    vec2(0.44323325, -0.97511554),   vec2(0.53742981, -0.47373420),
+    vec2(-0.26496911, -0.41893023),  vec2(0.79197514,  0.19090188),
+    vec2(-0.24188840,  0.99706507),  vec2(-0.81409955,  0.91437590),
+    vec2(0.19984126,  0.78641367),   vec2(0.14383161, -0.14100790)
+);
+
+// Tune these per-light or as global uniforms
+uniform float u_LightRadiusUV    = 0.005;   // light size in shadow-map UVs
+uniform float u_BlockerSearchUV  = 0.0025;  // search radius in UVs
+
+/* float ShadowPCSS(int index, vec3 N)
+{
+    // 1. Project fragment into light clip space ➜ [0,1] UV + depth
+    vec3 proj = fromVert.fragPosLightSpace[index].xyz /
+                fromVert.fragPosLightSpace[index].w;
+    proj = proj * 0.5 + 0.5; // NDC → UV
+
+    // Outside of shadow map = lit
+    if (proj.z > 1.0) return 0.0;
+
+    // Bias to fight acne
+    vec3  L    = normalize(-spotLights[index].direction);
+    float bias = max(0.05 * (1.0 - dot(normalize(N), L)), 0.005);
+
+    vec2 texelSize = 1.0 / textureSize(spotLightShadowMaps[index], 0);
+    // ── 2. Blocker search ────────────────────────────
+    float avgBlockerDepth = 0.0;
+    int   blockerCount    = 0;
+
+    for (int i = 0; i < POISSON_SAMPLES; ++i)
+    {
+        vec2 offset = poissonDisk[i] * u_BlockerSearchUV;
+        float sampleTime = texture(spotLightShadowMaps[index], vec3(proj.xy + offset, proj.z - bias));
+
+        if (sampleTime < 1.0) // shadowed → blocker exists
+        {
+            float sampleDepth = proj.z - bias - texelSize.y; // Approximation
+            avgBlockerDepth += sampleDepth;
+            blockerCount++;
+        }
+    }
+
+    if (blockerCount == 0)
+        return 0.0;
+
+    avgBlockerDepth /= float(blockerCount);
+
+    // ── 3. Penumbra size ─────────────────────────────
+    float penumbra = (proj.z - avgBlockerDepth) / avgBlockerDepth;
+    float filterRadiusUV = penumbra * u_LightRadiusUV;
+
+    // ── 4. PCF filter with variable radius ───────────
+    float shadow = 0.0;
+    for (int i = 0; i < POISSON_SAMPLES; ++i)
+    {
+        vec2 offset = poissonDisk[i] * filterRadiusUV;
+        float sampleTime = texture(spotLightShadowMaps[index], vec3(proj.xy + offset, proj.z - bias));
+        shadow += 1.0 - sampleTime; // sample = 1.0 if lit, 0.0 if shadowed
+    }
+
+    shadow /= float(POISSON_SAMPLES);
+    return shadow;
+} */
+// ─────────────────────────────────────────────────────
+// PCSS SHADOW FUNCTION
+// ─────────────────────────────────────────────────────
+  float ShadowPCSS(int index, vec3 N)
+{
+    // 1. Project fragment into light clip space ➜ [0,1] UV + depth
+    vec3 proj = fromVert.fragPosLightSpace[index].xyz /
+                fromVert.fragPosLightSpace[index].w;
+    proj = proj * 0.5 + 0.5;    // NDC → UV
+
+    // Outside of shadow map = lit
+    if (proj.z > 1.0) return 0.0;
+
+    // Bias to fight acne (same you used before)
+    vec3  L       = normalize(-spotLights[index].direction);
+    float bias    = max(0.05 * (1.0 - dot(normalize(fromVert.normal), L)), 0.005);
+
+    // sampler2D shadowTex = spotLightShadowMaps[index];
+    vec2 texelSize      = 1.0 / textureSize(spotLightShadowMaps[index], 0);
+
+    // ── 2. Blocker search ────────────────────────────
+    float avgBlockerDepth = 0.0;
+    int   blockerCount    = 0;
+
+    for (int i = 0; i < POISSON_SAMPLES; ++i)
+    {
+        vec2 offset = poissonDisk[i] * u_BlockerSearchUV;
+        float sampleDepth = texture(spotLightShadowMaps[index], proj.xy + offset).r;
+
+        if (sampleDepth < proj.z - bias)   // blocker = nearer than receiver
+        {
+            avgBlockerDepth += sampleDepth;
+            blockerCount++;
+        }
+    }
+
+    // No blockers → fully lit
+    if (blockerCount == 0)
+        return 0.0;
+
+    avgBlockerDepth /= float(blockerCount);
+
+    // ── 3. Penumbra size (filter radius) ─────────────
+    float penumbra = (proj.z - avgBlockerDepth) / avgBlockerDepth;
+
+
+    float filterRadiusUV = penumbra * u_LightRadiusUV;   // in UV space
+
+    // ── 4. PCF filter with variable radius ───────────
+    float shadow = 0.0;
+    for (int i = 0; i < POISSON_SAMPLES; ++i)
+    {
+        vec2 offset = poissonDisk[i] * filterRadiusUV;
+        float sampleDepth = texture(spotLightShadowMaps[index], proj.xy + offset).r;
+        shadow += (proj.z - bias > sampleDepth) ? 1.0 : 0.0;
+    }
+
+    shadow /= float(POISSON_SAMPLES);
+    
+// Already in proj.xy (UV from 0–1)
+//  float distFromCenter = length(proj.xy - 0.5);
+// float coneFade = smoothstep(1.0, 0.1, distFromCenter); // adjust 0.85 for edge softness
+// shadow *= coneFade; // fade shadow toward outer cone 
+
+    return shadow;
+}  
+/* float ShadowCalculation(int index, vec3 N)
+{
+    vec3 projCoords = fromVert.fragPosLightSpace[index].xyz / fromVert.fragPosLightSpace[index].w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    if (currentDepth > 1.0) return 0.0;
+
+    vec3 normal = normalize(fromVert.normal);
+    vec3 lightDir = normalize(-spotLights[index].direction);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(spotLightShadowMaps[index], 0);
+
+    for (int i = 0; i < POISSON_SAMPLE_COUNT; ++i) {
+        vec2 offset = poissonDisk[i] * texelSize * 2.0; // tweak scale for softness
+        float sampledDepth = texture(spotLightShadowMaps[index], projCoords.xy + offset).r;
+        shadow += (currentDepth - bias > sampledDepth) ? 1.0 : 0.0;
+    }
+
+    shadow /= float(POISSON_SAMPLE_COUNT);
+    return shadow;
+} */
+
+ /* float ShadowCalculation(int index, vec3 N)
 {
     vec3 projCoords = fromVert.fragPosLightSpace[index].xyz / fromVert.fragPosLightSpace[index].w;
     projCoords = projCoords * 0.5 + 0.5;
@@ -113,7 +297,7 @@ float ShadowCalculation(int index, vec3 N)
     }
  
     return shadow;
-}  
+}  */  
 
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -177,6 +361,8 @@ void main() {
 	           
     vec3 Lo = vec3(0.0);
     
+    float shadowCalc = 0.0;
+
 for(int i = 0; i < fromVert.numSpotLights; ++i) {
          if(spotLights[i].brightness == 0){
             continue;
@@ -194,8 +380,9 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
 
         radiance *= intensityRadiance;
 
-        float shadowCalc = ShadowCalculation(i, N);
+        // shadowCalc = ShadowCalculation(i, N);
         
+        shadowCalc = ShadowPCSS(i, N);
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
