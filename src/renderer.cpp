@@ -401,8 +401,8 @@ void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light) {
 }
 
 void createSpotLightShadowMap(Scene* scene, SpotLight* light) {
-    light->shadowWidth = 512.0f;
-    light->shadowHeight = 512.0f;
+    light->shadowWidth = 1024.0f;
+    light->shadowHeight = 1024.0f;
     glGenFramebuffers(1, &light->depthFrameBuffer);
     glGenTextures(1, &light->depthTex);
     glBindTexture(GL_TEXTURE_2D, light->depthTex);

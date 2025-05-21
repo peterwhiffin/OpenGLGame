@@ -6,6 +6,8 @@
 #include "forward.h"
 #include "utils/mathutils.h"
 
+constexpr char* resourcePath = "..\\resources\\";
+
 struct ModelNode {
     std::string name;
     ModelNode* parent;

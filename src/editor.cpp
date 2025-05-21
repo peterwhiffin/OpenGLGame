@@ -1,4 +1,6 @@
 #include <iostream>
+#include <filesystem>
+
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"
@@ -10,6 +12,8 @@
 #include "renderer.h"
 #include "physics.h"
 #include "animation.h"
+
+void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection, std::string directory);
 
 void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     if (!scene->isPicking) {
@@ -116,7 +120,7 @@ static void ShowExampleMenuFile(Scene* scene) {
     }
 }
 
-void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
+void createEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
     Entity* entity = getEntity(scene, entityID);
     Transform* transform = getTransform(scene, entityID);
 
@@ -143,7 +147,7 @@ void createImGuiEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags n
 
     if (node_open) {
         for (uint32_t childEntityID : transform->childEntityIds) {
-            createImGuiEntityTree(scene, childEntityID, node_flags, selection);
+            createEntityTree(scene, childEntityID, node_flags, selection);
         }
         ImGui::TreePop();
     }
@@ -229,7 +233,7 @@ void buildImGui(Scene* scene) {
 
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createImGuiEntityTree(scene, scene->transforms[i].entityID, 0, selection);
+            createEntityTree(scene, scene->transforms[i].entityID, 0, selection);
         }
     }
 
@@ -698,6 +702,9 @@ void buildImGui(Scene* scene) {
     ImGui::End();
 
     ImGui::Begin("Project");
+
+    static ImGuiSelectionBasicStorage projectSelection;
+    createProjectTree(scene, 0, projectSelection, "..\\resources\\");
     ImGui::End();
 
     ImGui::Begin("Post-Process");
@@ -709,6 +716,68 @@ void buildImGui(Scene* scene) {
     ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
     ImGui::DragFloat("SSAO power", &scene->AOPower, 0.001f, 0.0f, 50.0f);
     ImGui::End();
+}
+
+void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection, std::string directory) {
+    for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(directory)) {
+        if (dir.is_directory()) {
+            std::filesystem::path path = dir.path();
+            std::string fullPath = dir.path().string();
+            std::string name = fullPath.substr(fullPath.find_last_of('\\') + 1);
+            ImGui::PushID(fullPath.c_str());
+            bool isOpen = ImGui::TreeNodeEx(name.c_str(), node_flags);
+
+            if (isOpen) {
+                createProjectTree(scene, node_flags, selection, fullPath);
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+        } else if (dir.is_regular_file()) {
+            std::string fileString = dir.path().filename().string();
+            ImGui::PushID(fileString.c_str());
+
+            node_flags |= ImGuiTreeNodeFlags_Leaf;
+            ImGui::TreeNodeEx(fileString.c_str(), node_flags);
+            /* if (isOpen) {
+                ImGui::TreePop();
+            } */
+            ImGui::TreePop();
+            ImGui::PopID();
+        }
+    }
+
+    /* Entity* entity = getEntity(scene, entityID);
+    Transform* transform = getTransform(scene, entityID);
+
+    ImGui::PushID(entityID);
+
+    node_flags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
+
+    if (transform->childEntityIds.size() == 0) {
+        node_flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    ImGui::SetNextItemSelectionUserData(entityID);
+
+    bool is_selected = selection.Contains(entityID);
+    if (is_selected) {
+        node_flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    std::string title = entity->name;
+    bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
+    if (ImGui::IsItemClicked()) {
+        scene->nodeClicked = entity->entityID;
+    }
+
+    if (node_open) {
+        for (uint32_t childEntityID : transform->childEntityIds) {
+            createEntityTree(scene, childEntityID, node_flags, selection);
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID(); */
 }
 
 void drawEditor(Scene* scene) {

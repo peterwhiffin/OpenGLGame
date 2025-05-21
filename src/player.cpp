@@ -13,9 +13,10 @@
 #include "ecs.h"
 
 void spawnTrashCan(Scene* scene, Player* player) {
-    uint32_t trashcanID = createEntityFromModel(scene, scene->trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
+    Model* trashcanModel = scene->modelMap["trashcan"];
+    uint32_t trashcanID = createEntityFromModel(scene, trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
     Transform* transform = getTransform(scene, trashcanID);
-    JPH::CylinderShapeSettings floor_shape_settings(scene->trashcanModel->rootNode->mesh->extent.GetY(), scene->trashcanModel->rootNode->mesh->extent.GetX());
+    JPH::CylinderShapeSettings floor_shape_settings(trashcanModel->rootNode->mesh->extent.GetY(), trashcanModel->rootNode->mesh->extent.GetX());
     JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
     JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
     JPH::ObjectLayer layer = Layers::MOVING;

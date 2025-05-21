@@ -73,7 +73,6 @@ struct Scene {
     uint32_t nextEntityID = 1;
     vec3 wrenchOffset = vec3(0.0f, -0.42f, 0.37f);
 
-    Model* trashcanModel;
     Model* testRoom;
     Model* wrench;
     Model* arms;
@@ -106,6 +105,7 @@ struct Scene {
     std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<std::string, Material*> materialMap;
     std::unordered_map<std::string, Texture> textureMap;
+    std::unordered_map<std::string, Model*> modelMap;
 
     std::vector<Model*> models;
     std::vector<vec3> ssaoKernel;

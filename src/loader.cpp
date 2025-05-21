@@ -3,6 +3,8 @@
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
 
 #include "loader.h"
 #include "scene.h"
@@ -382,7 +384,7 @@ Model* loadModel(Scene* gameScene, std::string path, std::vector<Texture>* allTe
     }
 
     Model* newModel = new Model();
-    directory = path.substr(0, path.find_last_of('/'));
+    directory = path.substr(0, path.find_last_of('\\'));
     std::string name = scene->mRootNode->mName.C_Str();
     name = name.substr(0, name.find_last_of('.'));
     newModel->name = name;
@@ -448,9 +450,25 @@ void createDefaultResources(Scene* scene) {
     scene->materialMap[defaultMaterial->name] = defaultMaterial;
 }
 
+void findResources(Scene* scene) {
+    for (const std::filesystem::directory_entry& dir : std::filesystem::recursive_directory_iterator(resourcePath)) {
+        if (dir.is_regular_file()) {
+            std::filesystem::path extension = dir.path().extension();
+            std::string pathString = dir.path().string();
+            std::string extString = extension.string();
+            std::string fileString = dir.path().filename().string();
+            std::string name = fileString.substr(0, fileString.find_last_of('.'));
+            if (extString == ".gltf") {
+                scene->modelMap[name] = loadModel(scene, pathString, &scene->textures, scene->lightingShader, true);
+            }
+        }
+    }
+}
+
 void loadResources(Scene* scene) {
     createDefaultResources(scene);
-    scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
-    scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
+    findResources(scene);
+    // scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
+    // scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
+    // scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
 }
