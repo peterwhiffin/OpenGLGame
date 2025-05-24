@@ -1,6 +1,8 @@
 #pragma once
-#include "forward.h"
+// #include "forward.h"
 #include "utils/mathutils.h"
+
+struct Scene;
 
 struct Transform {
     uint32_t entityID;

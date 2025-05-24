@@ -305,9 +305,8 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
             if (scene->materialMap.count(materialName)) {
                 materials.push_back(scene->materialMap[materialName]);
             } else {
-                Material* material = new Material();
-                *material = *scene->materialMap["default"];
-                scene->materialMap[materialName] = material;
+                Material* material = scene->materialMap["default"];
+                // scene->materialMap[materialName] = material;
                 materials.push_back(material);
                 std::cerr << "ERROR::MISSING_MATERIAL::No material in map with name: " << materialName << std::endl;
                 for (auto& pair : scene->materialMap) {
@@ -408,6 +407,7 @@ void createMaterial(Scene* scene, ComponentBlock block) {
         material = scene->materialMap[name];
     } else {
         material = new Material();
+        scene->materialMap[name] = material;
     }
 
     material->name = name;
@@ -802,6 +802,24 @@ void loadDefaultScene(Scene* scene) {
     setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
 }
 
+void loadMaterials(Scene* scene) {
+    for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
+        if (dir.is_regular_file()) {
+            std::filesystem::path path = dir.path();
+            std::string fileString = path.filename().string();
+            std::string ext = path.extension().string();
+            if (ext == ".mat") {
+                std::ifstream stream(path);
+                std::vector<Token> tokens;
+                std::vector<ComponentBlock> components;
+                getTokens(&stream, &tokens);
+                createComponentBlocks(scene, &tokens, &components);
+                createComponents(scene, &components);
+            }
+        }
+    }
+}
+
 void loadScene(Scene* scene) {
     if (!findLastScene(scene)) {
         loadDefaultScene(scene);
@@ -889,41 +907,74 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeMaterials(Scene* scene, std::ofstream& stream) {
-    for (auto& pair : scene->materialMap) {
-        Material* material = pair.second;
-        std::string name = material->name;
-        std::string textures = "";
-        std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
-        std::string roughness = std::to_string(material->roughness);
-        std::string metalness = std::to_string(material->metalness);
-        std::string aoStrength = std::to_string(material->aoStrength);
-        std::string normalStrength = std::to_string(material->normalStrength);
-        std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
+void writeMaterials(Scene* scene) {
+    for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
+        if (dir.is_regular_file()) {
+            std::filesystem::path path = dir.path();
+            if (path.extension() == ".mat") {
+                std::string fileName = path.filename().string();
+                std::string name = fileName.substr(0, fileName.find_first_of('.'));
+                if (scene->materialMap.count(name)) {
+                    Material* material = scene->materialMap[name];
+                    std::ofstream stream(path);
+                    std::string name = material->name;
+                    std::string textures = "";
+                    std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
+                    std::string roughness = std::to_string(material->roughness);
+                    std::string metalness = std::to_string(material->metalness);
+                    std::string aoStrength = std::to_string(material->aoStrength);
+                    std::string normalStrength = std::to_string(material->normalStrength);
+                    std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
 
-        if (material->textures.size() > 0) {
-            textures += material->textures[0].name;
-        } else {
-            textures += "white";
+                    if (material->textures.size() > 0) {
+                        textures += material->textures[0].name;
+                    } else {
+                        textures += "white";
+                    }
+
+                    for (int i = 1; i < 5; i++) {
+                        textures += ", " + material->textures[i].name;
+                    }
+
+                    stream << "Material {" << std::endl;
+                    stream << "name: " << name << std::endl;
+                    stream << "textures: " << textures << std::endl;
+                    stream << "textureTiling: " << textureTiling << std::endl;
+                    stream << "baseColor: " << baseColor << std::endl;
+                    stream << "roughness: " << roughness << std::endl;
+                    stream << "metalness: " << metalness << std::endl;
+                    stream << "aoStrength: " << aoStrength << std::endl;
+                    stream << "normalStrength: " << normalStrength << std::endl;
+                    stream << "}" << std::endl
+                           << std::endl;
+                }
+            }
+        }
+    }
+}
+
+/* void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
+    for (MeshRenderer& renderer : scene->meshRenderers) {
+        std::string entityID = std::to_string(renderer.entityID);
+        std::string rootEntity = std::to_string(renderer.rootEntity);
+        std::string mesh = renderer.mesh->name;
+        std::string materials = "";
+
+        materials += renderer.mesh->subMeshes[0].material->name;
+
+        for (int i = 1; i < renderer.mesh->subMeshes.size(); i++) {
+            materials += ", " + renderer.mesh->subMeshes[i].material->name;
         }
 
-        for (int i = 1; i < 5; i++) {
-            textures += ", " + material->textures[i].name;
-        }
-
-        stream << "Material {" << std::endl;
-        stream << "name: " << name << std::endl;
-        stream << "textures: " << textures << std::endl;
-        stream << "textureTiling: " << textureTiling << std::endl;
-        stream << "baseColor: " << baseColor << std::endl;
-        stream << "roughness: " << roughness << std::endl;
-        stream << "metalness: " << metalness << std::endl;
-        stream << "aoStrength: " << aoStrength << std::endl;
-        stream << "normalStrength: " << normalStrength << std::endl;
+        stream << "MeshRenderer {" << std::endl;
+        stream << "entityID: " << entityID << std::endl;
+        stream << "rootEntity: " << rootEntity << std::endl;
+        stream << "mesh: " << mesh << std::endl;
+        stream << "materials: " << materials << std::endl;
         stream << "}" << std::endl
                << std::endl;
     }
-}
+} */
 
 void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
@@ -1165,5 +1216,5 @@ void saveScene(Scene* scene) {
     writeSpotLights(scene, stream);
     writeCameras(scene, stream);
     writePlayer(scene, stream);
-    writeMaterials(scene, stream);
+    writeMaterials(scene);
 }

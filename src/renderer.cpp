@@ -173,11 +173,13 @@ void drawScene(Scene* scene) {
             material = subMesh.material;
             const std::vector<Texture>& textures = material->textures;
 
+            vec4 baseColor = scene->nodeClicked == renderer.entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
+
             glUniform1f(10, material->metalness);
             glUniform1f(11, material->roughness);
             glUniform1f(12, material->aoStrength);
             glUniform1f(13, material->normalStrength);
-            glUniform3fv(14, 1, material->baseColor.mF32);
+            glUniform3fv(14, 1, baseColor.mF32);
             glUniform2fv(glGetUniformLocation(scene->lightingShader, "textureTiling"), 1, glm::value_ptr(material->textureTiling));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
@@ -828,6 +830,7 @@ void initializeLights(Scene* scene, unsigned int shader) {
 
 void renderScene(Scene* scene) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &scene->matricesUBOData);
+    drawPickingScene(scene);
     drawShadowMaps(scene);
     drawScene(scene);
     drawSSAO(scene);
@@ -875,7 +878,7 @@ void createCameraUBO(Scene* scene) {
 
 void initRenderer(Scene* scene) {
     setInitialFlags();
-    // createPickingFBO(scene);
+    createPickingFBO(scene);
     createSSAOBuffer(scene);
     createShadowMapDepthBuffers(scene);
     for (SpotLight& light : scene->spotLights) {

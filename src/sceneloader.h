@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <unordered_map>
-#include "forward.h"
+// #include "forward.h"
 
 constexpr char* scenePath = "../data/scenes/";
+
+struct Scene;
 
 enum TokenType {
     Value,
@@ -27,3 +29,4 @@ struct ComponentBlock {
 void loadScene(Scene* scene);
 bool findLastScene(Scene* scene);
 void saveScene(Scene* scene);
+void loadMaterials(Scene* scene);

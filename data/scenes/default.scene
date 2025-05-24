@@ -7493,7 +7493,7 @@ Transform {
 entityID: 482
 parentEntityID: 480
 childEntityIds: 483
-localPosition: 0.370588, 0.371540, -0.718286
+localPosition: 0.370589, 0.375386, -0.718286
 localRotation: -0.124429, -0.293109, -0.945846, 0.063085
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7502,8 +7502,8 @@ Transform {
 entityID: 483
 parentEntityID: 482
 childEntityIds: 484
-localPosition: 0.000000, 0.492474, 0.000000
-localRotation: 0.596523, 0.160521, -0.096640, 0.780419
+localPosition: 0.000000, 0.492474, -0.000000
+localRotation: 0.596119, 0.150124, -0.100513, 0.782305
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7529,7 +7529,7 @@ Transform {
 entityID: 486
 parentEntityID: 485
 childEntityIds: 487
-localPosition: -0.000000, 0.107024, -0.000000
+localPosition: 0.000000, 0.107024, 0.000000
 localRotation: -0.155999, 0.076925, -0.092879, 0.980368
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7538,7 +7538,7 @@ Transform {
 entityID: 487
 parentEntityID: 486
 childEntityIds: None
-localPosition: -0.000000, 0.048880, -0.000000
+localPosition: 0.000000, 0.048880, -0.000000
 localRotation: -0.026568, 0.007733, 0.004450, 0.999607
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7556,7 +7556,7 @@ Transform {
 entityID: 489
 parentEntityID: 488
 childEntityIds: 490
-localPosition: 0.000000, 0.057069, 0.000000
+localPosition: 0.000000, 0.057069, -0.000000
 localRotation: -0.202934, 0.002548, -0.012294, 0.979112
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7565,7 +7565,7 @@ Transform {
 entityID: 490
 parentEntityID: 489
 childEntityIds: None
-localPosition: 0.000000, 0.048671, -0.000000
+localPosition: -0.000000, 0.048671, -0.000000
 localRotation: -0.083388, -0.000780, 0.009326, 0.996473
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7575,7 +7575,7 @@ entityID: 491
 parentEntityID: 484
 childEntityIds: 492
 localPosition: -0.005289, 0.222849, 0.017762
-localRotation: -0.212179, -0.448623, -0.099102, 0.862494
+localRotation: -0.212180, -0.448623, -0.099102, 0.862494
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7592,7 +7592,7 @@ Transform {
 entityID: 493
 parentEntityID: 492
 childEntityIds: None
-localPosition: 0.000000, 0.049470, 0.000000
+localPosition: 0.000000, 0.049470, -0.000000
 localRotation: -0.169396, -0.004513, 0.026236, 0.985188
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7610,7 +7610,7 @@ Transform {
 entityID: 495
 parentEntityID: 494
 childEntityIds: 496
-localPosition: -0.000000, 0.043627, 0.000000
+localPosition: -0.000000, 0.043627, -0.000000
 localRotation: -0.430746, 0.001826, -0.003828, 0.902463
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7637,7 +7637,7 @@ Transform {
 entityID: 498
 parentEntityID: 497
 childEntityIds: 499
-localPosition: -0.000000, 0.045948, -0.000000
+localPosition: -0.000000, 0.045948, 0.000000
 localRotation: -0.446048, -0.021167, 0.042411, 0.893753
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7646,7 +7646,7 @@ Transform {
 entityID: 499
 parentEntityID: 498
 childEntityIds: None
-localPosition: 0.000000, 0.034896, -0.000000
+localPosition: 0.000000, 0.034896, 0.000000
 localRotation: -0.278528, -0.004104, 0.014154, 0.960315
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7655,7 +7655,7 @@ Transform {
 entityID: 500
 parentEntityID: 480
 childEntityIds: 501
-localPosition: -0.235946, 0.219233, -0.858149
+localPosition: -0.235946, 0.223288, -0.858149
 localRotation: -0.008642, 0.447557, 0.841314, 0.302999
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7664,8 +7664,8 @@ Transform {
 entityID: 501
 parentEntityID: 500
 childEntityIds: 502
-localPosition: 0.000000, 0.492474, -0.000000
-localRotation: 0.475978, -0.184752, 0.079497, 0.856149
+localPosition: -0.000000, 0.492474, -0.000000
+localRotation: 0.465858, -0.188455, 0.088459, 0.860021
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7674,7 +7674,7 @@ entityID: 502
 parentEntityID: 501
 childEntityIds: 503, 506, 509, 512, 515, 518
 localPosition: -0.000000, 0.524044, 0.000000
-localRotation: -0.055429, 0.482110, -0.154978, 0.860511
+localRotation: -0.055176, 0.478877, -0.154154, 0.862479
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7781,7 +7781,7 @@ Transform {
 entityID: 514
 parentEntityID: 513
 childEntityIds: None
-localPosition: -0.000000, 0.040439, 0.000000
+localPosition: 0.000000, 0.040439, -0.000000
 localRotation: -0.276328, -0.001895, 0.006588, 0.961039
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7853,8 +7853,8 @@ Transform {
 entityID: 522
 parentEntityID: -1
 childEntityIds: 523
-localPosition: 1.004851, 1.280000, -16.590128
-localRotation: 0.000000, -0.899173, 0.000000, -0.437593
+localPosition: 4.894912, 1.300000, -0.320108
+localRotation: 0.000000, -0.049721, 0.000000, 0.998763
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7863,7 +7863,7 @@ entityID: 523
 parentEntityID: 522
 childEntityIds: 521
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.247846, 0.000000, 0.000000, 0.968799
+localRotation: 0.207058, 0.000000, 0.000000, 0.978329
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 1.004851, 1.980000, -16.590128
-localRotation: 0.108456, 0.871118, -0.222857, 0.423940
+localPosition: 4.894912, 2.000000, -0.320108
+localRotation: 0.206802, -0.048644, 0.010295, 0.977119
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7949,7 +7949,7 @@ MeshRenderer {
 entityID: 11
 rootEntity: 4
 mesh: Floor1.006
-materials: floorMat
+materials: NewMaterial
 }
 
 MeshRenderer {
@@ -16096,82 +16096,5 @@ cameraControllerEntityID: 522
 cameraControllerCameraTargetEntityID: 523
 cameraControllerCameraEntityID: 524
 cameraControllerSensitivity: 0.300000
-}
-
-Material {
-name: default
-textures: white, white, black, white, blue
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 1.000000
-metalness: 1.000000
-aoStrength: 1.000000
-normalStrength: 1.000000
-}
-
-Material {
-name: Trashcan
-textures: TrashDiffuse.png, white, white, white, white
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 0.700000
-metalness: 0.400000
-aoStrength: 1.000000
-normalStrength: 0.000000
-}
-
-Material {
-name: floorMat
-textures: concrete.png, concreteRoughness.png, white, white, concreteNormal.png
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 0.700000
-metalness: 0.000000
-aoStrength: 1.000000
-normalStrength: 0.700000
-}
-
-Material {
-name: Wrench.001
-textures: wrench.png, white, white, white, wrenchNormal.png
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 0.460000
-metalness: 0.170000
-aoStrength: 1.000000
-normalStrength: 0.810000
-}
-
-Material {
-name: Mat
-textures: arm1Color.png, white, white, white, white
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 1.000000
-metalness: 0.000000
-aoStrength: 1.000000
-normalStrength: 0.000000
-}
-
-Material {
-name: Material.003
-textures: concretewalls.png, concretewallsRoughness.png, white, white, concretewallsNormal.png
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 1.000000
-metalness: 0.000000
-aoStrength: 1.000000
-normalStrength: 2.600000
-}
-
-Material {
-name: Wrench
-textures: wrench.png, white, white, white, wrenchNormal.png
-textureTiling: 1.000000, 1.000000
-baseColor: 1.000000, 1.000000, 1.000000, 1.000000
-roughness: 1.000000
-metalness: 1.000000
-aoStrength: 1.000000
-normalStrength: 1.000000
 }
 

@@ -15,6 +15,7 @@
 #include "assimp/material.h"
 #include "assimp/types.h"
 #include "utils/stb_image.h"
+#include "sceneloader.h"
 
 JPH::Mat44 transpose(const aiMatrix4x4& m) {
     return JPH::Mat44(
@@ -468,6 +469,7 @@ void findResources(Scene* scene) {
 void loadResources(Scene* scene) {
     createDefaultResources(scene);
     findResources(scene);
+    loadMaterials(scene);
     // scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
     // scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
     // scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
