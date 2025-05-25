@@ -144,6 +144,7 @@ void createEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_f
     bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
     if (ImGui::IsItemClicked()) {
         scene->nodeClicked = entity->entityID;
+        scene->fileClicked = "";
     }
 
     if (node_open) {
@@ -285,6 +286,70 @@ void buildImGui(Scene* scene) {
 
     ImGui::End();
 
+    ImGui::Begin("Project");
+
+    static ImGuiSelectionBasicStorage projectSelection;
+    createProjectTree(scene, 0, projectSelection, "..\\resources\\");
+
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        ImGui::OpenPopup("ProjectContextMenu");
+    }
+
+    if (ImGui::BeginPopup("ProjectContextMenu")) {
+        if (ImGui::MenuItem("Create Material")) {
+            std::string fileName = "NewMaterial.mat";
+            std::string name = "NewMaterial";
+            std::string suffix = "";
+            std::string ext = ".mat";
+            int counter = 0;
+
+            while (!checkFilenameUnique("..\\resources\\", fileName)) {
+                counter++;
+                suffix = std::to_string(counter);
+                fileName = name + suffix + ext;
+            }
+
+            name = name + suffix;
+            std::string textures = "white, white, white, white, white";
+            std::string baseColor = "1.0, 1.0, 1.0, 1.0";
+            std::string roughness = "1.0";
+            std::string metalness = "1.0";
+            std::string aoStrength = "1.0";
+            std::string normalStrength = "1.0";
+            std::string textureTiling = "1.0, 1.0";
+
+            std::ofstream stream("..\\resources\\" + fileName);
+            stream << "Material {" << std::endl;
+            stream << "name: " << name << std::endl;
+            stream << "textures: " << textures << std::endl;
+            stream << "textureTiling: " << textureTiling << std::endl;
+            stream << "baseColor: " << baseColor << std::endl;
+            stream << "roughness: " << roughness << std::endl;
+            stream << "metalness: " << metalness << std::endl;
+            stream << "aoStrength: " << aoStrength << std::endl;
+            stream << "normalStrength: " << normalStrength << std::endl;
+            stream << "}" << std::endl
+                   << std::endl;
+
+            Material* newMat = new Material();
+            newMat->name = name;
+            newMat->textures.push_back(scene->textureMap["white"]);
+            newMat->textures.push_back(scene->textureMap["white"]);
+            newMat->textures.push_back(scene->textureMap["black"]);
+            newMat->textures.push_back(scene->textureMap["white"]);
+            newMat->textures.push_back(scene->textureMap["blue"]);
+            newMat->textureTiling = glm::vec2(1.0f, 1.0f);
+            newMat->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            newMat->roughness = 1.0f;
+            newMat->metalness = 1.0f;
+            newMat->aoStrength = 1.0f;
+            newMat->normalStrength = 1.0f;
+            scene->materialMap[name] = newMat;
+        }
+
+        ImGui::EndPopup();
+    }
+    ImGui::End();
     ImGui::Begin("Inspector");
 
     if (entityID != INVALID_ID) {
@@ -612,11 +677,11 @@ void buildImGui(Scene* scene) {
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("Albedo");
                         ImGui::TableSetColumnIndex(1);
-                        if (ImGui::BeginCombo("##currentAlbedoMap", material->textures[0].name.c_str())) {
+                        if (ImGui::BeginCombo("##currentAlbedoMap", material->textures[0]->name.c_str())) {
                             const bool isSelected = false;
 
                             for (auto& pair : scene->textureMap) {
-                                ImGui::Image((ImTextureID)(intptr_t)pair.second.id, ImVec2(20, 20));
+                                ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
                                 ImGui::SameLine();
                                 if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                                     material->textures[0] = pair.second;
@@ -626,7 +691,7 @@ void buildImGui(Scene* scene) {
                             ImGui::EndCombo();
                         }
                         ImGui::SameLine();
-                        ImGui::Image((ImTextureID)(intptr_t)material->textures[0].id, ImVec2(20, 20));
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[0]->id, ImVec2(20, 20));
                         ImGui::TableSetColumnIndex(2);
                         ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
 
@@ -634,11 +699,11 @@ void buildImGui(Scene* scene) {
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("Roughness");
                         ImGui::TableSetColumnIndex(1);
-                        if (ImGui::BeginCombo("##currentRoughnessMap", material->textures[1].name.c_str())) {
+                        if (ImGui::BeginCombo("##currentRoughnessMap", material->textures[1]->name.c_str())) {
                             const bool isSelected = false;
 
                             for (auto& pair : scene->textureMap) {
-                                ImGui::Image((ImTextureID)(intptr_t)pair.second.id, ImVec2(20, 20));
+                                ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
                                 ImGui::SameLine();
                                 if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                                     material->textures[1] = pair.second;
@@ -648,7 +713,7 @@ void buildImGui(Scene* scene) {
                             ImGui::EndCombo();
                         }
                         ImGui::SameLine();
-                        ImGui::Image((ImTextureID)(intptr_t)material->textures[1].id, ImVec2(20, 20));
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[1]->id, ImVec2(20, 20));
                         ImGui::TableSetColumnIndex(2);
                         ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
 
@@ -656,11 +721,11 @@ void buildImGui(Scene* scene) {
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("Metalness");
                         ImGui::TableSetColumnIndex(1);
-                        if (ImGui::BeginCombo("##currentMetallicMap", material->textures[2].name.c_str())) {
+                        if (ImGui::BeginCombo("##currentMetallicMap", material->textures[2]->name.c_str())) {
                             const bool isSelected = false;
 
                             for (auto& pair : scene->textureMap) {
-                                ImGui::Image((ImTextureID)(intptr_t)pair.second.id, ImVec2(20, 20));
+                                ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
                                 ImGui::SameLine();
                                 if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                                     material->textures[2] = pair.second;
@@ -670,7 +735,7 @@ void buildImGui(Scene* scene) {
                             ImGui::EndCombo();
                         }
                         ImGui::SameLine();
-                        ImGui::Image((ImTextureID)(intptr_t)material->textures[2].id, ImVec2(20, 20));
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[2]->id, ImVec2(20, 20));
                         ImGui::TableSetColumnIndex(2);
                         ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
 
@@ -678,11 +743,11 @@ void buildImGui(Scene* scene) {
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("AO");
                         ImGui::TableSetColumnIndex(1);
-                        if (ImGui::BeginCombo("##currentAOMap", material->textures[3].name.c_str())) {
+                        if (ImGui::BeginCombo("##currentAOMap", material->textures[3]->name.c_str())) {
                             const bool isSelected = false;
 
                             for (auto& pair : scene->textureMap) {
-                                ImGui::Image((ImTextureID)(intptr_t)pair.second.id, ImVec2(20, 20));
+                                ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
                                 ImGui::SameLine();
                                 if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                                     material->textures[3] = pair.second;
@@ -692,7 +757,7 @@ void buildImGui(Scene* scene) {
                             ImGui::EndCombo();
                         }
                         ImGui::SameLine();
-                        ImGui::Image((ImTextureID)(intptr_t)material->textures[3].id, ImVec2(20, 20));
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[3]->id, ImVec2(20, 20));
                         ImGui::TableSetColumnIndex(2);
                         ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
 
@@ -700,11 +765,11 @@ void buildImGui(Scene* scene) {
                         ImGui::TableSetColumnIndex(0);
                         ImGui::Text("Normal");
                         ImGui::TableSetColumnIndex(1);
-                        if (ImGui::BeginCombo("##currentNormalMap", material->textures[4].name.c_str())) {
+                        if (ImGui::BeginCombo("##currentNormalMap", material->textures[4]->name.c_str())) {
                             const bool isSelected = false;
 
                             for (auto& pair : scene->textureMap) {
-                                ImGui::Image((ImTextureID)(intptr_t)pair.second.id, ImVec2(20, 20));
+                                ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
                                 ImGui::SameLine();
                                 if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                                     material->textures[4] = pair.second;
@@ -714,7 +779,7 @@ void buildImGui(Scene* scene) {
                             ImGui::EndCombo();
                         }
                         ImGui::SameLine();
-                        ImGui::Image((ImTextureID)(intptr_t)material->textures[4].id, ImVec2(20, 20));
+                        ImGui::Image((ImTextureID)(intptr_t)material->textures[4]->id, ImVec2(20, 20));
                         ImGui::TableSetColumnIndex(2);
                         ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
 
@@ -771,8 +836,102 @@ void buildImGui(Scene* scene) {
             }
             ImGui::EndCombo();
         }
-    }
+    } else if (scene->fileClicked != "") {
+        std::string extension = scene->fileClicked.substr(scene->fileClicked.find_last_of('.'));
+        std::string fileName = scene->fileClicked.substr(scene->fileClicked.find_last_of('\\'));
+        std::string name = fileName.substr(1);
 
+        if (extension == ".png") {
+            if (ImGui::BeginTable("PNG Import Table", 2, ImGuiTableFlags_SizingFixedSame)) {
+                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
+                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Path: ");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(scene->fileClicked.c_str());
+
+                TextureSettings* settings = &scene->textureImportMap[scene->fileClicked];
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Gamma");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Checkbox("##gammaBool", &settings->gamma);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Filter ");
+                ImGui::TableSetColumnIndex(1);
+                GLenum filter = settings->filter;
+                std::string filterString = "Nearest";
+                if (filter == GL_LINEAR) {
+                    filterString = "Linear";
+                }
+
+                if (ImGui::BeginCombo("##pixelFormat", filterString.c_str())) {
+                    const bool isSelected = false;
+
+                    if (ImGui::Selectable("Nearest", isSelected)) {
+                        settings->filter = GL_NEAREST;
+                    } else if (ImGui::Selectable("Linear", isSelected)) {
+                        settings->filter = GL_LINEAR;
+                    }
+
+                    ImGui::EndCombo();
+                }
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Image((ImTextureID)(intptr_t)scene->textureMap[name]->id, ImVec2(100, 100));
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                if (ImGui::Button("Apply", ImVec2(40.0f, 25.0f))) {
+                    GLuint textureID = scene->textureMap[name]->id;  // Assume textureID is a valid texture object
+                    GLint internalFormat;
+                    glBindTexture(GL_TEXTURE_2D, textureID);
+                    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+                    if (settings->gamma) {
+                        if (internalFormat == GL_RGB) {
+                            settings->filter = GL_SRGB;
+                        } else if (internalFormat == GL_RGBA) {
+                            settings->filter = GL_SRGB_ALPHA;
+                        }
+                    } else {
+                        if (internalFormat == GL_SRGB) {
+                            settings->filter = GL_RGB;
+                        } else if (internalFormat == GL_SRGB_ALPHA) {
+                            settings->filter = GL_RGBA;
+                        }
+                    }
+
+                    glDeleteTextures(1, &scene->textureMap[name]->id);
+                    scene->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
+
+                    std::string gammaString = "true";
+                    std::string filterString = "GL_NEAREST";
+
+                    if (!settings->gamma) {
+                        gammaString = "false";
+                    }
+
+                    if (settings->filter == GL_LINEAR) {
+                        filterString = "GL_LINEAR";
+                    }
+
+                    std::ofstream stream(scene->fileClicked + ".meta");
+                    stream << "Texture {" << std::endl;
+                    stream << "path: " << scene->fileClicked << std::endl;
+                    stream << "gamma: " << gammaString << std::endl;
+                    stream << "filter: " << filterString << std::endl;
+                    stream << "}" << std::endl
+                           << std::endl;
+                }
+                ImGui::EndTable();
+            }
+        }
+    }
     /* if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("InspectorContextMenu");
     }
@@ -780,71 +939,6 @@ void buildImGui(Scene* scene) {
         ImGui::Text("Inspector menu");
         ImGui::EndPopup();
     } */
-    ImGui::End();
-
-    ImGui::Begin("Project");
-
-    static ImGuiSelectionBasicStorage projectSelection;
-    createProjectTree(scene, 0, projectSelection, "..\\resources\\");
-
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-        ImGui::OpenPopup("ProjectContextMenu");
-    }
-
-    if (ImGui::BeginPopup("ProjectContextMenu")) {
-        if (ImGui::MenuItem("Create Material")) {
-            std::string fileName = "NewMaterial.mat";
-            std::string name = "NewMaterial";
-            std::string suffix = "";
-            std::string ext = ".mat";
-            int counter = 0;
-
-            while (!checkFilenameUnique("..\\resources\\", fileName)) {
-                counter++;
-                suffix = std::to_string(counter);
-                fileName = name + suffix + ext;
-            }
-
-            name = name + suffix;
-            std::string textures = "white, white, white, white, white";
-            std::string baseColor = "1.0, 1.0, 1.0, 1.0";
-            std::string roughness = "1.0";
-            std::string metalness = "1.0";
-            std::string aoStrength = "1.0";
-            std::string normalStrength = "1.0";
-            std::string textureTiling = "1.0, 1.0";
-
-            std::ofstream stream("..\\resources\\" + fileName);
-            stream << "Material {" << std::endl;
-            stream << "name: " << name << std::endl;
-            stream << "textures: " << textures << std::endl;
-            stream << "textureTiling: " << textureTiling << std::endl;
-            stream << "baseColor: " << baseColor << std::endl;
-            stream << "roughness: " << roughness << std::endl;
-            stream << "metalness: " << metalness << std::endl;
-            stream << "aoStrength: " << aoStrength << std::endl;
-            stream << "normalStrength: " << normalStrength << std::endl;
-            stream << "}" << std::endl
-                   << std::endl;
-
-            Material* newMat = new Material();
-            newMat->name = name;
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["black"]);
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["blue"]);
-            newMat->textureTiling = glm::vec2(1.0f, 1.0f);
-            newMat->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            newMat->roughness = 1.0f;
-            newMat->metalness = 1.0f;
-            newMat->aoStrength = 1.0f;
-            newMat->normalStrength = 1.0f;
-            scene->materialMap[name] = newMat;
-        }
-
-        ImGui::EndPopup();
-    }
     ImGui::End();
 
     ImGui::Begin("Post-Process");
@@ -886,11 +980,22 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelecti
             }
             ImGui::PopID();
         } else if (dir.is_regular_file()) {
+            if (dir.path().extension() == ".meta") {
+                continue;
+            }
             std::string fileString = dir.path().filename().string();
             ImGui::PushID(fileString.c_str());
 
             node_flags |= ImGuiTreeNodeFlags_Leaf;
+
             ImGui::TreeNodeEx(fileString.c_str(), node_flags);
+
+            if (ImGui::IsItemClicked()) {
+                scene->fileClicked = dir.path().string();
+                scene->nodeClicked = INVALID_ID;
+                node_flags |= ImGuiTreeNodeFlags_Selected;
+            }
+
             ImGui::TreePop();
             ImGui::PopID();
         }

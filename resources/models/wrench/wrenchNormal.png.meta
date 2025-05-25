@@ -1,0 +1,6 @@
+Texture {
+path: ..\resources\models\wrench\wrenchNormal.png
+gamma: false
+filter: GL_NEAREST
+}
+

@@ -14,6 +14,7 @@
 #include "camera.h"
 #include "shader.h"
 #include "ecs.h"
+#include "loader.h"
 
 struct Scene {
     std::string name = "default";
@@ -39,6 +40,7 @@ struct Scene {
     GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
 
     uint32_t nodeClicked = INVALID_ID;
+    std::string fileClicked = "";
     ContextMenuType contextType;
 
     double timeAccum = 0.0f;
@@ -100,13 +102,15 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
     std::unordered_map<uint32_t, size_t> spotLightIndexMap;
 
-    std::vector<Texture> textures;
+    // std::vector<Texture> textures;
     std::unordered_map<std::string, Mesh*> meshMap;
     std::unordered_map<std::string, Animation*> animationMap;
     std::unordered_map<std::string, Material*> materialMap;
-    std::unordered_map<std::string, Texture> textureMap;
+    std::unordered_map<std::string, Texture*> textureMap;
     std::unordered_map<std::string, Model*> modelMap;
 
+    std::unordered_map<std::string, TextureSettings> textureImportMap;
+    std::unordered_map<std::string, ModelSettings> modelImportMap;
     std::vector<Model*> models;
     std::vector<vec3> ssaoKernel;
     std::vector<vec3> ssaoNoise;

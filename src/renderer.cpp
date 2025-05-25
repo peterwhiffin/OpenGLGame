@@ -171,7 +171,7 @@ void drawScene(Scene* scene) {
 
         for (SubMesh& subMesh : mesh->subMeshes) {
             material = subMesh.material;
-            const std::vector<Texture>& textures = material->textures;
+            const std::vector<Texture*>& textures = material->textures;
 
             vec4 baseColor = scene->nodeClicked == renderer.entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
 
@@ -183,15 +183,15 @@ void drawScene(Scene* scene) {
             glUniform2fv(glGetUniformLocation(scene->lightingShader, "textureTiling"), 1, glm::value_ptr(material->textureTiling));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);
-            glBindTexture(GL_TEXTURE_2D, textures[0].id);
+            glBindTexture(GL_TEXTURE_2D, textures[0]->id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureRoughnessUnit);
-            glBindTexture(GL_TEXTURE_2D, textures[1].id);
+            glBindTexture(GL_TEXTURE_2D, textures[1]->id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureMetallicUnit);
-            glBindTexture(GL_TEXTURE_2D, textures[2].id);
+            glBindTexture(GL_TEXTURE_2D, textures[2]->id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAOUnit);
-            glBindTexture(GL_TEXTURE_2D, textures[3].id);
+            glBindTexture(GL_TEXTURE_2D, textures[3]->id);
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
-            glBindTexture(GL_TEXTURE_2D, textures[4].id);
+            glBindTexture(GL_TEXTURE_2D, textures[4]->id);
 
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
@@ -781,8 +781,8 @@ void deleteBuffers(Scene* scene) {
 
     glDeleteBuffers(1, &scene->fullscreenVBO);
     glDeleteVertexArrays(1, &scene->fullscreenVAO);
-    for (Texture& tex : scene->textures) {
-        glDeleteTextures(1, &tex.id);
+    for (auto& pair : scene->textureMap) {
+        glDeleteTextures(1, &pair.second->id);
     }
 
     for (auto pair : scene->meshMap) {

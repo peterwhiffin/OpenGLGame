@@ -7493,7 +7493,7 @@ Transform {
 entityID: 482
 parentEntityID: 480
 childEntityIds: 483
-localPosition: 0.370589, 0.375386, -0.718286
+localPosition: 0.370588, 0.375826, -0.718286
 localRotation: -0.124429, -0.293109, -0.945846, 0.063085
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7502,8 +7502,8 @@ Transform {
 entityID: 483
 parentEntityID: 482
 childEntityIds: 484
-localPosition: 0.000000, 0.492474, -0.000000
-localRotation: 0.596119, 0.150124, -0.100513, 0.782305
+localPosition: 0.000000, 0.492474, 0.000000
+localRotation: 0.596376, 0.156507, -0.098137, 0.781160
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7538,7 +7538,7 @@ Transform {
 entityID: 487
 parentEntityID: 486
 childEntityIds: None
-localPosition: 0.000000, 0.048880, -0.000000
+localPosition: 0.000000, 0.048880, 0.000000
 localRotation: -0.026568, 0.007733, 0.004450, 0.999607
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7565,7 +7565,7 @@ Transform {
 entityID: 490
 parentEntityID: 489
 childEntityIds: None
-localPosition: -0.000000, 0.048671, -0.000000
+localPosition: 0.000000, 0.048671, 0.000000
 localRotation: -0.083388, -0.000780, 0.009326, 0.996473
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7575,7 +7575,7 @@ entityID: 491
 parentEntityID: 484
 childEntityIds: 492
 localPosition: -0.005289, 0.222849, 0.017762
-localRotation: -0.212180, -0.448623, -0.099102, 0.862494
+localRotation: -0.212179, -0.448623, -0.099102, 0.862494
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7583,7 +7583,7 @@ Transform {
 entityID: 492
 parentEntityID: 491
 childEntityIds: 493
-localPosition: -0.000000, 0.054666, -0.000000
+localPosition: -0.000000, 0.054666, 0.000000
 localRotation: -0.381367, -0.010676, 0.025870, 0.924000
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7610,7 +7610,7 @@ Transform {
 entityID: 495
 parentEntityID: 494
 childEntityIds: 496
-localPosition: -0.000000, 0.043627, -0.000000
+localPosition: 0.000000, 0.043627, -0.000000
 localRotation: -0.430746, 0.001826, -0.003828, 0.902463
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7646,7 +7646,7 @@ Transform {
 entityID: 499
 parentEntityID: 498
 childEntityIds: None
-localPosition: 0.000000, 0.034896, 0.000000
+localPosition: 0.000000, 0.034896, -0.000000
 localRotation: -0.278528, -0.004104, 0.014154, 0.960315
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7655,7 +7655,7 @@ Transform {
 entityID: 500
 parentEntityID: 480
 childEntityIds: 501
-localPosition: -0.235946, 0.223288, -0.858149
+localPosition: -0.235946, 0.223790, -0.858149
 localRotation: -0.008642, 0.447557, 0.841314, 0.302999
 localScale: 1.000000, 1.000000, 1.000000
 }
@@ -7664,8 +7664,8 @@ Transform {
 entityID: 501
 parentEntityID: 500
 childEntityIds: 502
-localPosition: -0.000000, 0.492474, -0.000000
-localRotation: 0.465858, -0.188455, 0.088459, 0.860021
+localPosition: 0.000000, 0.492474, -0.000000
+localRotation: 0.469179, -0.187248, 0.085529, 0.858774
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7674,7 +7674,7 @@ entityID: 502
 parentEntityID: 501
 childEntityIds: 503, 506, 509, 512, 515, 518
 localPosition: -0.000000, 0.524044, 0.000000
-localRotation: -0.055176, 0.478877, -0.154154, 0.862479
+localRotation: -0.055148, 0.478511, -0.154061, 0.862700
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7808,8 +7808,8 @@ Transform {
 entityID: 517
 parentEntityID: 516
 childEntityIds: None
-localPosition: 0.000000, 0.034896, 0.000000
-localRotation: -0.345979, 0.005099, -0.013826, 0.938127
+localPosition: -0.000000, 0.034896, 0.000000
+localRotation: -0.345979, 0.005100, -0.013826, 0.938127
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7853,8 +7853,8 @@ Transform {
 entityID: 522
 parentEntityID: -1
 childEntityIds: 523
-localPosition: 4.894912, 1.300000, -0.320108
-localRotation: 0.000000, -0.049721, 0.000000, 0.998763
+localPosition: -0.795350, 1.280000, -0.200027
+localRotation: 0.000000, 0.801257, 0.000000, 0.598320
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7863,7 +7863,7 @@ entityID: 523
 parentEntityID: 522
 childEntityIds: 521
 localPosition: 0.000000, 0.700000, 0.000000
-localRotation: 0.207058, 0.000000, 0.000000, 0.978329
+localRotation: 0.164186, 0.000000, 0.000000, 0.986429
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 4.894912, 2.000000, -0.320108
-localRotation: 0.206802, -0.048644, 0.010295, 0.977119
+localPosition: -0.795350, 1.980000, -0.200027
+localRotation: 0.098236, 0.790384, -0.131555, 0.590201
 localScale: 1.000000, 1.000000, 1.000000
 }
 

@@ -42,7 +42,7 @@ struct Shader {
 struct Material {
     GLint shader;  // this will probably need to be a shader struct eventually
     std::string name;
-    std::vector<Texture> textures;
+    std::vector<Texture*> textures;
     vec4 baseColor;
     glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
     float roughness = 1.0f;

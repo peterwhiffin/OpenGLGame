@@ -3,7 +3,9 @@
 
 
 ### Extra ###
-/Resources
+/Resources/Fonts
+/Resources/Arms
 /include
 /lib
 /build
+/art

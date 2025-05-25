@@ -1,0 +1,6 @@
+Texture {
+path: ..\resources\models\testroom\concretewalls.png
+gamma: true
+filter: GL_NEAREST
+}
+

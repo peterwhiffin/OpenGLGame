@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 // #include "forward.h"
 
 constexpr char* scenePath = "../data/scenes/";
@@ -30,3 +31,4 @@ void loadScene(Scene* scene);
 bool findLastScene(Scene* scene);
 void saveScene(Scene* scene);
 void loadMaterials(Scene* scene);
+void loadResourceSettings(Scene* scene, std::unordered_set<std::string>& metaPaths);

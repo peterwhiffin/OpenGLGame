@@ -61,6 +61,7 @@ void getNextToken(std::ifstream* stream, std::vector<Token>* tokens) {
 
     std::string text;
     Token token;
+    int newLine = int('\n');
 
     switch (c) {
         case '{':
@@ -79,14 +80,14 @@ void getNextToken(std::ifstream* stream, std::vector<Token>* tokens) {
             tokens->push_back(token);
             break;
         default:
-            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-' && c != '_') {
+            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-' && c != '_' && c != '\\') {
                 std::cerr << "ERROR::UNKNOWN_TOKEN--->  " << c << std::endl;
                 return;
             }
 
             text += c;
 
-            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-' || stream->peek() == '_') {
+            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-' || stream->peek() == '_' || stream->peek() == '\\') {
                 c = static_cast<char>(stream->get());
                 text += c;
                 if (c == ',') {
@@ -332,7 +333,7 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 
 void createMaterial(Scene* scene, ComponentBlock block) {
     std::string name = "default";
-    std::vector<Texture> textures;
+    std::vector<Texture*> textures;
     glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
     vec4 baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     float roughness = 0.5f;
@@ -737,6 +738,48 @@ void createPlayer(Scene* scene, ComponentBlock block) {
     scene->player = player;
 }
 
+void createModelSettings(Scene* scene, ComponentBlock block) {
+    std::string path = "";
+
+    if (block.memberValueMap.count("path")) {
+        path = block.memberValueMap["path"];
+    }
+
+    ModelSettings settings;
+    settings.path = path;
+    scene->modelImportMap[path] = settings;
+}
+
+void createTextureSettings(Scene* scene, ComponentBlock block) {
+    std::string path = "";
+    bool gamma = true;
+    GLenum filter = GL_NEAREST;
+
+    if (block.memberValueMap.count("path")) {
+        path = block.memberValueMap["path"];
+    }
+
+    if (block.memberValueMap.count("gamma")) {
+        if (block.memberValueMap["gamma"] == "false") {
+            gamma = false;
+        }
+    }
+
+    if (block.memberValueMap.count("filter")) {
+        std::string filterString = block.memberValueMap["filter"];
+        if (filterString == "GL_LINEAR") {
+            filter = GL_LINEAR;
+        } else if (filterString == "GL_NEAREST") {
+            filter = GL_NEAREST;
+        }
+    }
+
+    TextureSettings settings;
+    settings.path = path;
+    settings.gamma = gamma;
+    settings.filter = filter;
+    scene->textureImportMap[path] = settings;
+}
 void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock block = components->at(i);
@@ -761,6 +804,10 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createPlayer(scene, block);
         } else if (block.type == "Material") {
             createMaterial(scene, block);
+        } else if (block.type == "Model") {
+            createModelSettings(scene, block);
+        } else if (block.type == "Texture") {
+            createTextureSettings(scene, block);
         }
     }
 }
@@ -817,6 +864,17 @@ void loadMaterials(Scene* scene) {
                 createComponents(scene, &components);
             }
         }
+    }
+}
+
+void loadResourceSettings(Scene* scene, std::unordered_set<std::string>& metaPaths) {
+    for (std::string path : metaPaths) {
+        std::ifstream stream(path);
+        std::vector<Token> tokens;
+        std::vector<ComponentBlock> components;
+        getTokens(&stream, &tokens);
+        createComponentBlocks(scene, &tokens, &components);
+        createComponents(scene, &components);
     }
 }
 
@@ -927,13 +985,13 @@ void writeMaterials(Scene* scene) {
                     std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
 
                     if (material->textures.size() > 0) {
-                        textures += material->textures[0].name;
+                        textures += material->textures[0]->name;
                     } else {
                         textures += "white";
                     }
 
                     for (int i = 1; i < 5; i++) {
-                        textures += ", " + material->textures[i].name;
+                        textures += ", " + material->textures[i]->name;
                     }
 
                     stream << "Material {" << std::endl;

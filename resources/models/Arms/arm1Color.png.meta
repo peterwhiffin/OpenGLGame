@@ -1,0 +1,6 @@
+Texture {
+path: ..\resources\models\Arms\arm1Color.png
+gamma: true
+filter: GL_NEAREST
+}
+

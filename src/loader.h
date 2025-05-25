@@ -8,6 +8,16 @@
 
 constexpr char* resourcePath = "..\\resources\\";
 
+struct ModelSettings {
+    std::string path;
+};
+
+struct TextureSettings {
+    std::string path;
+    bool gamma = true;
+    GLint filter = GL_NEAREST;
+};
+
 struct ModelNode {
     std::string name;
     ModelNode* parent;
@@ -18,6 +28,7 @@ struct ModelNode {
 };
 
 struct Model {
+    std::string path;
     std::string name;
     ModelNode* rootNode;
     mat4 RootNodeTransform;
@@ -28,3 +39,4 @@ struct Model {
 };
 
 void loadResources(Scene* scene);
+GLuint loadTextureFromFile(const char* path, TextureSettings settings);

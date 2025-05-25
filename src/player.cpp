@@ -13,7 +13,7 @@
 #include "ecs.h"
 
 void spawnTrashCan(Scene* scene, Player* player) {
-    Model* trashcanModel = scene->modelMap["trashcan"];
+    Model* trashcanModel = scene->modelMap["trashcan.gltf"];
     uint32_t trashcanID = createEntityFromModel(scene, trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
     Transform* transform = getTransform(scene, trashcanID);
     JPH::CylinderShapeSettings floor_shape_settings(trashcanModel->rootNode->mesh->extent.GetY(), trashcanModel->rootNode->mesh->extent.GetX());
