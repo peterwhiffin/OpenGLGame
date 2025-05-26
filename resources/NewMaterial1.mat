@@ -1,5 +1,5 @@
 Material {
-textures: black, white, white, white, white
+textures: white, white, white, white, white
 textureTiling: 1.000000, 1.000000
 baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 roughness: 1.000000

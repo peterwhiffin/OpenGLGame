@@ -319,7 +319,6 @@ void buildImGui(Scene* scene) {
 
             std::ofstream stream("..\\resources\\" + fileName);
             stream << "Material {" << std::endl;
-            stream << "name: " << name << std::endl;
             stream << "textures: " << textures << std::endl;
             stream << "textureTiling: " << textureTiling << std::endl;
             stream << "baseColor: " << baseColor << std::endl;
@@ -331,7 +330,7 @@ void buildImGui(Scene* scene) {
                    << std::endl;
 
             Material* newMat = new Material();
-            newMat->name = name;
+            newMat->name = fileName;
             newMat->textures.push_back(scene->textureMap["white"]);
             newMat->textures.push_back(scene->textureMap["white"]);
             newMat->textures.push_back(scene->textureMap["black"]);
@@ -343,7 +342,7 @@ void buildImGui(Scene* scene) {
             newMat->metalness = 1.0f;
             newMat->aoStrength = 1.0f;
             newMat->normalStrength = 1.0f;
-            scene->materialMap[name] = newMat;
+            scene->materialMap[fileName] = newMat;
         }
 
         ImGui::EndPopup();
@@ -931,14 +930,14 @@ void buildImGui(Scene* scene) {
             }
         } else if (extension == ".mat") {
             if (ImGui::BeginTable("Material Table", 3, ImGuiTableFlags_SizingFixedFit)) {
-                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 75.0f);
+                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 95.0f);
                 ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthFixed, 145.0f);
                 ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
 
-                std::string matName = name.substr(0, name.find_last_of('.'));
+                // std::string matName = name.substr(0, name.find_last_of('.'));
 
-                if (scene->materialMap.count(matName)) {
-                    Material* material = scene->materialMap[matName];
+                if (scene->materialMap.count(name)) {
+                    Material* material = scene->materialMap[name];
 
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -946,54 +945,22 @@ void buildImGui(Scene* scene) {
                     static char buf1[32] = "";
                     ImGuiInputTextFlags flags;
                     flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ElideLeft;
-                    if (ImGui::InputText("default", buf1, IM_ARRAYSIZE(buf1), flags)) {
+                    ImGui::SameLine();
+
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::InputText("##defaultMatFilename", buf1, IM_ARRAYSIZE(buf1), flags)) {
                         std::filesystem::path path(scene->fileClicked);
                         if (std::filesystem::is_regular_file(path)) {
                             std::filesystem::path newPath = path;
                             newPath.replace_filename(buf1 + extension);
                             std::filesystem::rename(path, newPath);
-                            scene->materialMap.erase(matName);
-                            material->name = buf1;
+                            scene->materialMap.erase(name);
+                            material->name = buf1 + extension;
                             scene->materialMap[material->name] = material;
                             scene->fileClicked = newPath.string();
-
-                            saveScene(scene);
-
-                            /* std::ofstream stream(newPath);
-                            std::string name = material->name;
-                            std::string textures = "";
-                            std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
-                            std::string roughness = std::to_string(material->roughness);
-                            std::string metalness = std::to_string(material->metalness);
-                            std::string aoStrength = std::to_string(material->aoStrength);
-                            std::string normalStrength = std::to_string(material->normalStrength);
-                            std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
-
-                            if (material->textures.size() > 0) {
-                                textures += material->textures[0]->name;
-                            } else {
-                                textures += "white";
-                            }
-
-                            for (int i = 1; i < 5; i++) {
-                                textures += ", " + material->textures[i]->name;
-                            }
-
-                            stream << "Material {" << std::endl;
-                            stream << "name: " << name << std::endl;
-                            stream << "textures: " << textures << std::endl;
-                            stream << "textureTiling: " << textureTiling << std::endl;
-                            stream << "baseColor: " << baseColor << std::endl;
-                            stream << "roughness: " << roughness << std::endl;
-                            stream << "metalness: " << metalness << std::endl;
-                            stream << "aoStrength: " << aoStrength << std::endl;
-                            stream << "normalStrength: " << normalStrength << std::endl;
-                            stream << "}" << std::endl
-                                   << std::endl; */
+                            saveScene(scene);  // have to write the entire scene because mesh renderers get their material references by filename, and writing just the mesh renderers would be a disaster. Would need a stable handle to the material file, such as a guid, to skip this.
                         }
                     }
-
-                    ImGui::TableSetColumnIndex(1);
 
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -1151,6 +1118,7 @@ bool checkFilenameUnique(std::string path, std::string filename) {
 void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string directory) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(directory)) {
         if (dir.is_directory()) {
+            node_flags = 0;
             std::filesystem::path path = dir.path();
             std::string fullPath = dir.path().string();
             std::string name = fullPath.substr(fullPath.find_last_of('\\') + 1);
@@ -1169,16 +1137,18 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string 
             std::string fileString = dir.path().filename().string();
             ImGui::PushID(fileString.c_str());
 
-            node_flags |= ImGuiTreeNodeFlags_Leaf;
+            node_flags = ImGuiTreeNodeFlags_Leaf;
 
             // ImGui::SetNextItemSelectionUserData(scene->fileClicked);
+            if (scene->fileClicked == dir.path().string()) {
+                node_flags |= ImGuiTreeNodeFlags_Selected;
+            }
 
             ImGui::TreeNodeEx(fileString.c_str(), node_flags);
 
-            if (ImGui::IsItemClicked() || scene->fileClicked == dir.path().string()) {
+            if (ImGui::IsItemClicked()) {
                 scene->fileClicked = dir.path().string();
                 scene->nodeClicked = INVALID_ID;
-                node_flags |= ImGuiTreeNodeFlags_Selected;
             }
 
             ImGui::TreePop();

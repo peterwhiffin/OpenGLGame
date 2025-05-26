@@ -1,0 +1,10 @@
+Material {
+textures: wrench.png, white, white, white, wrenchNormal.png
+textureTiling: 1.000000, 1.000000
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 0.640000
+metalness: 0.400000
+aoStrength: 1.000000
+normalStrength: 0.500000
+}
+

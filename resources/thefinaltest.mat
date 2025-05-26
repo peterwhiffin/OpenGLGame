@@ -1,0 +1,10 @@
+Material {
+textures: concrete.png, concreteRoughness.png, concreteRoughness.png, white, concreteNormal.png
+textureTiling: 1.000000, 1.000000
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 0.650000
+metalness: 0.000000
+aoStrength: 1.000000
+normalStrength: 1.290000
+}
+

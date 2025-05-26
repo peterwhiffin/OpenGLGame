@@ -966,11 +966,9 @@ void writeMaterials(Scene* scene) {
             std::filesystem::path path = dir.path();
             if (path.extension() == ".mat") {
                 std::string fileName = path.filename().string();
-                std::string name = fileName.substr(0, fileName.find_first_of('.'));
-                if (scene->materialMap.count(name)) {
-                    Material* material = scene->materialMap[name];
+                if (scene->materialMap.count(fileName)) {
+                    Material* material = scene->materialMap[fileName];
                     std::ofstream stream(path);
-                    std::string name = material->name;
                     std::string textures = "";
                     std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
                     std::string roughness = std::to_string(material->roughness);
