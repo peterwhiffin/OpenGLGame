@@ -331,8 +331,8 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
     }
 }
 
-void createMaterial(Scene* scene, ComponentBlock block) {
-    std::string name = "default";
+void createMaterial(Scene* scene, ComponentBlock block, std::string fileName) {
+    std::string name = fileName;
     std::vector<Texture*> textures;
     glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
     vec4 baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -345,10 +345,6 @@ void createMaterial(Scene* scene, ComponentBlock block) {
     size_t currentPos = 0;
     size_t commaPos = 0;
     float floatComps[4];
-
-    if (block.memberValueMap.count("name")) {
-        name = block.memberValueMap["name"];
-    }
 
     if (block.memberValueMap.count("textures")) {
         memberString = block.memberValueMap["textures"];
@@ -802,8 +798,6 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
             createSpotLights(scene, block);
         } else if (block.type == "Player") {
             createPlayer(scene, block);
-        } else if (block.type == "Material") {
-            createMaterial(scene, block);
         } else if (block.type == "Model") {
             createModelSettings(scene, block);
         } else if (block.type == "Texture") {
@@ -861,7 +855,8 @@ void loadMaterials(Scene* scene) {
                 std::vector<ComponentBlock> components;
                 getTokens(&stream, &tokens);
                 createComponentBlocks(scene, &tokens, &components);
-                createComponents(scene, &components);
+                // createComponents(scene, &components);
+                createMaterial(scene, components[0], fileString);
             }
         }
     }
@@ -995,7 +990,6 @@ void writeMaterials(Scene* scene) {
                     }
 
                     stream << "Material {" << std::endl;
-                    stream << "name: " << name << std::endl;
                     stream << "textures: " << textures << std::endl;
                     stream << "textureTiling: " << textureTiling << std::endl;
                     stream << "baseColor: " << baseColor << std::endl;

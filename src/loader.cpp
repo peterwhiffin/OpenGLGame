@@ -496,13 +496,13 @@ void findResources(Scene* scene) {
         newTex->id = loadTextureFromFile(pair.first.c_str(), pair.second);
         std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
         std::string name = fileName.substr(0, fileName.find_first_of('.'));
-        newTex->name = name;
+        newTex->name = fileName;
         newTex->path = pair.first;
         scene->textureMap[fileName] = newTex;
     }
 
     for (auto& pair : scene->modelImportMap) {
-        std::string fileName = pair.first.substr(0, pair.first.find_last_of('\\'));
+        std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
         scene->modelMap[fileName] = loadModel(scene, pair.first);
     }
     // parse meta files and create settings structs

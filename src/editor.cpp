@@ -14,7 +14,7 @@
 #include "physics.h"
 #include "animation.h"
 
-void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection, std::string directory);
+void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string directory);
 
 void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
     if (!scene->isPicking) {
@@ -288,8 +288,7 @@ void buildImGui(Scene* scene) {
 
     ImGui::Begin("Project");
 
-    static ImGuiSelectionBasicStorage projectSelection;
-    createProjectTree(scene, 0, projectSelection, "..\\resources\\");
+    createProjectTree(scene, 0, "..\\resources\\");
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("ProjectContextMenu");
@@ -930,6 +929,190 @@ void buildImGui(Scene* scene) {
                 }
                 ImGui::EndTable();
             }
+        } else if (extension == ".mat") {
+            if (ImGui::BeginTable("Material Table", 3, ImGuiTableFlags_SizingFixedFit)) {
+                ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 75.0f);
+                ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthFixed, 145.0f);
+                ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
+
+                std::string matName = name.substr(0, name.find_last_of('.'));
+
+                if (scene->materialMap.count(matName)) {
+                    Material* material = scene->materialMap[matName];
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text(material->name.c_str());
+                    static char buf1[32] = "";
+                    ImGuiInputTextFlags flags;
+                    flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ElideLeft;
+                    if (ImGui::InputText("default", buf1, IM_ARRAYSIZE(buf1), flags)) {
+                        std::filesystem::path path(scene->fileClicked);
+                        if (std::filesystem::is_regular_file(path)) {
+                            std::filesystem::path newPath = path;
+                            newPath.replace_filename(buf1 + extension);
+                            std::filesystem::rename(path, newPath);
+                            scene->materialMap.erase(matName);
+                            material->name = buf1;
+                            scene->materialMap[material->name] = material;
+                            scene->fileClicked = newPath.string();
+
+                            saveScene(scene);
+
+                            /* std::ofstream stream(newPath);
+                            std::string name = material->name;
+                            std::string textures = "";
+                            std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
+                            std::string roughness = std::to_string(material->roughness);
+                            std::string metalness = std::to_string(material->metalness);
+                            std::string aoStrength = std::to_string(material->aoStrength);
+                            std::string normalStrength = std::to_string(material->normalStrength);
+                            std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
+
+                            if (material->textures.size() > 0) {
+                                textures += material->textures[0]->name;
+                            } else {
+                                textures += "white";
+                            }
+
+                            for (int i = 1; i < 5; i++) {
+                                textures += ", " + material->textures[i]->name;
+                            }
+
+                            stream << "Material {" << std::endl;
+                            stream << "name: " << name << std::endl;
+                            stream << "textures: " << textures << std::endl;
+                            stream << "textureTiling: " << textureTiling << std::endl;
+                            stream << "baseColor: " << baseColor << std::endl;
+                            stream << "roughness: " << roughness << std::endl;
+                            stream << "metalness: " << metalness << std::endl;
+                            stream << "aoStrength: " << aoStrength << std::endl;
+                            stream << "normalStrength: " << normalStrength << std::endl;
+                            stream << "}" << std::endl
+                                   << std::endl; */
+                        }
+                    }
+
+                    ImGui::TableSetColumnIndex(1);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Albedo");
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::BeginCombo("##currentAlbedoMap", material->textures[0]->name.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->textureMap) {
+                            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+                            ImGui::SameLine();
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                material->textures[0] = pair.second;
+                            }
+                        }
+
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    ImGui::Image((ImTextureID)(intptr_t)material->textures[0]->id, ImVec2(20, 20));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Roughness");
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::BeginCombo("##currentRoughnessMap", material->textures[1]->name.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->textureMap) {
+                            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+                            ImGui::SameLine();
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                material->textures[1] = pair.second;
+                            }
+                        }
+
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    ImGui::Image((ImTextureID)(intptr_t)material->textures[1]->id, ImVec2(20, 20));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Metalness");
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::BeginCombo("##currentMetallicMap", material->textures[2]->name.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->textureMap) {
+                            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+                            ImGui::SameLine();
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                material->textures[2] = pair.second;
+                            }
+                        }
+
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    ImGui::Image((ImTextureID)(intptr_t)material->textures[2]->id, ImVec2(20, 20));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("AO");
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::BeginCombo("##currentAOMap", material->textures[3]->name.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->textureMap) {
+                            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+                            ImGui::SameLine();
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                material->textures[3] = pair.second;
+                            }
+                        }
+
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    ImGui::Image((ImTextureID)(intptr_t)material->textures[3]->id, ImVec2(20, 20));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Normal");
+                    ImGui::TableSetColumnIndex(1);
+                    if (ImGui::BeginCombo("##currentNormalMap", material->textures[4]->name.c_str())) {
+                        const bool isSelected = false;
+
+                        for (auto& pair : scene->textureMap) {
+                            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+                            ImGui::SameLine();
+                            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                                material->textures[4] = pair.second;
+                            }
+                        }
+
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    ImGui::Image((ImTextureID)(intptr_t)material->textures[4]->id, ImVec2(20, 20));
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Tiling");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
+                }
+                ImGui::EndTable();
+            }
         }
     }
     /* if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
@@ -965,7 +1148,7 @@ bool checkFilenameUnique(std::string path, std::string filename) {
     return true;
 }
 
-void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection, std::string directory) {
+void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string directory) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(directory)) {
         if (dir.is_directory()) {
             std::filesystem::path path = dir.path();
@@ -975,7 +1158,7 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelecti
             bool isOpen = ImGui::TreeNodeEx(name.c_str(), node_flags);
 
             if (isOpen) {
-                createProjectTree(scene, node_flags, selection, fullPath);
+                createProjectTree(scene, node_flags, fullPath);
                 ImGui::TreePop();
             }
             ImGui::PopID();
@@ -988,9 +1171,11 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, ImGuiSelecti
 
             node_flags |= ImGuiTreeNodeFlags_Leaf;
 
+            // ImGui::SetNextItemSelectionUserData(scene->fileClicked);
+
             ImGui::TreeNodeEx(fileString.c_str(), node_flags);
 
-            if (ImGui::IsItemClicked()) {
+            if (ImGui::IsItemClicked() || scene->fileClicked == dir.path().string()) {
                 scene->fileClicked = dir.path().string();
                 scene->nodeClicked = INVALID_ID;
                 node_flags |= ImGuiTreeNodeFlags_Selected;
