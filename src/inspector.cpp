@@ -14,13 +14,92 @@
 #include "physics.h"
 #include "animation.h"
 
-void buildFloatRow(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 1.0f) {
-    std::string hideLabel = "##" + label;
+void buildTextRow(std::string label, std::string value) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
     ImGui::TableSetColumnIndex(1);
-    ImGui::DragFloat(hideLabel.c_str(), value, speed, min, max);
+    ImGui::Text(value.c_str());
+}
+
+void buildBoolRow(std::string label, bool* value) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text(label.c_str());
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Checkbox(("##" + label).c_str(), value);
+}
+
+void buildFloatRow(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 0.0f) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text(label.c_str());
+    ImGui::TableSetColumnIndex(1);
+    ImGui::DragFloat(("##" + label).c_str(), value, speed, min, max);
+}
+
+void buildFloat2Row(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 0.0f) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text(label.c_str());
+    ImGui::TableSetColumnIndex(1);
+    ImGui::DragFloat3(("##" + label).c_str(), value, speed, min, max);
+}
+
+bool buildFloat3Row(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 0.0f) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text(label.c_str());
+    ImGui::TableSetColumnIndex(1);
+    return ImGui::DragFloat3(("##" + label).c_str(), value, speed, min, max);
+}
+
+void buildColor3Row(std::string label, float* value, ImGuiColorEditFlags flags) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text("Color");
+    ImGui::TableSetColumnIndex(1);
+    ImGui::ColorEdit3(("##" + label).c_str(), value, flags);
+    ImGui::EndTable();
+}
+
+void buildColor4Row(std::string label, float* value, ImGuiColorEditFlags flags) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text("Color");
+    ImGui::TableSetColumnIndex(1);
+    ImGui::ColorEdit4(("##" + label).c_str(), value, flags);
+    ImGui::EndTable();
+}
+
+void buildTextureMapRow(Scene* scene, std::string label, Texture* tex, float* value, bool color = false) {
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text(label.c_str());
+    ImGui::TableSetColumnIndex(1);
+    if (ImGui::BeginCombo(("##" + label).c_str(), tex->name.c_str())) {
+        const bool isSelected = false;
+
+        for (auto& pair : scene->textureMap) {
+            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
+            ImGui::SameLine();
+            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                tex = pair.second;
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    ImGui::Image((ImTextureID)(intptr_t)tex->id, ImVec2(20, 20));
+
+    if (color) {
+        ImGui::TableSetColumnIndex(2);
+        ImGui::ColorEdit4("##color", value, ImGuiColorEditFlags_HDR);
+    } else {
+        ImGui::TableSetColumnIndex(2);
+        ImGui::DragFloat("##roughness", value, 0.01f, 0.0f, 1.0f);
+    }
 }
 
 void buildMaterialInspector(Scene* scene, Material* material) {
@@ -40,121 +119,12 @@ void buildMaterialInspector(Scene* scene, Material* material) {
         ImGui::EndCombo();
     }
 
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Albedo");
-    ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentAlbedoMap", material->textures[0]->name.c_str())) {
-        const bool isSelected = false;
-
-        for (auto& pair : scene->textureMap) {
-            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-            ImGui::SameLine();
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material->textures[0] = pair.second;
-            }
-        }
-
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    ImGui::Image((ImTextureID)(intptr_t)material->textures[0]->id, ImVec2(20, 20));
-    ImGui::TableSetColumnIndex(2);
-    ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Roughness");
-    ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentRoughnessMap", material->textures[1]->name.c_str())) {
-        const bool isSelected = false;
-
-        for (auto& pair : scene->textureMap) {
-            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-            ImGui::SameLine();
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material->textures[1] = pair.second;
-            }
-        }
-
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    ImGui::Image((ImTextureID)(intptr_t)material->textures[1]->id, ImVec2(20, 20));
-    ImGui::TableSetColumnIndex(2);
-    ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Metalness");
-    ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentMetallicMap", material->textures[2]->name.c_str())) {
-        const bool isSelected = false;
-
-        for (auto& pair : scene->textureMap) {
-            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-            ImGui::SameLine();
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material->textures[2] = pair.second;
-            }
-        }
-
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    ImGui::Image((ImTextureID)(intptr_t)material->textures[2]->id, ImVec2(20, 20));
-    ImGui::TableSetColumnIndex(2);
-    ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("AO");
-    ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentAOMap", material->textures[3]->name.c_str())) {
-        const bool isSelected = false;
-
-        for (auto& pair : scene->textureMap) {
-            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-            ImGui::SameLine();
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material->textures[3] = pair.second;
-            }
-        }
-
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    ImGui::Image((ImTextureID)(intptr_t)material->textures[3]->id, ImVec2(20, 20));
-    ImGui::TableSetColumnIndex(2);
-    ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Normal");
-    ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentNormalMap", material->textures[4]->name.c_str())) {
-        const bool isSelected = false;
-
-        for (auto& pair : scene->textureMap) {
-            ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-            ImGui::SameLine();
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material->textures[4] = pair.second;
-            }
-        }
-
-        ImGui::EndCombo();
-    }
-    ImGui::SameLine();
-    ImGui::Image((ImTextureID)(intptr_t)material->textures[4]->id, ImVec2(20, 20));
-    ImGui::TableSetColumnIndex(2);
-    ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Tiling");
-    ImGui::TableSetColumnIndex(1);
-    ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
+    buildTextureMapRow(scene, "Albedo", material->textures[0], material->baseColor.mF32, true);
+    buildTextureMapRow(scene, "Roughness", material->textures[1], &material->roughness);
+    buildTextureMapRow(scene, "Metalness", material->textures[2], &material->metalness);
+    buildTextureMapRow(scene, "AO", material->textures[3], &material->aoStrength);
+    buildTextureMapRow(scene, "Normal", material->textures[4], &material->normalStrength);
+    buildFloat2Row("Tiling", glm::value_ptr(material->textureTiling), 0.001f);
 }
 
 void buildTransformInspector(Scene* scene, Transform* transform) {
@@ -170,29 +140,10 @@ void buildTransformInspector(Scene* scene, Transform* transform) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("World Position");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##worldposition", worldPosition.mF32, 0.1f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Position");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Position", position.mF32, 0.01f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Rotation");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Rotation", degrees.mF32, 0.01f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Scale");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat3("##Scale", scale.mF32, 0.1f);
+            buildFloat3Row("World Position", worldPosition.mF32, 0.1f);
+            buildFloat3Row("Position", position.mF32);
+            buildFloat3Row("Rotation", degrees.mF32);
+            buildFloat3Row("Scale", scale.mF32);
 
             vec3 newPos;
             newPos.SetX(position.GetX());
@@ -269,27 +220,8 @@ void buildAnimatorInspector(Scene* scene, Animator* animator) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Current Animation:");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(animator->currentAnimation->name.c_str());
-
-            if (ImGui::Button("Next Animation", ImVec2(30, 40))) {
-                animator->currentIndex++;
-                if (animator->currentIndex >= animator->animations.size()) {
-                    animator->currentIndex = 0;
-                }
-
-                animator->currentAnimation = animator->animations[animator->currentIndex];
-                animator->playbackTime = 0.0f;
-            }
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Playback Time:");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(std::to_string(animator->playbackTime).c_str());
+            buildTextRow("Current Animation:", animator->currentAnimation->name);
+            buildTextRow("Playback Time:", std::to_string(animator->playbackTime));
 
             ImGui::EndTable();
         }
@@ -346,26 +278,10 @@ void buildRigidbodyInspector(Scene* scene, RigidBody* rigidbody) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Shape: ");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("Box");
+            buildTextRow("Shape: ", "Box");
+            buildTextRow("Motion Type: ", motionTypeString);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Motion Type: ");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(motionTypeString.c_str());
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Half Extents: ");
-            ImGui::TableSetColumnIndex(1);
-            bool changed = ImGui::DragFloat3("##halfExtents", halfExtents.mF32, 0.01f, 0.0f, 0.0f);
-            ImGui::EndTable();
-
-            if (changed) {
+            if (buildFloat3Row("Half Extents: ", halfExtents.mF32)) {
                 if (shapeType == JPH::EShapeSubType::Box) {
                     vec3 newExtent = vec3(std::max(halfExtents.GetX(), 0.0f), std::max(halfExtents.GetY(), 0.0f), std::max(halfExtents.GetZ(), 0.0f));
                     JPH::BoxShapeSettings boxShapeSettings(newExtent);
@@ -374,6 +290,8 @@ void buildRigidbodyInspector(Scene* scene, RigidBody* rigidbody) {
                     scene->bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
                 }
             }
+
+            ImGui::EndTable();
         }
     }
 }
@@ -384,18 +302,8 @@ void buildPointLightInspector(Scene* scene, PointLight* light) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Brightness");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##brightness", &light->brightness, 0.01f, 0.0f, 10000.0f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Color");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::ColorEdit3("##color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
-            ImGui::EndTable();
+            buildFloatRow("Brightness", &light->brightness);
+            buildColor3Row("Color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
         }
     }
 }
@@ -406,49 +314,13 @@ void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-            buildFloatRow("Brightness", &spotLight->brightness, 0.01f, 0.0f, 1000.0f);
-
-            /* ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Brightness");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##brightness", &spotLight->brightness, 0.01f, 0.0f, 1000.0f); */
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Color");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::ColorEdit3("##color", spotLight->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Inner Cutoff");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##inner cutoff", &spotLight->cutoff, 0.01f, 0.0f, spotLight->outerCutoff - 0.01f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Outer Cutoff");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##outer cutoff", &spotLight->outerCutoff, 0.01f, spotLight->cutoff + 0.01f, 180.0f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Range");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##range", &spotLight->range, 0.01f, 0.0, 1000.0f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Light Radius");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##lightRadius", &spotLight->lightRadiusUV, 0.0001f, 0.0f, 180.0f);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Blocker Search");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::DragFloat("##blockerSearch", &spotLight->blockerSearchUV, 0.0001f, 0.00f, 180.0f);
+            buildFloatRow("Brightness", &spotLight->brightness);
+            buildColor3Row("Color", spotLight->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
+            buildFloatRow("Inner Angle", &spotLight->cutoff, 0.01f, 0.0f, spotLight->outerCutoff - 0.01f);
+            buildFloatRow("Outer Angle", &spotLight->outerCutoff, 0.01f, spotLight->cutoff + 0.01f, 180.0f);
+            buildFloatRow("Range", &spotLight->range);
+            buildFloatRow("Light Radius UV", &spotLight->lightRadiusUV, 0.0001f, 0.0f, 180.0f);
+            buildFloatRow("Blocker Search UV", &spotLight->blockerSearchUV, 0.0001f, 0.0f, 180.0f);
 
             if (ImGui::CollapsingHeader("Shadow Map")) {
                 ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
@@ -459,7 +331,90 @@ void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
     }
 }
 
-void buildTextureInspector(Scene* scene, std::string path) {
+void buildTextureInspector(Scene* scene) {
+    std::string extension = scene->fileClicked.substr(scene->fileClicked.find_last_of('.'));
+    std::string fileName = scene->fileClicked.substr(scene->fileClicked.find_last_of('\\'));
+    std::string name = fileName.substr(1);
+    TextureSettings* settings = &scene->textureImportMap[scene->fileClicked];
+
+    if (ImGui::BeginTable("Texture Import Table", 2, ImGuiTableFlags_SizingFixedSame)) {
+        ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
+        ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+        buildTextRow("Path: ", scene->fileClicked.c_str());
+        buildBoolRow("Gamma", &settings->gamma);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Filter ");
+        ImGui::TableSetColumnIndex(1);
+        GLenum filter = settings->filter;
+        std::string filterString = "Nearest";
+        if (filter == GL_LINEAR) {
+            filterString = "Linear";
+        }
+
+        if (ImGui::BeginCombo("##pixelFormat", filterString.c_str())) {
+            const bool isSelected = false;
+
+            if (ImGui::Selectable("Nearest", isSelected)) {
+                settings->filter = GL_NEAREST;
+            } else if (ImGui::Selectable("Linear", isSelected)) {
+                settings->filter = GL_LINEAR;
+            }
+
+            ImGui::EndCombo();
+        }
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Image((ImTextureID)(intptr_t)scene->textureMap[name]->id, ImVec2(100, 100));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        if (ImGui::Button("Apply", ImVec2(40.0f, 25.0f))) {
+            GLuint textureID = scene->textureMap[name]->id;  // Assume textureID is a valid texture object
+            GLint internalFormat;
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+            if (settings->gamma) {
+                if (internalFormat == GL_RGB) {
+                    settings->filter = GL_SRGB;
+                } else if (internalFormat == GL_RGBA) {
+                    settings->filter = GL_SRGB_ALPHA;
+                }
+            } else {
+                if (internalFormat == GL_SRGB) {
+                    settings->filter = GL_RGB;
+                } else if (internalFormat == GL_SRGB_ALPHA) {
+                    settings->filter = GL_RGBA;
+                }
+            }
+
+            glDeleteTextures(1, &scene->textureMap[name]->id);
+            scene->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
+
+            std::string gammaString = "true";
+            std::string filterString = "GL_NEAREST";
+
+            if (!settings->gamma) {
+                gammaString = "false";
+            }
+
+            if (settings->filter == GL_LINEAR) {
+                filterString = "GL_LINEAR";
+            }
+
+            std::ofstream stream(scene->fileClicked + ".meta");
+            stream << "Texture {" << std::endl;
+            stream << "path: " << scene->fileClicked << std::endl;
+            stream << "gamma: " << gammaString << std::endl;
+            stream << "filter: " << filterString << std::endl;
+            stream << "}" << std::endl
+                   << std::endl;
+        }
+        ImGui::EndTable();
+    }
 }
 
 void buildAddComponentCombo(Scene* scene) {
@@ -551,94 +506,7 @@ void buildResourceInspector(Scene* scene) {
     std::string name = fileName.substr(1);
 
     if (extension == ".png") {
-        if (ImGui::BeginTable("PNG Import Table", 2, ImGuiTableFlags_SizingFixedSame)) {
-            ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
-            ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Path: ");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(scene->fileClicked.c_str());
-
-            TextureSettings* settings = &scene->textureImportMap[scene->fileClicked];
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Gamma");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Checkbox("##gammaBool", &settings->gamma);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Filter ");
-            ImGui::TableSetColumnIndex(1);
-            GLenum filter = settings->filter;
-            std::string filterString = "Nearest";
-            if (filter == GL_LINEAR) {
-                filterString = "Linear";
-            }
-
-            if (ImGui::BeginCombo("##pixelFormat", filterString.c_str())) {
-                const bool isSelected = false;
-
-                if (ImGui::Selectable("Nearest", isSelected)) {
-                    settings->filter = GL_NEAREST;
-                } else if (ImGui::Selectable("Linear", isSelected)) {
-                    settings->filter = GL_LINEAR;
-                }
-
-                ImGui::EndCombo();
-            }
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Image((ImTextureID)(intptr_t)scene->textureMap[name]->id, ImVec2(100, 100));
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            if (ImGui::Button("Apply", ImVec2(40.0f, 25.0f))) {
-                GLuint textureID = scene->textureMap[name]->id;  // Assume textureID is a valid texture object
-                GLint internalFormat;
-                glBindTexture(GL_TEXTURE_2D, textureID);
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
-                if (settings->gamma) {
-                    if (internalFormat == GL_RGB) {
-                        settings->filter = GL_SRGB;
-                    } else if (internalFormat == GL_RGBA) {
-                        settings->filter = GL_SRGB_ALPHA;
-                    }
-                } else {
-                    if (internalFormat == GL_SRGB) {
-                        settings->filter = GL_RGB;
-                    } else if (internalFormat == GL_SRGB_ALPHA) {
-                        settings->filter = GL_RGBA;
-                    }
-                }
-
-                glDeleteTextures(1, &scene->textureMap[name]->id);
-                scene->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
-
-                std::string gammaString = "true";
-                std::string filterString = "GL_NEAREST";
-
-                if (!settings->gamma) {
-                    gammaString = "false";
-                }
-
-                if (settings->filter == GL_LINEAR) {
-                    filterString = "GL_LINEAR";
-                }
-
-                std::ofstream stream(scene->fileClicked + ".meta");
-                stream << "Texture {" << std::endl;
-                stream << "path: " << scene->fileClicked << std::endl;
-                stream << "gamma: " << gammaString << std::endl;
-                stream << "filter: " << filterString << std::endl;
-                stream << "}" << std::endl
-                       << std::endl;
-            }
-            ImGui::EndTable();
-        }
+        buildTextureInspector(scene);
     } else if (extension == ".mat") {
         if (ImGui::BeginTable("Material Table", 3, ImGuiTableFlags_SizingFixedFit)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 95.0f);
@@ -647,7 +515,6 @@ void buildResourceInspector(Scene* scene) {
 
             if (scene->materialMap.count(name)) {
                 Material* material = scene->materialMap[name];
-
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text(material->name.c_str());
@@ -671,121 +538,7 @@ void buildResourceInspector(Scene* scene) {
                     }
                 }
 
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Albedo");
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::BeginCombo("##currentAlbedoMap", material->textures[0]->name.c_str())) {
-                    const bool isSelected = false;
-
-                    for (auto& pair : scene->textureMap) {
-                        ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-                        ImGui::SameLine();
-                        if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                            material->textures[0] = pair.second;
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                ImGui::Image((ImTextureID)(intptr_t)material->textures[0]->id, ImVec2(20, 20));
-                ImGui::TableSetColumnIndex(2);
-                ImGui::ColorEdit4("##color", material->baseColor.mF32, ImGuiColorEditFlags_HDR);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Roughness");
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::BeginCombo("##currentRoughnessMap", material->textures[1]->name.c_str())) {
-                    const bool isSelected = false;
-
-                    for (auto& pair : scene->textureMap) {
-                        ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-                        ImGui::SameLine();
-                        if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                            material->textures[1] = pair.second;
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                ImGui::Image((ImTextureID)(intptr_t)material->textures[1]->id, ImVec2(20, 20));
-                ImGui::TableSetColumnIndex(2);
-                ImGui::DragFloat("##roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Metalness");
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::BeginCombo("##currentMetallicMap", material->textures[2]->name.c_str())) {
-                    const bool isSelected = false;
-
-                    for (auto& pair : scene->textureMap) {
-                        ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-                        ImGui::SameLine();
-                        if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                            material->textures[2] = pair.second;
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                ImGui::Image((ImTextureID)(intptr_t)material->textures[2]->id, ImVec2(20, 20));
-                ImGui::TableSetColumnIndex(2);
-                ImGui::DragFloat("##metalness", &material->metalness, 0.01f, 0.0f, 1.0f);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("AO");
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::BeginCombo("##currentAOMap", material->textures[3]->name.c_str())) {
-                    const bool isSelected = false;
-
-                    for (auto& pair : scene->textureMap) {
-                        ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-                        ImGui::SameLine();
-                        if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                            material->textures[3] = pair.second;
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                ImGui::Image((ImTextureID)(intptr_t)material->textures[3]->id, ImVec2(20, 20));
-                ImGui::TableSetColumnIndex(2);
-                ImGui::DragFloat("##ao", &material->aoStrength, 0.01f, 0.0f, 1.0f);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Normal");
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::BeginCombo("##currentNormalMap", material->textures[4]->name.c_str())) {
-                    const bool isSelected = false;
-
-                    for (auto& pair : scene->textureMap) {
-                        ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
-                        ImGui::SameLine();
-                        if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                            material->textures[4] = pair.second;
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-                ImGui::SameLine();
-                ImGui::Image((ImTextureID)(intptr_t)material->textures[4]->id, ImVec2(20, 20));
-                ImGui::TableSetColumnIndex(2);
-                ImGui::DragFloat("##normal", &material->normalStrength, 0.01f, 0.0f, 100.0f);
-
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Tiling");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::DragFloat2("##tiling", glm::value_ptr(material->textureTiling), 0.001f);
+                buildMaterialInspector(scene, material);
             }
             ImGui::EndTable();
         }
