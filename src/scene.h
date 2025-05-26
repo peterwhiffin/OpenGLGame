@@ -15,6 +15,8 @@
 #include "shader.h"
 #include "ecs.h"
 #include "loader.h"
+#include "editor.h"
+#include "inspector.h"
 
 struct Scene {
     std::string name = "default";
@@ -39,18 +41,11 @@ struct Scene {
     GLuint editorFBO, editorRBO, editorTex;
     GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
 
-    uint32_t nodeClicked = INVALID_ID;
-    std::string fileClicked = "";
-    ContextMenuType contextType;
-
     double timeAccum = 0.0f;
     double physicsAccum = 0.0f;
     double currentFrame = 0.0f;
     double lastFrame = 0.0f;
     double deltaTime;
-    float FPS = 0.0f;
-    float frameTime = 0.0f;
-    float frameCount = 0;
     float gravity = -18.81f;
     float normalStrength = 1.06f;
     float exposure = 1.0f;
@@ -66,9 +61,21 @@ struct Scene {
     bool menuCanOpen = true;
     bool useDeferred = false;
     bool horizontalBlur = true;
+
+    // editor
+    float FPS = 0.0f;
+    float frameTime = 0.0f;
+    float frameCount = 0;
     bool isPicking = false;
     bool canPick = true;
     bool canDelete = true;
+    bool showDemoWindow = true;
+    InspectorState inspectorState;
+    uint32_t nodeClicked = INVALID_ID;
+    std::string fileClicked = "";
+    ContextMenuType contextType;
+    std::unordered_set<uint32_t> selectedEntities;
+    // editor
 
     GLuint matricesUBO;
     GlobalUBO matricesUBOData;
@@ -114,6 +121,4 @@ struct Scene {
     std::vector<Model*> models;
     std::vector<vec3> ssaoKernel;
     std::vector<vec3> ssaoNoise;
-
-    std::unordered_set<uint32_t> selectedEntities;
 };

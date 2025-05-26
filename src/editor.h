@@ -2,6 +2,9 @@
 #include "utils/mathutils.h"
 struct Scene;
 
+struct EditorInfo {
+};
+
 void initEditor(Scene* scene);
 void checkPicker(Scene* scene, glm::dvec2 pickPosition);
 void drawEditor(Scene* scene);
