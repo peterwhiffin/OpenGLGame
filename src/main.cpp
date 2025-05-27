@@ -51,6 +51,7 @@ int main() {
         updatePhysics(scene);
         updateInput(inputActions, renderer->window);
         updatePlayer(scene, resources, renderer);
+        updatePhysicsBodyPositions(scene);
         updateAnimators(scene);
         updateCamera(scene);
         renderScene(renderer, scene, editor);

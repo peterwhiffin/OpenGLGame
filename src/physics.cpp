@@ -94,7 +94,7 @@ void initPhysics(Scene* scene) {
     scene->bodyInterface = &scene->physicsSystem.GetBodyInterface();
 }
 
-void updateObjectPositions(Scene* scene) {
+void updatePhysicsBodyPositions(Scene* scene) {
     const float t = scene->physicsAccum / cDeltaTime;
     const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (uint32_t entityID : scene->movingRigidbodies) {
@@ -126,19 +126,12 @@ void setPreviousTransforms(Scene* scene) {
 
         rigidbody->lastPosition = currentPosition;
         rigidbody->lastRotation = currentRotation;
-
-        setPosition(scene, rigidbody->entityID, currentPosition);
-
-        if (!rigidbody->rotationLocked) {
-            setRotation(scene, rigidbody->entityID, currentRotation);
-        }
     }
 }
 
 void updatePhysics(Scene* scene) {
     scene->physicsAccum += scene->deltaTime;
     if (scene->physicsAccum < cDeltaTime) {
-        updateObjectPositions(scene);
         return;
     }
 

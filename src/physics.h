@@ -52,6 +52,7 @@ constexpr double cDeltaTime = 1.0 / 60.0;
 void initPhysics(Scene* scene);
 void updatePhysics(Scene* scene);
 void destroyPhysicsSystem();
+void updatePhysicsBodyPositions(Scene* scene);
 
 class MyObjectLayerPairFilter : public JPH::ObjectLayerPairFilter {
    public:

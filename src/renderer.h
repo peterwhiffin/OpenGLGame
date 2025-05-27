@@ -145,6 +145,7 @@ struct GlobalUBO {
 };
 
 struct RenderState {
+    bool updateTransforms = false;
     GLFWwindow* window;
     WindowData windowData;
     GLuint litFBO, litRBO, ssaoFBO;

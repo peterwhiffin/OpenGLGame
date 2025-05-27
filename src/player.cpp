@@ -147,7 +147,7 @@ Player* buildPlayer(Scene* scene) {
     JPH::ShapeRefC floor_shape = floor_shape_result.Get();
     JPH::ObjectLayer layer = Layers::MOVING;
     JPH::EActivation shouldActivate = JPH::EActivation::Activate;
-    JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, playerEntityID), getRotation(scene, playerEntityID), JPH::EMotionType::Dynamic, layer);
+    JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, playerEntityID), getRotation(scene, playerEntityID), JPH::EMotionType::Kinematic, layer);
     floor_settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
     JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
 
