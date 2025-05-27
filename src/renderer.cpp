@@ -815,7 +815,6 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
-        // glUniform1i(glGetUniformLocation(shader, (base + ".shadowMap").c_str()), uniform_location::kTextureShadowMapUnit + i);
     }
 
     vec2 v(renderer->windowData.viewportWidth / 4.0f, renderer->windowData.viewportHeight / 4.0f);
@@ -827,8 +826,17 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
     renderer->AOPower = 2.02f;
 }
 
-void renderScene(RenderState* renderer, Scene* scene, EditorState* editor) {
+void updateBufferData(RenderState* renderer, Scene* scene) {
+    Camera* camera = scene->cameras[0];
+    vec3 position = getPosition(scene, camera->entityID);
+
+    renderer->matricesUBOData.view = mat4::sLookAt(position, position + forward(scene, camera->entityID), up(scene, camera->entityID));
+    renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
+}
+
+void renderScene(RenderState* renderer, Scene* scene, EditorState* editor) {
+    updateBufferData(renderer, scene);
     drawPickingScene(renderer, scene);
     drawShadowMaps(renderer, scene);
     drawScene(renderer, scene);
@@ -897,14 +905,11 @@ void initRenderer(RenderState* renderer, Scene* scene, EditorState* editor) {
 
 void onScreenChanged(GLFWwindow* window, int width, int height) {
     RenderState* renderer = (RenderState*)glfwGetWindowUserPointer(window);
+    renderer->windowData.aspectRatio = (float)width / height;
     glViewport(0, 0, width, height);
     glUseProgram(renderer->ssaoShader);
     vec2 v(renderer->windowData.viewportWidth / 4.0f, renderer->windowData.viewportHeight / 4.0f);
     glUniform2fv(8, 1, &v.x);
-
-    /*     for (int i = 0; i < renderer->cameras.size(); i++) {
-            renderer->cameras[i]->aspectRatio = (float)renderer->windowData.viewportWidth / renderer->windowData.viewportHeight;
-        } */
 
     resizeBuffers(renderer);
 }
@@ -914,7 +919,7 @@ void createContext(Scene* scene, RenderState* renderer) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     renderer->windowData.width = 1920;
     renderer->windowData.height = 1080;

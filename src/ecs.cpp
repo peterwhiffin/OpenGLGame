@@ -271,7 +271,6 @@ Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float nearPlane, f
     camera->entityID = entityID;
     camera->fov = fov;
     camera->fovRadians = JPH::DegreesToRadians(fov);
-    camera->aspectRatio = 16.0f / 9.0f;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;
     return camera;

@@ -35,7 +35,7 @@ struct ComponentBlock {
 void loadScene(Scene* scene, Resources* resources);
 bool findLastScene(Scene* scene);
 void saveScene(Scene* scene, Resources* resources);
-void loadMaterials(Scene* scene, Resources* resources, RenderState* renderer);
-void loadResourceSettings(Scene* scene, Resources* resources, std::unordered_set<std::string>& metaPaths);
-void writeMaterial(Scene* scene, Resources* resources, std::filesystem::path path);
-void writeTextureSettings(Scene* scene, TextureSettings settings);
+void loadMaterials(Resources* resources, RenderState* renderer);
+void loadResourceSettings(Resources* resources, std::unordered_set<std::string>& metaPaths);
+void writeMaterial(Resources* resources, std::filesystem::path path);
+void writeTextureSettings(TextureSettings settings);

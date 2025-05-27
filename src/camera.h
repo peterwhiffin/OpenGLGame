@@ -7,9 +7,8 @@ struct Camera {
     uint32_t entityID;
     float fov;
     float fovRadians;
-    float aspectRatio;
     float nearPlane;
     float farPlane;
 };
 
-void updateCamera(Scene* scene, RenderState* renderer);
+void updateCamera(Scene* scene);

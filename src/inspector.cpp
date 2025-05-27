@@ -71,7 +71,7 @@ void buildColor4Row(std::string label, float* value, ImGuiColorEditFlags flags) 
     ImGui::ColorEdit4(("##" + label).c_str(), value, flags);
 }
 
-void buildTextureMapRow(Scene* scene, Resources* resources, std::string label, Texture* tex, float* value, bool color = false) {
+void buildTextureMapRow(Resources* resources, std::string label, Texture* tex, float* value, bool color = false) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
@@ -101,7 +101,7 @@ void buildTextureMapRow(Scene* scene, Resources* resources, std::string label, T
     }
 }
 
-void buildMaterialInspector(Scene* scene, Resources* resources, Material* material) {
+void buildMaterialInspector(Resources* resources, Material* material) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Material");
@@ -118,11 +118,11 @@ void buildMaterialInspector(Scene* scene, Resources* resources, Material* materi
         ImGui::EndCombo();
     }
 
-    buildTextureMapRow(scene, resources, "Albedo", material->textures[0], material->baseColor.mF32, true);
-    buildTextureMapRow(scene, resources, "Roughness", material->textures[1], &material->roughness);
-    buildTextureMapRow(scene, resources, "Metalness", material->textures[2], &material->metalness);
-    buildTextureMapRow(scene, resources, "AO", material->textures[3], &material->aoStrength);
-    buildTextureMapRow(scene, resources, "Normal", material->textures[4], &material->normalStrength);
+    buildTextureMapRow(resources, "Albedo", material->textures[0], material->baseColor.mF32, true);
+    buildTextureMapRow(resources, "Roughness", material->textures[1], &material->roughness);
+    buildTextureMapRow(resources, "Metalness", material->textures[2], &material->metalness);
+    buildTextureMapRow(resources, "AO", material->textures[3], &material->aoStrength);
+    buildTextureMapRow(resources, "Normal", material->textures[4], &material->normalStrength);
     buildFloat2Row("Tiling", glm::value_ptr(material->textureTiling), 0.001f);
 }
 
@@ -205,7 +205,7 @@ void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer
             }
 
             if (renderer->mesh != nullptr) {
-                buildMaterialInspector(scene, resources, renderer->mesh->subMeshes[0].material);
+                buildMaterialInspector(resources, renderer->mesh->subMeshes[0].material);
             }
 
             ImGui::EndTable();
@@ -213,7 +213,7 @@ void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer
     }
 }
 
-void buildAnimatorInspector(Scene* scene, Animator* animator) {
+void buildAnimatorInspector(Animator* animator) {
     if (ImGui::CollapsingHeader("Animator", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::BeginTable("Animator Table", 2, ImGuiTableFlags_SizingFixedSame)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
@@ -295,7 +295,7 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
     }
 }
 
-void buildPointLightInspector(Scene* scene, PointLight* light) {
+void buildPointLightInspector(PointLight* light) {
     if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::BeginTable("Point Light Table", 2, ImGuiTableFlags_SizingFixedSame)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
@@ -308,7 +308,7 @@ void buildPointLightInspector(Scene* scene, PointLight* light) {
     }
 }
 
-void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
+void buildSpotLightInspector(SpotLight* spotLight) {
     if (ImGui::CollapsingHeader("Spot Light", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::BeginTable("Spot Light Table", 2, ImGuiTableFlags_SizingFixedSame)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
@@ -331,7 +331,7 @@ void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
     }
 }
 
-void buildTextureInspector(Scene* scene, Resources* resources, EditorState* editor) {
+void buildTextureInspector(Resources* resources, EditorState* editor) {
     std::string extension = editor->fileClicked.substr(editor->fileClicked.find_last_of('.'));
     std::string fileName = editor->fileClicked.substr(editor->fileClicked.find_last_of('\\'));
     std::string name = fileName.substr(1);
@@ -375,7 +375,7 @@ void buildTextureInspector(Scene* scene, Resources* resources, EditorState* edit
         if (ImGui::Button("Apply", ImVec2(40.0f, 25.0f))) {
             glDeleteTextures(1, &resources->textureMap[name]->id);
             resources->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
-            writeTextureSettings(scene, *settings);
+            writeTextureSettings(*settings);
         }
         ImGui::EndTable();
     }
@@ -439,15 +439,14 @@ void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* r
     buildTransformInspector(scene, transform);
 
     if (animator != nullptr) {
-        buildAnimatorInspector(scene, animator);
+        buildAnimatorInspector(animator);
     }
-
     if (pointLight != nullptr) {
-        buildPointLightInspector(scene, pointLight);
+        buildPointLightInspector(pointLight);
     }
 
     if (spotLight != nullptr) {
-        buildSpotLightInspector(scene, spotLight);
+        buildSpotLightInspector(spotLight);
     }
 
     if (rigidbody != nullptr) {
@@ -470,7 +469,7 @@ void buildResourceInspector(Scene* scene, Resources* resources, EditorState* edi
     std::string name = fileName.substr(1);
 
     if (extension == ".png") {
-        buildTextureInspector(scene, resources, editor);
+        buildTextureInspector(resources, editor);
     } else if (extension == ".mat") {
         if (ImGui::BeginTable("Material Table", 3, ImGuiTableFlags_SizingFixedFit)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 95.0f);
@@ -502,7 +501,7 @@ void buildResourceInspector(Scene* scene, Resources* resources, EditorState* edi
                     }
                 }
 
-                buildMaterialInspector(scene, resources, material);
+                buildMaterialInspector(resources, material);
             }
             ImGui::EndTable();
         }

@@ -165,7 +165,7 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     return currentIndex;
 }
 
-void createComponentBlocks(Scene* scene, std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
+void createComponentBlocks(std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
     int currentIndex = 0;
 
     while (tokens->at(currentIndex).type != TokenType::EndOfFile) {
@@ -330,7 +330,7 @@ void createMeshRenderer(Scene* scene, Resources* resources, ComponentBlock block
     }
 }
 
-void createMaterial(Scene* scene, Resources* resources, RenderState* renderer, ComponentBlock block, std::string fileName) {
+void createMaterial(Resources* resources, RenderState* renderer, ComponentBlock block, std::string fileName) {
     std::string name = fileName;
     std::vector<Texture*> textures;
     glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
@@ -555,7 +555,6 @@ void createAnimator(Scene* scene, Resources* resources, ComponentBlock block) {
 void createCamera(Scene* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     float fov = 68.0f;
-    float aspectRatio = (float)800 / 600;
     float nearPlane = 0.1f;
     float farPlane = 800.0f;
 
@@ -733,7 +732,7 @@ void createPlayer(Scene* scene, ComponentBlock block) {
     scene->player = player;
 }
 
-void createModelSettings(Scene* scene, Resources* resources, ComponentBlock block) {
+void createModelSettings(Resources* resources, ComponentBlock block) {
     std::string path = "";
 
     if (block.memberValueMap.count("path")) {
@@ -745,7 +744,7 @@ void createModelSettings(Scene* scene, Resources* resources, ComponentBlock bloc
     resources->modelImportMap[path] = settings;
 }
 
-void createTextureSettings(Scene* scene, Resources* resources, ComponentBlock block) {
+void createTextureSettings(Resources* resources, ComponentBlock block) {
     std::string path = "";
     bool gamma = true;
     GLenum filter = GL_NEAREST;
@@ -775,6 +774,19 @@ void createTextureSettings(Scene* scene, Resources* resources, ComponentBlock bl
     settings.filter = filter;
     resources->textureImportMap[path] = settings;
 }
+
+void createImportSettings(Resources* resources, std::vector<ComponentBlock>* components) {
+    for (int i = 0; i < components->size(); i++) {
+        ComponentBlock block = components->at(i);
+
+        if (block.type == "Model") {
+            createModelSettings(resources, block);
+        } else if (block.type == "Texture") {
+            createTextureSettings(resources, block);
+        }
+    }
+}
+
 void createComponents(Scene* scene, Resources* resources, std::vector<ComponentBlock>* components) {
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock block = components->at(i);
@@ -797,10 +809,6 @@ void createComponents(Scene* scene, Resources* resources, std::vector<ComponentB
             createSpotLights(scene, block);
         } else if (block.type == "Player") {
             createPlayer(scene, block);
-        } else if (block.type == "Model") {
-            createModelSettings(scene, resources, block);
-        } else if (block.type == "Texture") {
-            createTextureSettings(scene, resources, block);
         }
     }
 }
@@ -842,7 +850,7 @@ void loadDefaultScene(Scene* scene, Resources* resources) {
     setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
 }
 
-void loadMaterials(Scene* scene, Resources* resources, RenderState* renderer) {
+void loadMaterials(Resources* resources, RenderState* renderer) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
         if (dir.is_regular_file()) {
             std::filesystem::path path = dir.path();
@@ -853,22 +861,22 @@ void loadMaterials(Scene* scene, Resources* resources, RenderState* renderer) {
                 std::vector<Token> tokens;
                 std::vector<ComponentBlock> components;
                 getTokens(&stream, &tokens);
-                createComponentBlocks(scene, &tokens, &components);
+                createComponentBlocks(&tokens, &components);
                 // createComponents(scene, &components);
-                createMaterial(scene, resources, renderer, components[0], fileString);
+                createMaterial(resources, renderer, components[0], fileString);
             }
         }
     }
 }
 
-void loadResourceSettings(Scene* scene, Resources* resources, std::unordered_set<std::string>& metaPaths) {
+void loadResourceSettings(Resources* resources, std::unordered_set<std::string>& metaPaths) {
     for (std::string path : metaPaths) {
         std::ifstream stream(path);
         std::vector<Token> tokens;
         std::vector<ComponentBlock> components;
         getTokens(&stream, &tokens);
-        createComponentBlocks(scene, &tokens, &components);
-        createComponents(scene, resources, &components);
+        createComponentBlocks(&tokens, &components);
+        createImportSettings(resources, &components);
     }
 }
 
@@ -884,7 +892,7 @@ void loadScene(Scene* scene, Resources* resources) {
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
-    createComponentBlocks(scene, &tokens, &components);
+    createComponentBlocks(&tokens, &components);
     // logComponentBlocks(&components);
     createComponents(scene, resources, &components);
 
@@ -959,7 +967,7 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeTextureSettings(Scene* scene, TextureSettings settings) {
+void writeTextureSettings(TextureSettings settings) {
     std::string texPath = settings.path;
     std::string gamma = settings.gamma ? "true" : "false";
     std::string filter = settings.filter == GL_LINEAR ? "GL_LINEAR" : "GL_NEAREST";
@@ -973,7 +981,7 @@ void writeTextureSettings(Scene* scene, TextureSettings settings) {
            << std::endl;
 }
 
-void writeMaterial(Scene* scene, Resources* resources, std::filesystem::path path) {
+void writeMaterial(Resources* resources, std::filesystem::path path) {
     std::filesystem::path fileName = path.filename();
 
     if (fileName.extension() != ".mat") {
@@ -1016,12 +1024,12 @@ void writeMaterial(Scene* scene, Resources* resources, std::filesystem::path pat
            << std::endl;
 }
 
-void writeMaterials(Scene* scene, Resources* resources) {
+void writeMaterials(Resources* resources) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
         if (dir.is_regular_file()) {
             std::filesystem::path path = dir.path();
             if (path.extension() == ".mat") {
-                writeMaterial(scene, resources, path.filename());
+                writeMaterial(resources, path.filename());
             }
         }
     }
@@ -1242,7 +1250,6 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
     for (Camera* camera : scene->cameras) {
         std::string entityID = std::to_string(camera->entityID);
         std::string fov = std::to_string(camera->fov);
-        std::string aspectRatio = std::to_string(camera->aspectRatio);
         std::string nearPlane = std::to_string(camera->nearPlane);
         std::string farPlane = std::to_string(camera->farPlane);
 
@@ -1267,5 +1274,5 @@ void saveScene(Scene* scene, Resources* resources) {
     writeSpotLights(scene, stream);
     writeCameras(scene, stream);
     writePlayer(scene, stream);
-    writeMaterials(scene, resources);
+    writeMaterials(resources);
 }

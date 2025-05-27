@@ -132,10 +132,11 @@ struct SpotLight {
 };
 
 struct WindowData {
-    GLsizei width = 800;
-    GLsizei height = 600;
-    GLsizei viewportWidth = 800;
-    GLsizei viewportHeight = 600;
+    GLsizei width = 1920;
+    GLsizei height = 1080;
+    GLsizei viewportWidth = 1920;
+    GLsizei viewportHeight = 1080;
+    float aspectRatio = 1.7777f;
 };
 
 struct GlobalUBO {

@@ -60,7 +60,6 @@ void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGu
     if (ImGui::IsItemClicked()) {
         editor->nodeClicked = entity->entityID;
         editor->inspectorState = SceneEntity;
-        // scene->fileClicked = "";
     }
 
     if (node_open) {
@@ -339,7 +338,7 @@ void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) 
             newMat->aoStrength = 1.0f;
             newMat->normalStrength = 1.0f;
             resources->materialMap[fileName] = newMat;
-            writeMaterial(scene, resources, "..\\resources\\" + fileName);
+            writeMaterial(resources, "..\\resources\\" + fileName);
         }
 
         ImGui::EndPopup();

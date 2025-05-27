@@ -36,7 +36,7 @@ int main() {
 
     createContext(scene, renderer);
     loadShaders(renderer);
-    loadResources(scene, resources, renderer);
+    loadResources(resources, renderer);
     initPhysics(scene);
     loadScene(scene, resources);
     initRenderer(renderer, scene, editor);
@@ -52,7 +52,7 @@ int main() {
         updateInput(inputActions, renderer->window);
         updatePlayer(scene, resources, renderer);
         updateAnimators(scene);
-        updateCamera(scene, renderer);
+        updateCamera(scene);
         renderScene(renderer, scene, editor);
         drawEditor(scene, renderer, resources, editor);
         glfwSwapBuffers(renderer->window);

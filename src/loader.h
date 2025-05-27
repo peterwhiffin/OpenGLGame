@@ -50,5 +50,5 @@ struct Resources {
     std::unordered_map<std::string, ModelSettings> modelImportMap;
 };
 
-void loadResources(Scene* scene, Resources* resources, RenderState* renderer);
+void loadResources(Resources* resources, RenderState* renderer);
 GLuint loadTextureFromFile(const char* path, TextureSettings settings);

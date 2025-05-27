@@ -25,7 +25,7 @@ JPH::Mat44 transpose(const aiMatrix4x4& m) {
         JPH::Vec4(m.a4, m.b4, m.c4, m.d4));
 }
 
-void processAnimations(Scene* gameScene, Resources* resources, const aiScene* scene, Model* model) {
+void processAnimations(Resources* resources, const aiScene* scene, Model* model) {
     aiAnimation* aiAnim;
     aiVectorKey aiVecKey;
     aiQuatKey aiQuatKey;
@@ -156,7 +156,7 @@ GLuint loadTextureFromFile(const char* path, TextureSettings settings) {
     return textureID;
 }
 
-Texture* loadTexture(Scene* gameScene, Resources* resources, aiMaterial* mat, aiTextureType type, std::string* directory) {
+Texture* loadTexture(Resources* resources, aiMaterial* mat, aiTextureType type, std::string* directory) {
     Texture* newTexture;
     // newTexture.path = "default";
     // newTexture.name = "white";
@@ -204,7 +204,7 @@ Texture* loadTexture(Scene* gameScene, Resources* resources, aiMaterial* mat, ai
     return newTexture;
 }
 
-void processSubMesh(Scene* gameScene, RenderState* renderer, Resources* resources, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const mat4 transform, std::string* directory) {
+void processSubMesh(RenderState* renderer, Resources* resources, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const mat4 transform, std::string* directory) {
     SubMesh subMesh;
     aiFace face;
     size_t baseVertex = parentMesh->vertices.size();
@@ -256,11 +256,11 @@ void processSubMesh(Scene* gameScene, RenderState* renderer, Resources* resource
         } else {
             newMaterial = new Material();
 
-            Texture* albedoTexture = loadTexture(gameScene, resources, material, aiTextureType_DIFFUSE, directory);
-            Texture* roughnessTexture = loadTexture(gameScene, resources, material, aiTextureType_METALNESS, directory);
-            Texture* metallicTexture = loadTexture(gameScene, resources, material, aiTextureType_DIFFUSE_ROUGHNESS, directory);
-            Texture* aoTexture = loadTexture(gameScene, resources, material, aiTextureType_AMBIENT_OCCLUSION, directory);
-            Texture* normalTexture = loadTexture(gameScene, resources, material, aiTextureType_NORMALS, directory);
+            Texture* albedoTexture = loadTexture(resources, material, aiTextureType_DIFFUSE, directory);
+            Texture* roughnessTexture = loadTexture(resources, material, aiTextureType_METALNESS, directory);
+            Texture* metallicTexture = loadTexture(resources, material, aiTextureType_DIFFUSE_ROUGHNESS, directory);
+            Texture* aoTexture = loadTexture(resources, material, aiTextureType_AMBIENT_OCCLUSION, directory);
+            Texture* normalTexture = loadTexture(resources, material, aiTextureType_NORMALS, directory);
 
             material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
 
@@ -280,7 +280,7 @@ void processSubMesh(Scene* gameScene, RenderState* renderer, Resources* resource
     parentMesh->subMeshes.push_back(subMesh);
 }
 
-ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, Resources* resources, RenderState* renderer, mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory) {
+ModelNode* processNode(aiNode* node, const aiScene* scene, Resources* resources, RenderState* renderer, mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory) {
     mat4 nodeTransform = transpose(node->mTransformation);
     mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
@@ -310,7 +310,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, Res
 
         for (uint32_t i = 0; i < node->mNumMeshes; i++) {
             mesh = scene->mMeshes[node->mMeshes[i]];
-            processSubMesh(gameScene, renderer, resources, mesh, scene, childNode->mesh, globalTransform, directory);
+            processSubMesh(renderer, resources, mesh, scene, childNode->mesh, globalTransform, directory);
 
             if (mesh->mNumBones == 0) {
                 for (Vertex& vertex : childNode->mesh->vertices) {
@@ -363,13 +363,13 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, Res
     }
 
     for (uint32_t i = 0; i < node->mNumChildren; i++) {
-        childNode->children.push_back(processNode(node->mChildren[i], scene, gameScene, resources, renderer, globalTransform, model, childNode, directory));
+        childNode->children.push_back(processNode(node->mChildren[i], scene, resources, renderer, globalTransform, model, childNode, directory));
     }
 
     return childNode;
 }
 
-Model* loadModel(Scene* gameScene, Resources* resources, RenderState* renderer, std::string path) {
+Model* loadModel(Resources* resources, RenderState* renderer, std::string path) {
     Assimp::Importer importer;
     std::string directory;
 
@@ -386,13 +386,13 @@ Model* loadModel(Scene* gameScene, Resources* resources, RenderState* renderer, 
     name = name.substr(0, name.find_last_of('.'));
     newModel->name = name;
 
-    processAnimations(gameScene, resources, scene, newModel);
+    processAnimations(resources, scene, newModel);
     newModel->RootNodeTransform = transpose(scene->mRootNode->mTransformation);
-    newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, resources, renderer, mat4::sIdentity(), newModel, nullptr, &directory);
+    newModel->rootNode = processNode(scene->mRootNode, scene, resources, renderer, mat4::sIdentity(), newModel, nullptr, &directory);
     return newModel;
 }
 
-void createDefaultResources(Scene* scene, Resources* resources, RenderState* renderer) {
+void createDefaultResources(Resources* resources, RenderState* renderer) {
     GLuint whiteTexture;
     GLuint blackTexture;
     GLuint blueTexture;
@@ -443,7 +443,7 @@ void createDefaultResources(Scene* scene, Resources* resources, RenderState* ren
     resources->materialMap[defaultMaterial->name] = defaultMaterial;
 }
 
-void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
+void findResources(Resources* resources, RenderState* renderer) {
     std::vector<std::filesystem::directory_entry> resourcePaths;
     std::unordered_set<std::string> metaPaths;
 
@@ -468,7 +468,6 @@ void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
             std::ofstream stream(metaPath);
             std::string extension = path.path().extension().string();
             if (extension == ".gltf") {
-                // write new model meta file
                 stream << "Model {" << std::endl;
                 stream << "path: " << path.path().string() << std::endl;
                 stream << "}" << std::endl
@@ -476,7 +475,6 @@ void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
 
                 metaPaths.insert(metaPath);
             } else if (extension == ".png") {
-                // write new texture meta file
                 stream << "Texture {" << std::endl;
                 stream << "path: " << path.path().string() << std::endl;
                 stream << "gamma: " << "true" << std::endl;
@@ -489,7 +487,7 @@ void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
         }
     }
 
-    loadResourceSettings(scene, resources, metaPaths);
+    loadResourceSettings(resources, metaPaths);
 
     for (auto& pair : resources->textureImportMap) {
         Texture* newTex = new Texture();
@@ -503,17 +501,12 @@ void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
 
     for (auto& pair : resources->modelImportMap) {
         std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
-        resources->modelMap[fileName] = loadModel(scene, resources, renderer, pair.first);
+        resources->modelMap[fileName] = loadModel(resources, renderer, pair.first);
     }
-    // parse meta files and create settings structs
-    // load models/textures;
 }
 
-void loadResources(Scene* scene, Resources* resources, RenderState* renderer) {
-    createDefaultResources(scene, resources, renderer);
-    findResources(scene, resources, renderer);
-    loadMaterials(scene, resources, renderer);
-    // scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
-    // scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
-    // scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);
+void loadResources(Resources* resources, RenderState* renderer) {
+    createDefaultResources(resources, renderer);
+    findResources(resources, renderer);
+    loadMaterials(resources, renderer);
 }
