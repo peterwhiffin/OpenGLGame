@@ -88,8 +88,8 @@ void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
     vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(player->cameraController->pitch), 0.0f, 0.0f);
     vec3 playerRotation = vec3(0.0f, JPH::DegreesToRadians(player->cameraController->yaw), 0.0f);
 
-    setLocalRotation(scene, player->cameraController->cameraTargetEntityID, quat::sEulerAngles(cameraTargetRotation));
     setRotation(scene, player->entityID, quat::sEulerAngles(playerRotation));
+    setLocalRotation(scene, player->cameraController->cameraTargetEntityID, quat::sEulerAngles(cameraTargetRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
     vec3 forwardDir = forward(scene, player->entityID);
