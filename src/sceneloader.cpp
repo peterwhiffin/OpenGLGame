@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -271,7 +270,7 @@ void createTransform(Scene* scene, ComponentBlock block) {
     transform->localScale = localScale;
 }
 
-void createMeshRenderer(Scene* scene, ComponentBlock block) {
+void createMeshRenderer(Scene* scene, Resources* resources, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     uint32_t rootEntity = INVALID_ID;
     Mesh* mesh = nullptr;
@@ -290,8 +289,8 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
 
     if (block.memberValueMap.count("mesh")) {
         std::string meshName = block.memberValueMap["mesh"];
-        if (scene->meshMap.count(meshName)) {
-            mesh = scene->meshMap[meshName];
+        if (resources->meshMap.count(meshName)) {
+            mesh = resources->meshMap[meshName];
         } else {
             std::cerr << "ERROR::MISSING_MESH::No mesh in mesh map with name: " << meshName << std::endl;
         }
@@ -303,14 +302,14 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
         while (commaPos != std::string::npos) {
             commaPos = memberString.find(",", currentPos);
             materialName = memberString.substr(currentPos, commaPos - currentPos);
-            if (scene->materialMap.count(materialName)) {
-                materials.push_back(scene->materialMap[materialName]);
+            if (resources->materialMap.count(materialName)) {
+                materials.push_back(resources->materialMap[materialName]);
             } else {
-                Material* material = scene->materialMap["default"];
+                Material* material = resources->materialMap["default"];
                 // scene->materialMap[materialName] = material;
                 materials.push_back(material);
                 std::cerr << "ERROR::MISSING_MATERIAL::No material in map with name: " << materialName << std::endl;
-                for (auto& pair : scene->materialMap) {
+                for (auto& pair : resources->materialMap) {
                     std::cout << pair.first << std::endl;
                 }
             }
@@ -331,7 +330,7 @@ void createMeshRenderer(Scene* scene, ComponentBlock block) {
     }
 }
 
-void createMaterial(Scene* scene, ComponentBlock block, std::string fileName) {
+void createMaterial(Scene* scene, Resources* resources, RenderState* renderer, ComponentBlock block, std::string fileName) {
     std::string name = fileName;
     std::vector<Texture*> textures;
     glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
@@ -352,12 +351,12 @@ void createMaterial(Scene* scene, ComponentBlock block, std::string fileName) {
         while (commaPos != std::string::npos) {
             commaPos = memberString.find(",", currentPos);
             textureName = memberString.substr(currentPos, commaPos - currentPos);
-            if (scene->textureMap.count(textureName)) {
-                textures.push_back(scene->textureMap[textureName]);
+            if (resources->textureMap.count(textureName)) {
+                textures.push_back(resources->textureMap[textureName]);
             } else {
-                textures.push_back(scene->textureMap["white"]);
+                textures.push_back(resources->textureMap["white"]);
                 std::cerr << "ERROR::MISSING_TEXTURE::No texture in map with name: " << textureName << std::endl;
-                for (auto& pair : scene->textureMap) {
+                for (auto& pair : resources->textureMap) {
                     std::cout << pair.first << std::endl;
                 }
             }
@@ -400,15 +399,15 @@ void createMaterial(Scene* scene, ComponentBlock block, std::string fileName) {
 
     Material* material;
 
-    if (scene->materialMap.count(name)) {
-        material = scene->materialMap[name];
+    if (resources->materialMap.count(name)) {
+        material = resources->materialMap[name];
     } else {
         material = new Material();
-        scene->materialMap[name] = material;
+        resources->materialMap[name] = material;
     }
 
     material->name = name;
-    material->shader = scene->lightingShader;
+    material->shader = renderer->lightingShader;
     material->textures = textures;
     material->textureTiling = textureTiling;
     material->baseColor = baseColor;
@@ -518,7 +517,7 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
     rb->joltBody = body->GetID();
 }
 
-void createAnimator(Scene* scene, ComponentBlock block) {
+void createAnimator(Scene* scene, Resources* resources, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::vector<Animation*> animations;
     std::string memberString;
@@ -537,11 +536,11 @@ void createAnimator(Scene* scene, ComponentBlock block) {
         while (commaPos != std::string::npos) {
             commaPos = memberString.find(",", currentPos);
             animationName = memberString.substr(currentPos, commaPos - currentPos);
-            if (scene->animationMap.count(animationName)) {
-                animations.push_back(scene->animationMap[animationName]);
+            if (resources->animationMap.count(animationName)) {
+                animations.push_back(resources->animationMap[animationName]);
             } else {
                 std::cerr << "ERROR::MISSING_ANIMATION::No animation in map with name: " << animationName << std::endl;
-                for (auto& pair : scene->animationMap) {
+                for (auto& pair : resources->animationMap) {
                     std::cout << pair.first << std::endl;
                 }
             }
@@ -576,7 +575,7 @@ void createCamera(Scene* scene, ComponentBlock block) {
         farPlane = std::stof(block.memberValueMap["farPlane"]);
     }
 
-    Camera* camera = addCamera(scene, entityID, fov, aspectRatio, nearPlane, farPlane);
+    Camera* camera = addCamera(scene, entityID, fov, nearPlane, farPlane);
 }
 
 void createPointLights(Scene* scene, ComponentBlock block) {
@@ -734,7 +733,7 @@ void createPlayer(Scene* scene, ComponentBlock block) {
     scene->player = player;
 }
 
-void createModelSettings(Scene* scene, ComponentBlock block) {
+void createModelSettings(Scene* scene, Resources* resources, ComponentBlock block) {
     std::string path = "";
 
     if (block.memberValueMap.count("path")) {
@@ -743,10 +742,10 @@ void createModelSettings(Scene* scene, ComponentBlock block) {
 
     ModelSettings settings;
     settings.path = path;
-    scene->modelImportMap[path] = settings;
+    resources->modelImportMap[path] = settings;
 }
 
-void createTextureSettings(Scene* scene, ComponentBlock block) {
+void createTextureSettings(Scene* scene, Resources* resources, ComponentBlock block) {
     std::string path = "";
     bool gamma = true;
     GLenum filter = GL_NEAREST;
@@ -774,9 +773,9 @@ void createTextureSettings(Scene* scene, ComponentBlock block) {
     settings.path = path;
     settings.gamma = gamma;
     settings.filter = filter;
-    scene->textureImportMap[path] = settings;
+    resources->textureImportMap[path] = settings;
 }
-void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
+void createComponents(Scene* scene, Resources* resources, std::vector<ComponentBlock>* components) {
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock block = components->at(i);
 
@@ -785,11 +784,11 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
         } else if (block.type == "Transform") {
             createTransform(scene, block);
         } else if (block.type == "MeshRenderer") {
-            createMeshRenderer(scene, block);
+            createMeshRenderer(scene, resources, block);
         } else if (block.type == "Rigidbody") {
             createRigidbody(scene, block);
         } else if (block.type == "Animator") {
-            createAnimator(scene, block);
+            createAnimator(scene, resources, block);
         } else if (block.type == "Camera") {
             createCamera(scene, block);
         } else if (block.type == "PointLight") {
@@ -799,14 +798,14 @@ void createComponents(Scene* scene, std::vector<ComponentBlock>* components) {
         } else if (block.type == "Player") {
             createPlayer(scene, block);
         } else if (block.type == "Model") {
-            createModelSettings(scene, block);
+            createModelSettings(scene, resources, block);
         } else if (block.type == "Texture") {
-            createTextureSettings(scene, block);
+            createTextureSettings(scene, resources, block);
         }
     }
 }
 
-void loadDefaultScene(Scene* scene) {
+void loadDefaultScene(Scene* scene, Resources* resources) {
     for (int i = 0; i < 2; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
@@ -826,10 +825,10 @@ void loadDefaultScene(Scene* scene) {
     spotLight->shadowWidth = 800;
     spotLight->shadowHeight = 600;
 
-    const uint32_t levelEntity = createEntityFromModel(scene, scene->testRoom->rootNode, INVALID_ID, true, INVALID_ID, true, false);
-    const uint32_t armsID = createEntityFromModel(scene, scene->wrenchArms->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+    const uint32_t levelEntity = createEntityFromModel(scene, resources->modelMap["testroom.gltf"]->rootNode, INVALID_ID, true, INVALID_ID, true, false);
+    const uint32_t armsID = createEntityFromModel(scene, resources->modelMap["WrenchArms.gltf"]->rootNode, INVALID_ID, false, INVALID_ID, true, false);
     Transform* armsTransform = getTransform(scene, armsID);
-    addAnimator(scene, armsID, scene->wrenchArms);
+    addAnimator(scene, armsID, resources->modelMap["WrenchArms.gltf"]);
 
     Entity* wrenchParent = getNewEntity(scene, "WrenchParent");
     Player* player = buildPlayer(scene);
@@ -843,7 +842,7 @@ void loadDefaultScene(Scene* scene) {
     setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
 }
 
-void loadMaterials(Scene* scene) {
+void loadMaterials(Scene* scene, Resources* resources, RenderState* renderer) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
         if (dir.is_regular_file()) {
             std::filesystem::path path = dir.path();
@@ -856,26 +855,26 @@ void loadMaterials(Scene* scene) {
                 getTokens(&stream, &tokens);
                 createComponentBlocks(scene, &tokens, &components);
                 // createComponents(scene, &components);
-                createMaterial(scene, components[0], fileString);
+                createMaterial(scene, resources, renderer, components[0], fileString);
             }
         }
     }
 }
 
-void loadResourceSettings(Scene* scene, std::unordered_set<std::string>& metaPaths) {
+void loadResourceSettings(Scene* scene, Resources* resources, std::unordered_set<std::string>& metaPaths) {
     for (std::string path : metaPaths) {
         std::ifstream stream(path);
         std::vector<Token> tokens;
         std::vector<ComponentBlock> components;
         getTokens(&stream, &tokens);
         createComponentBlocks(scene, &tokens, &components);
-        createComponents(scene, &components);
+        createComponents(scene, resources, &components);
     }
 }
 
-void loadScene(Scene* scene) {
+void loadScene(Scene* scene, Resources* resources) {
     if (!findLastScene(scene)) {
-        loadDefaultScene(scene);
+        loadDefaultScene(scene, resources);
         return;
     }
 
@@ -887,7 +886,7 @@ void loadScene(Scene* scene) {
     getTokens(&stream, &tokens);
     createComponentBlocks(scene, &tokens, &components);
     // logComponentBlocks(&components);
-    createComponents(scene, &components);
+    createComponents(scene, resources, &components);
 
     for (int i = 0; i < scene->transforms.size(); i++) {
         updateTransformMatrices(scene, &scene->transforms[i]);
@@ -960,71 +959,73 @@ void writeTransforms(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeMaterials(Scene* scene) {
+void writeTextureSettings(Scene* scene, TextureSettings settings) {
+    std::string texPath = settings.path;
+    std::string gamma = settings.gamma ? "true" : "false";
+    std::string filter = settings.filter == GL_LINEAR ? "GL_LINEAR" : "GL_NEAREST";
+
+    std::ofstream stream(texPath + ".meta");
+    stream << "Texture {" << std::endl;
+    stream << "path: " << texPath << std::endl;
+    stream << "gamma: " << gamma << std::endl;
+    stream << "filter: " << filter << std::endl;
+    stream << "}" << std::endl
+           << std::endl;
+}
+
+void writeMaterial(Scene* scene, Resources* resources, std::filesystem::path path) {
+    std::filesystem::path fileName = path.filename();
+
+    if (fileName.extension() != ".mat") {
+        return;
+    }
+
+    if (!resources->materialMap.count(fileName.string())) {
+        return;
+    }
+
+    Material* material = resources->materialMap[fileName.string()];
+    std::ofstream stream(path);
+    std::string textures = "";
+    std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
+    std::string roughness = std::to_string(material->roughness);
+    std::string metalness = std::to_string(material->metalness);
+    std::string aoStrength = std::to_string(material->aoStrength);
+    std::string normalStrength = std::to_string(material->normalStrength);
+    std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
+
+    if (material->textures.size() > 0) {
+        textures += material->textures[0]->name;
+    } else {
+        textures += "white";
+    }
+
+    for (int i = 1; i < 5; i++) {
+        textures += ", " + material->textures[i]->name;
+    }
+
+    stream << "Material {" << std::endl;
+    stream << "textures: " << textures << std::endl;
+    stream << "textureTiling: " << textureTiling << std::endl;
+    stream << "baseColor: " << baseColor << std::endl;
+    stream << "roughness: " << roughness << std::endl;
+    stream << "metalness: " << metalness << std::endl;
+    stream << "aoStrength: " << aoStrength << std::endl;
+    stream << "normalStrength: " << normalStrength << std::endl;
+    stream << "}" << std::endl
+           << std::endl;
+}
+
+void writeMaterials(Scene* scene, Resources* resources) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
         if (dir.is_regular_file()) {
             std::filesystem::path path = dir.path();
             if (path.extension() == ".mat") {
-                std::string fileName = path.filename().string();
-                if (scene->materialMap.count(fileName)) {
-                    Material* material = scene->materialMap[fileName];
-                    std::ofstream stream(path);
-                    std::string textures = "";
-                    std::string baseColor = std::to_string(material->baseColor.GetX()) + ", " + std::to_string(material->baseColor.GetY()) + ", " + std::to_string(material->baseColor.GetZ()) + ", " + std::to_string(material->baseColor.GetW());
-                    std::string roughness = std::to_string(material->roughness);
-                    std::string metalness = std::to_string(material->metalness);
-                    std::string aoStrength = std::to_string(material->aoStrength);
-                    std::string normalStrength = std::to_string(material->normalStrength);
-                    std::string textureTiling = std::to_string(material->textureTiling.x) + ", " + std::to_string(material->textureTiling.y);
-
-                    if (material->textures.size() > 0) {
-                        textures += material->textures[0]->name;
-                    } else {
-                        textures += "white";
-                    }
-
-                    for (int i = 1; i < 5; i++) {
-                        textures += ", " + material->textures[i]->name;
-                    }
-
-                    stream << "Material {" << std::endl;
-                    stream << "textures: " << textures << std::endl;
-                    stream << "textureTiling: " << textureTiling << std::endl;
-                    stream << "baseColor: " << baseColor << std::endl;
-                    stream << "roughness: " << roughness << std::endl;
-                    stream << "metalness: " << metalness << std::endl;
-                    stream << "aoStrength: " << aoStrength << std::endl;
-                    stream << "normalStrength: " << normalStrength << std::endl;
-                    stream << "}" << std::endl
-                           << std::endl;
-                }
+                writeMaterial(scene, resources, path.filename());
             }
         }
     }
 }
-
-/* void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
-    for (MeshRenderer& renderer : scene->meshRenderers) {
-        std::string entityID = std::to_string(renderer.entityID);
-        std::string rootEntity = std::to_string(renderer.rootEntity);
-        std::string mesh = renderer.mesh->name;
-        std::string materials = "";
-
-        materials += renderer.mesh->subMeshes[0].material->name;
-
-        for (int i = 1; i < renderer.mesh->subMeshes.size(); i++) {
-            materials += ", " + renderer.mesh->subMeshes[i].material->name;
-        }
-
-        stream << "MeshRenderer {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "rootEntity: " << rootEntity << std::endl;
-        stream << "mesh: " << mesh << std::endl;
-        stream << "materials: " << materials << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
-    }
-} */
 
 void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
@@ -1255,7 +1256,7 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void saveScene(Scene* scene) {
+void saveScene(Scene* scene, Resources* resources) {
     std::ofstream stream(scene->scenePath);
     writeEntities(scene, stream);
     writeTransforms(scene, stream);
@@ -1266,5 +1267,5 @@ void saveScene(Scene* scene) {
     writeSpotLights(scene, stream);
     writeCameras(scene, stream);
     writePlayer(scene, stream);
-    writeMaterials(scene);
+    writeMaterials(scene, resources);
 }

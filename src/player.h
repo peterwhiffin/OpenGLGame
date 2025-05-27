@@ -24,5 +24,5 @@ struct Player {
     float groundCheckDistance = 0.2f;
 };
 
-void updatePlayer(Scene* scene);
+void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer);
 Player* buildPlayer(Scene* scene);

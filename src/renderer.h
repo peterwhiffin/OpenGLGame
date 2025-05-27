@@ -2,6 +2,7 @@
 #include <vector>
 #include "forward.h"
 #include "utils/mathutils.h"
+#include "physics.h"
 
 struct DebugVertex {
     vec3 pos;
@@ -142,11 +143,46 @@ struct GlobalUBO {
     mat4 projection = mat4::sIdentity();
 };
 
-void createContext(Scene* scene);
-void initRenderer(Scene* scene);
+struct RenderState {
+    GLFWwindow* window;
+    WindowData windowData;
+    GLuint litFBO, litRBO, ssaoFBO;
+    GLuint litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
+    GLuint blurFBO[2], blurSwapTex[2];
+    GLuint fullscreenVAO, fullscreenVBO;
+    GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, shadowBlurShader, debugShader;
+
+    GLuint pickingFBO;
+    GLuint pickingRBO;
+    GLuint pickingShader;
+    GLuint pickingTex;
+    GLuint editorFBO, editorRBO, editorTex;
+
+    GLuint matricesUBO;
+    GlobalUBO matricesUBOData;
+
+    JPH::DebugRendererSimple* debugRenderer;
+
+    float exposure = 1.0f;
+    float bloomThreshold = 0.39f;
+    float bloomAmount = 0.1f;
+    float ambient = 0.004f;
+    float AORadius = 0.5f;
+    float AOBias = 0.025f;
+    float AOAmount = 1.0f;
+    float AOPower = 2.0f;
+
+    bool horizontalBlur = true;
+
+    std::vector<vec3> ssaoKernel;
+    std::vector<vec3> ssaoNoise;
+};
+
+void createContext(Scene* scene, RenderState* renderer);
+void initRenderer(RenderState* renderer, Scene* scene, EditorState* editor);
 void mapBones(Scene* scene, MeshRenderer* renderer);
-void renderScene(Scene* scene);
-void deleteBuffers(Scene* scene);
+void renderScene(RenderState* renderer, Scene* scene, EditorState* editor);
+void deleteBuffers(RenderState* scene, Resources* resources);
 void createSpotLightShadowMap(Scene* scene, SpotLight* light);
 void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light);
 

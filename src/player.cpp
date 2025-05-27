@@ -12,8 +12,8 @@
 #include "animation.h"
 #include "ecs.h"
 
-void spawnTrashCan(Scene* scene, Player* player) {
-    Model* trashcanModel = scene->modelMap["trashcan.gltf"];
+void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
+    Model* trashcanModel = resources->modelMap["trashcan.gltf"];
     uint32_t trashcanID = createEntityFromModel(scene, trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
     Transform* transform = getTransform(scene, trashcanID);
     JPH::CylinderShapeSettings floor_shape_settings(trashcanModel->rootNode->mesh->extent.GetY(), trashcanModel->rootNode->mesh->extent.GetX());
@@ -36,10 +36,10 @@ void spawnTrashCan(Scene* scene, Player* player) {
     scene->movingRigidbodies.insert(rb->entityID);
 }
 
-void updatePlayer(Scene* scene) {
-    GLFWwindow* window = scene->window;
+void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
+    GLFWwindow* window = renderer->window;
     Player* player = scene->player;
-    InputActions* input = &scene->input;
+    InputActions* input = scene->input;
     Transform* transform = getTransform(scene, player->entityID);
 
     if (input->menu) {
@@ -54,25 +54,13 @@ void updatePlayer(Scene* scene) {
     }
 
     if (scene->menuOpen) {
-        if (input->fire) {
-            if (scene->canPick) {
-                scene->isPicking = true;
-                scene->canPick = false;
-            }
-        } else {
-            scene->isPicking = false;
-            scene->canPick = true;
-        }
-
         return;
-    } else {
-        // scene->nodeClicked = INVALID_ID;
     }
 
     if (input->spawn) {
         if (player->canSpawnCan) {
             player->canSpawnCan = false;
-            spawnTrashCan(scene, player);
+            spawnTrashCan(scene, resources, player);
         }
     } else {
         player->canSpawnCan = true;
@@ -136,7 +124,6 @@ void updatePlayer(Scene* scene) {
 
     player->isGrounded = true;
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, finalMove);
-    // scene->bodyInterface->SetRotation(rb->joltBody, quat::sEulerAngles(playerRotation), JPH::EActivation::Activate);
 }
 
 Player* buildPlayer(Scene* scene) {
@@ -144,7 +131,7 @@ Player* buildPlayer(Scene* scene) {
     uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->entityID;
     uint32_t cameraEntityID = getNewEntity(scene, "Camera")->entityID;
 
-    Camera* camera = addCamera(scene, cameraEntityID, 68.0f, (float)scene->windowData.width / scene->windowData.height, 0.01f, 800.0f);
+    Camera* camera = addCamera(scene, cameraEntityID, 68.0f, 0.01f, 800.0f);
     Player* player = new Player();
     player->entityID = playerEntityID;
 
@@ -153,9 +140,6 @@ Player* buildPlayer(Scene* scene) {
     player->cameraController = new CameraController();
 
     setPosition(scene, playerEntityID, vec3(0.0f, 5.0f, 0.0f));
-
-    // JPH::CharacterVirtualSettings* characterSettings = new JPH::CharacterVirtualSettings();
-    // characterSettings->mSupportingVolume = JPH::Plane(vec3::sAxisY(), .25);
 
     JPH::BoxShapeSettings floor_shape_settings(vec3(0.25f, 0.9f, 0.25f));
     floor_shape_settings.SetEmbedded();  // A ref counted object on the stack (base class RefTarget) should be marked as such to prevent it from being freed when its reference count goes to 0.

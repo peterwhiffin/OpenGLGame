@@ -93,7 +93,7 @@ unsigned int loadShader(std::string vertexFile, std::string fragmentFile) {
     return shaderProgram;
 }
 
-void loadShaders(Scene *scene) {
+void loadShaders(RenderState *scene) {
     scene->pickingShader = loadShader("pickingshader.vs", "pickingshader.fs");
     scene->depthShader = loadShader("depthprepassshader.vs", "depthprepassshader.fs");
     scene->lightingShader = loadShader("pbrlitshader.vs", "pbrlitshader.fs");

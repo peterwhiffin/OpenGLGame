@@ -1,6 +1,9 @@
 #pragma once
 
 struct Scene;
+struct Resources;
+struct EditorState;
+struct RenderState;
 
 enum InspectorState {
     Empty,
@@ -9,4 +12,4 @@ enum InspectorState {
     Resource
 };
 
-void buildInspector(Scene* scene);
+void buildInspector(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor);

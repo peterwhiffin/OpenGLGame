@@ -2,6 +2,7 @@
 #include "utils/mathutils.h"
 
 struct Scene;
+struct GLFWwindow;
 
 struct InputActions {
     glm::vec2 movement = glm::vec2(0.0f, 0.0f);
@@ -20,4 +21,4 @@ struct InputActions {
     bool deleteKey = false;
 };
 
-void updateInput(Scene* scene);
+void updateInput(InputActions* actions, GLFWwindow* window);

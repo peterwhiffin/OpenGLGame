@@ -25,7 +25,7 @@ JPH::Mat44 transpose(const aiMatrix4x4& m) {
         JPH::Vec4(m.a4, m.b4, m.c4, m.d4));
 }
 
-void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
+void processAnimations(Scene* gameScene, Resources* resources, const aiScene* scene, Model* model) {
     aiAnimation* aiAnim;
     aiVectorKey aiVecKey;
     aiQuatKey aiQuatKey;
@@ -79,7 +79,7 @@ void processAnimations(Scene* gameScene, const aiScene* scene, Model* model) {
         }
 
         model->animations.push_back(newAnimation);
-        gameScene->animationMap[newAnimation->name] = newAnimation;
+        resources->animationMap[newAnimation->name] = newAnimation;
     }
 }
 
@@ -156,26 +156,26 @@ GLuint loadTextureFromFile(const char* path, TextureSettings settings) {
     return textureID;
 }
 
-Texture* loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std::string* directory) {
+Texture* loadTexture(Scene* gameScene, Resources* resources, aiMaterial* mat, aiTextureType type, std::string* directory) {
     Texture* newTexture;
     // newTexture.path = "default";
     // newTexture.name = "white";
 
     switch (type) {
         case aiTextureType_DIFFUSE:  // albedo map
-            newTexture = gameScene->textureMap["white"];
+            newTexture = resources->textureMap["white"];
             break;
         case aiTextureType_METALNESS:  // roughness map
-            newTexture = gameScene->textureMap["white"];
+            newTexture = resources->textureMap["white"];
             break;
         case aiTextureType_DIFFUSE_ROUGHNESS:  // metallic map
-            newTexture = gameScene->textureMap["black"];
+            newTexture = resources->textureMap["black"];
             break;
         case aiTextureType_AMBIENT_OCCLUSION:  // ao map
-            newTexture = gameScene->textureMap["white"];
+            newTexture = resources->textureMap["white"];
             break;
         case aiTextureType_NORMALS:  // normal map
-            newTexture = gameScene->textureMap["blue"];
+            newTexture = resources->textureMap["blue"];
             break;
     }
 
@@ -186,7 +186,7 @@ Texture* loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std:
         std::string aiPath = texPath.C_Str();
         std::string fileName = aiPath.substr(aiPath.find_last_of('/') + 1);
 
-        for (auto& pair : gameScene->textureMap) {
+        for (auto& pair : resources->textureMap) {
             if (pair.first == fileName) {
                 return pair.second;
             }
@@ -198,18 +198,18 @@ Texture* loadTexture(Scene* gameScene, aiMaterial* mat, aiTextureType type, std:
         newTexture->path = texPath.C_Str();
         newTexture->name = fullPath.substr(offset + 1, fullPath.length() - offset);
         newTexture->id = loadTextureFromFile(fullPath.data(), settings);
-        gameScene->textureMap[newTexture->name] = newTexture;
+        resources->textureMap[newTexture->name] = newTexture;
     }
 
     return newTexture;
 }
 
-void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const mat4 transform, std::string* directory) {
+void processSubMesh(Scene* gameScene, RenderState* renderer, Resources* resources, aiMesh* mesh, const aiScene* scene, Mesh* parentMesh, const mat4 transform, std::string* directory) {
     SubMesh subMesh;
     aiFace face;
     size_t baseVertex = parentMesh->vertices.size();
     aiColor4D baseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    Material* newMaterial = gameScene->materialMap["default"];
+    Material* newMaterial = resources->materialMap["default"];
 
     for (uint32_t i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
@@ -251,28 +251,28 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         std::string name = material->GetName().C_Str();
 
-        if (gameScene->materialMap.count(name)) {
-            newMaterial = gameScene->materialMap[name];
+        if (resources->materialMap.count(name)) {
+            newMaterial = resources->materialMap[name];
         } else {
             newMaterial = new Material();
 
-            Texture* albedoTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE, directory);
-            Texture* roughnessTexture = loadTexture(gameScene, material, aiTextureType_METALNESS, directory);
-            Texture* metallicTexture = loadTexture(gameScene, material, aiTextureType_DIFFUSE_ROUGHNESS, directory);
-            Texture* aoTexture = loadTexture(gameScene, material, aiTextureType_AMBIENT_OCCLUSION, directory);
-            Texture* normalTexture = loadTexture(gameScene, material, aiTextureType_NORMALS, directory);
+            Texture* albedoTexture = loadTexture(gameScene, resources, material, aiTextureType_DIFFUSE, directory);
+            Texture* roughnessTexture = loadTexture(gameScene, resources, material, aiTextureType_METALNESS, directory);
+            Texture* metallicTexture = loadTexture(gameScene, resources, material, aiTextureType_DIFFUSE_ROUGHNESS, directory);
+            Texture* aoTexture = loadTexture(gameScene, resources, material, aiTextureType_AMBIENT_OCCLUSION, directory);
+            Texture* normalTexture = loadTexture(gameScene, resources, material, aiTextureType_NORMALS, directory);
 
             material->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor);
 
             newMaterial->name = material->GetName().C_Str();
-            newMaterial->shader = gameScene->lightingShader;
+            newMaterial->shader = renderer->lightingShader;
             newMaterial->baseColor = vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
             newMaterial->textures.push_back(albedoTexture);
             newMaterial->textures.push_back(roughnessTexture);
             newMaterial->textures.push_back(metallicTexture);
             newMaterial->textures.push_back(aoTexture);
             newMaterial->textures.push_back(normalTexture);
-            gameScene->materialMap[name] = newMaterial;
+            resources->materialMap[name] = newMaterial;
         }
     }
 
@@ -280,7 +280,7 @@ void processSubMesh(Scene* gameScene, aiMesh* mesh, const aiScene* scene, Mesh* 
     parentMesh->subMeshes.push_back(subMesh);
 }
 
-ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory) {
+ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, Resources* resources, RenderState* renderer, mat4 parentTransform, Model* model, ModelNode* parentNode, std::string* directory) {
     mat4 nodeTransform = transpose(node->mTransformation);
     mat4 globalTransform = parentTransform * nodeTransform;
     ModelNode* childNode = new ModelNode();
@@ -310,7 +310,7 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat
 
         for (uint32_t i = 0; i < node->mNumMeshes; i++) {
             mesh = scene->mMeshes[node->mMeshes[i]];
-            processSubMesh(gameScene, mesh, scene, childNode->mesh, globalTransform, directory);
+            processSubMesh(gameScene, renderer, resources, mesh, scene, childNode->mesh, globalTransform, directory);
 
             if (mesh->mNumBones == 0) {
                 for (Vertex& vertex : childNode->mesh->vertices) {
@@ -359,17 +359,17 @@ ModelNode* processNode(aiNode* node, const aiScene* scene, Scene* gameScene, mat
         }
 
         createMeshBuffers(childNode->mesh);
-        gameScene->meshMap[childNode->mesh->name] = childNode->mesh;
+        resources->meshMap[childNode->mesh->name] = childNode->mesh;
     }
 
     for (uint32_t i = 0; i < node->mNumChildren; i++) {
-        childNode->children.push_back(processNode(node->mChildren[i], scene, gameScene, globalTransform, model, childNode, directory));
+        childNode->children.push_back(processNode(node->mChildren[i], scene, gameScene, resources, renderer, globalTransform, model, childNode, directory));
     }
 
     return childNode;
 }
 
-Model* loadModel(Scene* gameScene, std::string path) {
+Model* loadModel(Scene* gameScene, Resources* resources, RenderState* renderer, std::string path) {
     Assimp::Importer importer;
     std::string directory;
 
@@ -386,13 +386,13 @@ Model* loadModel(Scene* gameScene, std::string path) {
     name = name.substr(0, name.find_last_of('.'));
     newModel->name = name;
 
-    processAnimations(gameScene, scene, newModel);
+    processAnimations(gameScene, resources, scene, newModel);
     newModel->RootNodeTransform = transpose(scene->mRootNode->mTransformation);
-    newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, mat4::sIdentity(), newModel, nullptr, &directory);
+    newModel->rootNode = processNode(scene->mRootNode, scene, gameScene, resources, renderer, mat4::sIdentity(), newModel, nullptr, &directory);
     return newModel;
 }
 
-void createDefaultResources(Scene* scene) {
+void createDefaultResources(Scene* scene, Resources* resources, RenderState* renderer) {
     GLuint whiteTexture;
     GLuint blackTexture;
     GLuint blueTexture;
@@ -427,9 +427,9 @@ void createDefaultResources(Scene* scene) {
     blue->path = "blue";
     blue->name = "blue";
 
-    scene->textureMap[white->name] = white;
-    scene->textureMap[black->name] = black;
-    scene->textureMap[blue->name] = blue;
+    resources->textureMap[white->name] = white;
+    resources->textureMap[black->name] = black;
+    resources->textureMap[blue->name] = blue;
 
     Material* defaultMaterial = new Material();
     defaultMaterial->textures.push_back(white);
@@ -438,12 +438,12 @@ void createDefaultResources(Scene* scene) {
     defaultMaterial->textures.push_back(white);
     defaultMaterial->textures.push_back(blue);
     defaultMaterial->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    defaultMaterial->shader = scene->lightingShader;
+    defaultMaterial->shader = renderer->lightingShader;
     defaultMaterial->name = "default";
-    scene->materialMap[defaultMaterial->name] = defaultMaterial;
+    resources->materialMap[defaultMaterial->name] = defaultMaterial;
 }
 
-void findResources(Scene* scene) {
+void findResources(Scene* scene, Resources* resources, RenderState* renderer) {
     std::vector<std::filesystem::directory_entry> resourcePaths;
     std::unordered_set<std::string> metaPaths;
 
@@ -489,30 +489,30 @@ void findResources(Scene* scene) {
         }
     }
 
-    loadResourceSettings(scene, metaPaths);
+    loadResourceSettings(scene, resources, metaPaths);
 
-    for (auto& pair : scene->textureImportMap) {
+    for (auto& pair : resources->textureImportMap) {
         Texture* newTex = new Texture();
         newTex->id = loadTextureFromFile(pair.first.c_str(), pair.second);
         std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
         std::string name = fileName.substr(0, fileName.find_first_of('.'));
         newTex->name = fileName;
         newTex->path = pair.first;
-        scene->textureMap[fileName] = newTex;
+        resources->textureMap[fileName] = newTex;
     }
 
-    for (auto& pair : scene->modelImportMap) {
+    for (auto& pair : resources->modelImportMap) {
         std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
-        scene->modelMap[fileName] = loadModel(scene, pair.first);
+        resources->modelMap[fileName] = loadModel(scene, resources, renderer, pair.first);
     }
     // parse meta files and create settings structs
     // load models/textures;
 }
 
-void loadResources(Scene* scene) {
-    createDefaultResources(scene);
-    findResources(scene);
-    loadMaterials(scene);
+void loadResources(Scene* scene, Resources* resources, RenderState* renderer) {
+    createDefaultResources(scene, resources, renderer);
+    findResources(scene, resources, renderer);
+    loadMaterials(scene, resources, renderer);
     // scene->testRoom = loadModel(scene, "../resources/models/testroom/testroom.gltf", &scene->textures, scene->lightingShader, true);
     // scene->trashcanModel = loadModel(scene, "../resources/models/trashcan/trashcan.gltf", &scene->textures, scene->lightingShader, true);
     // scene->wrenchArms = loadModel(scene, "../resources/models/Arms/wrencharms.gltf", &scene->textures, scene->lightingShader, true);

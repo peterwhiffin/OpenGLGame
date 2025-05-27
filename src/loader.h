@@ -38,5 +38,17 @@ struct Model {
     std::unordered_map<ModelNode*, AnimationChannel*> channelMap;
 };
 
-void loadResources(Scene* scene);
+struct Resources {
+    std::vector<Model*> models;
+    std::unordered_map<std::string, Mesh*> meshMap;
+    std::unordered_map<std::string, Animation*> animationMap;
+    std::unordered_map<std::string, Material*> materialMap;
+    std::unordered_map<std::string, Texture*> textureMap;
+    std::unordered_map<std::string, Model*> modelMap;
+
+    std::unordered_map<std::string, TextureSettings> textureImportMap;
+    std::unordered_map<std::string, ModelSettings> modelImportMap;
+};
+
+void loadResources(Scene* scene, Resources* resources, RenderState* renderer);
 GLuint loadTextureFromFile(const char* path, TextureSettings settings);

@@ -5,6 +5,7 @@
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"
+#include "inspector.h"
 #include "editor.h"
 #include "scene.h"
 #include "sceneloader.h"
@@ -43,7 +44,7 @@ void buildFloat2Row(std::string label, float* value, float speed = 0.01f, float 
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
     ImGui::TableSetColumnIndex(1);
-    ImGui::DragFloat3(("##" + label).c_str(), value, speed, min, max);
+    ImGui::DragFloat2(("##" + label).c_str(), value, speed, min, max);
 }
 
 bool buildFloat3Row(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 0.0f) {
@@ -60,7 +61,6 @@ void buildColor3Row(std::string label, float* value, ImGuiColorEditFlags flags) 
     ImGui::Text("Color");
     ImGui::TableSetColumnIndex(1);
     ImGui::ColorEdit3(("##" + label).c_str(), value, flags);
-    ImGui::EndTable();
 }
 
 void buildColor4Row(std::string label, float* value, ImGuiColorEditFlags flags) {
@@ -69,10 +69,9 @@ void buildColor4Row(std::string label, float* value, ImGuiColorEditFlags flags) 
     ImGui::Text("Color");
     ImGui::TableSetColumnIndex(1);
     ImGui::ColorEdit4(("##" + label).c_str(), value, flags);
-    ImGui::EndTable();
 }
 
-void buildTextureMapRow(Scene* scene, std::string label, Texture* tex, float* value, bool color = false) {
+void buildTextureMapRow(Scene* scene, Resources* resources, std::string label, Texture* tex, float* value, bool color = false) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
@@ -80,7 +79,7 @@ void buildTextureMapRow(Scene* scene, std::string label, Texture* tex, float* va
     if (ImGui::BeginCombo(("##" + label).c_str(), tex->name.c_str())) {
         const bool isSelected = false;
 
-        for (auto& pair : scene->textureMap) {
+        for (auto& pair : resources->textureMap) {
             ImGui::Image((ImTextureID)(intptr_t)pair.second->id, ImVec2(20, 20));
             ImGui::SameLine();
             if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
@@ -102,7 +101,7 @@ void buildTextureMapRow(Scene* scene, std::string label, Texture* tex, float* va
     }
 }
 
-void buildMaterialInspector(Scene* scene, Material* material) {
+void buildMaterialInspector(Scene* scene, Resources* resources, Material* material) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Material");
@@ -110,7 +109,7 @@ void buildMaterialInspector(Scene* scene, Material* material) {
     if (ImGui::BeginCombo("##currentMaterial", material->name.c_str())) {
         const bool isSelected = false;
 
-        for (auto& pair : scene->materialMap) {
+        for (auto& pair : resources->materialMap) {
             if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                 material = pair.second;
             }
@@ -119,11 +118,11 @@ void buildMaterialInspector(Scene* scene, Material* material) {
         ImGui::EndCombo();
     }
 
-    buildTextureMapRow(scene, "Albedo", material->textures[0], material->baseColor.mF32, true);
-    buildTextureMapRow(scene, "Roughness", material->textures[1], &material->roughness);
-    buildTextureMapRow(scene, "Metalness", material->textures[2], &material->metalness);
-    buildTextureMapRow(scene, "AO", material->textures[3], &material->aoStrength);
-    buildTextureMapRow(scene, "Normal", material->textures[4], &material->normalStrength);
+    buildTextureMapRow(scene, resources, "Albedo", material->textures[0], material->baseColor.mF32, true);
+    buildTextureMapRow(scene, resources, "Roughness", material->textures[1], &material->roughness);
+    buildTextureMapRow(scene, resources, "Metalness", material->textures[2], &material->metalness);
+    buildTextureMapRow(scene, resources, "AO", material->textures[3], &material->aoStrength);
+    buildTextureMapRow(scene, resources, "Normal", material->textures[4], &material->normalStrength);
     buildFloat2Row("Tiling", glm::value_ptr(material->textureTiling), 0.001f);
 }
 
@@ -167,7 +166,7 @@ void buildTransformInspector(Scene* scene, Transform* transform) {
     }
 }
 
-void buildMeshRendererInspector(Scene* scene, MeshRenderer* renderer) {
+void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer* renderer) {
     uint32_t entityID = renderer->entityID;
     bool isOpen = ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen);
 
@@ -196,7 +195,7 @@ void buildMeshRendererInspector(Scene* scene, MeshRenderer* renderer) {
             if (ImGui::BeginCombo("##currentMesh", meshName.c_str())) {
                 const bool isSelected = false;
 
-                for (auto& pair : scene->meshMap) {
+                for (auto& pair : resources->meshMap) {
                     if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
                         renderer->mesh = pair.second;
                     }
@@ -206,7 +205,7 @@ void buildMeshRendererInspector(Scene* scene, MeshRenderer* renderer) {
             }
 
             if (renderer->mesh != nullptr) {
-                buildMaterialInspector(scene, renderer->mesh->subMeshes[0].material);
+                buildMaterialInspector(scene, resources, renderer->mesh->subMeshes[0].material);
             }
 
             ImGui::EndTable();
@@ -228,7 +227,7 @@ void buildAnimatorInspector(Scene* scene, Animator* animator) {
     }
 }
 
-void buildRigidbodyInspector(Scene* scene, RigidBody* rigidbody) {
+void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* editor, RigidBody* rigidbody) {
     const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
     const JPH::BoxShape* box;
     const JPH::SphereShape* sphere;
@@ -245,24 +244,24 @@ void buildRigidbodyInspector(Scene* scene, RigidBody* rigidbody) {
             box = static_cast<const JPH::BoxShape*>(shape);
             vec3 halfExtents = box->GetHalfExtent();
             localBox = JPH::AABox(-halfExtents, halfExtents);
-            scene->debugRenderer->DrawBox(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+            renderer->debugRenderer->DrawBox(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
             break;
         case JPH::EShapeSubType::Sphere:
             sphere = static_cast<const JPH::SphereShape*>(shape);
             radius = sphere->GetRadius();
-            scene->debugRenderer->DrawSphere(scene->bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+            renderer->debugRenderer->DrawSphere(scene->bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
             break;
         case JPH::EShapeSubType::Capsule:
             capsule = static_cast<const JPH::CapsuleShape*>(shape);
             halfHeight = capsule->GetHalfHeightOfCylinder();
             radius = capsule->GetRadius();
-            scene->debugRenderer->DrawCapsule(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+            renderer->debugRenderer->DrawCapsule(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
             break;
         case JPH::EShapeSubType::Cylinder:
             cylinder = static_cast<const JPH::CylinderShape*>(shape);
             halfHeight = cylinder->GetHalfHeight();
             radius = cylinder->GetRadius();
-            scene->debugRenderer->DrawCylinder(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+            renderer->debugRenderer->DrawCylinder(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
             break;
     }
 
@@ -304,6 +303,7 @@ void buildPointLightInspector(Scene* scene, PointLight* light) {
 
             buildFloatRow("Brightness", &light->brightness);
             buildColor3Row("Color", light->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
+            ImGui::EndTable();
         }
     }
 }
@@ -331,17 +331,17 @@ void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
     }
 }
 
-void buildTextureInspector(Scene* scene) {
-    std::string extension = scene->fileClicked.substr(scene->fileClicked.find_last_of('.'));
-    std::string fileName = scene->fileClicked.substr(scene->fileClicked.find_last_of('\\'));
+void buildTextureInspector(Scene* scene, Resources* resources, EditorState* editor) {
+    std::string extension = editor->fileClicked.substr(editor->fileClicked.find_last_of('.'));
+    std::string fileName = editor->fileClicked.substr(editor->fileClicked.find_last_of('\\'));
     std::string name = fileName.substr(1);
-    TextureSettings* settings = &scene->textureImportMap[scene->fileClicked];
+    TextureSettings* settings = &resources->textureImportMap[editor->fileClicked];
 
     if (ImGui::BeginTable("Texture Import Table", 2, ImGuiTableFlags_SizingFixedSame)) {
         ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
         ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
-        buildTextRow("Path: ", scene->fileClicked.c_str());
+        buildTextRow("Path: ", editor->fileClicked.c_str());
         buildBoolRow("Gamma", &settings->gamma);
 
         ImGui::TableNextRow();
@@ -368,59 +368,23 @@ void buildTextureInspector(Scene* scene) {
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Image((ImTextureID)(intptr_t)scene->textureMap[name]->id, ImVec2(100, 100));
+        ImGui::Image((ImTextureID)(intptr_t)resources->textureMap[name]->id, ImVec2(100, 100));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         if (ImGui::Button("Apply", ImVec2(40.0f, 25.0f))) {
-            GLuint textureID = scene->textureMap[name]->id;  // Assume textureID is a valid texture object
-            GLint internalFormat;
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
-            if (settings->gamma) {
-                if (internalFormat == GL_RGB) {
-                    settings->filter = GL_SRGB;
-                } else if (internalFormat == GL_RGBA) {
-                    settings->filter = GL_SRGB_ALPHA;
-                }
-            } else {
-                if (internalFormat == GL_SRGB) {
-                    settings->filter = GL_RGB;
-                } else if (internalFormat == GL_SRGB_ALPHA) {
-                    settings->filter = GL_RGBA;
-                }
-            }
-
-            glDeleteTextures(1, &scene->textureMap[name]->id);
-            scene->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
-
-            std::string gammaString = "true";
-            std::string filterString = "GL_NEAREST";
-
-            if (!settings->gamma) {
-                gammaString = "false";
-            }
-
-            if (settings->filter == GL_LINEAR) {
-                filterString = "GL_LINEAR";
-            }
-
-            std::ofstream stream(scene->fileClicked + ".meta");
-            stream << "Texture {" << std::endl;
-            stream << "path: " << scene->fileClicked << std::endl;
-            stream << "gamma: " << gammaString << std::endl;
-            stream << "filter: " << filterString << std::endl;
-            stream << "}" << std::endl
-                   << std::endl;
+            glDeleteTextures(1, &resources->textureMap[name]->id);
+            resources->textureMap[name]->id = loadTextureFromFile(settings->path.c_str(), *settings);
+            writeTextureSettings(scene, *settings);
         }
         ImGui::EndTable();
     }
 }
 
-void buildAddComponentCombo(Scene* scene) {
+void buildAddComponentCombo(Scene* scene, EditorState* editor) {
     if (ImGui::BeginCombo("##Add Component", "Add Component")) {
         const bool isSelected = false;
-        uint32_t entityID = scene->nodeClicked;
+        uint32_t entityID = editor->nodeClicked;
         if (getMeshRenderer(scene, entityID) == nullptr) {
             if (ImGui::Selectable("Mesh Renderer", isSelected)) {
                 MeshRenderer* renderer = addMeshRenderer(scene, entityID);
@@ -463,10 +427,10 @@ void buildAddComponentCombo(Scene* scene) {
     }
 }
 
-void buildSceneEntityInspector(Scene* scene) {
-    uint32_t entityID = scene->nodeClicked;
+void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
+    uint32_t entityID = editor->nodeClicked;
     Transform* transform = getTransform(scene, entityID);
-    MeshRenderer* renderer = getMeshRenderer(scene, entityID);
+    MeshRenderer* meshRenderer = getMeshRenderer(scene, entityID);
     Animator* animator = getAnimator(scene, entityID);
     RigidBody* rigidbody = getRigidbody(scene, entityID);
     SpotLight* spotLight = getSpotLight(scene, entityID);
@@ -487,34 +451,34 @@ void buildSceneEntityInspector(Scene* scene) {
     }
 
     if (rigidbody != nullptr) {
-        buildRigidbodyInspector(scene, rigidbody);
+        buildRigidbodyInspector(scene, renderer, editor, rigidbody);
     }
 
-    if (renderer != nullptr) {
-        buildMeshRendererInspector(scene, renderer);
+    if (meshRenderer != nullptr) {
+        buildMeshRendererInspector(scene, resources, meshRenderer);
     }
 
-    buildAddComponentCombo(scene);
+    buildAddComponentCombo(scene, editor);
 }
 
 void buildPrefabInspector(Scene* scene) {
 }
 
-void buildResourceInspector(Scene* scene) {
-    std::string extension = scene->fileClicked.substr(scene->fileClicked.find_last_of('.'));
-    std::string fileName = scene->fileClicked.substr(scene->fileClicked.find_last_of('\\'));
+void buildResourceInspector(Scene* scene, Resources* resources, EditorState* editor) {
+    std::string extension = editor->fileClicked.substr(editor->fileClicked.find_last_of('.'));
+    std::string fileName = editor->fileClicked.substr(editor->fileClicked.find_last_of('\\'));
     std::string name = fileName.substr(1);
 
     if (extension == ".png") {
-        buildTextureInspector(scene);
+        buildTextureInspector(scene, resources, editor);
     } else if (extension == ".mat") {
         if (ImGui::BeginTable("Material Table", 3, ImGuiTableFlags_SizingFixedFit)) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, 95.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthFixed, 145.0f);
             ImGui::TableSetupColumn("##map", ImGuiTableColumnFlags_WidthStretch);
 
-            if (scene->materialMap.count(name)) {
-                Material* material = scene->materialMap[name];
+            if (resources->materialMap.count(name)) {
+                Material* material = resources->materialMap[name];
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text(material->name.c_str());
@@ -525,40 +489,40 @@ void buildResourceInspector(Scene* scene) {
 
                 ImGui::TableSetColumnIndex(1);
                 if (ImGui::InputText("##defaultMatFilename", buf1, IM_ARRAYSIZE(buf1), flags)) {
-                    std::filesystem::path path(scene->fileClicked);
+                    std::filesystem::path path(editor->fileClicked);
                     if (std::filesystem::is_regular_file(path)) {
                         std::filesystem::path newPath = path;
                         newPath.replace_filename(buf1 + extension);
                         std::filesystem::rename(path, newPath);
-                        scene->materialMap.erase(name);
+                        resources->materialMap.erase(name);
                         material->name = buf1 + extension;
-                        scene->materialMap[material->name] = material;
-                        scene->fileClicked = newPath.string();
-                        saveScene(scene);  // have to write the entire scene because mesh renderers get their material references by filename, and writing just the mesh renderers would be a disaster. Would need a stable handle to the material file, such as a guid, to skip this.
+                        resources->materialMap[material->name] = material;
+                        editor->fileClicked = newPath.string();
+                        saveScene(scene, resources);  // have to write the entire scene because mesh renderers get their material references by filename, and writing just the mesh renderers would be a disaster. Would need a stable handle to the material file, such as a guid, to skip this.
                     }
                 }
 
-                buildMaterialInspector(scene, material);
+                buildMaterialInspector(scene, resources, material);
             }
             ImGui::EndTable();
         }
     }
 }
 
-void buildInspector(Scene* scene) {
+void buildInspector(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
     ImGui::Begin("Inspector");
 
-    switch (scene->inspectorState) {
+    switch (editor->inspectorState) {
         case Empty:
             break;
         case SceneEntity:
-            buildSceneEntityInspector(scene);
+            buildSceneEntityInspector(scene, renderer, resources, editor);
             break;
         case Prefab:
             buildPrefabInspector(scene);
             break;
         case Resource:
-            buildResourceInspector(scene);
+            buildResourceInspector(scene, resources, editor);
             break;
     }
 

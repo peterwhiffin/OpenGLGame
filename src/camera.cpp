@@ -2,7 +2,7 @@
 #include "scene.h"
 #include "transform.h"
 
-void updateCamera(Scene* scene) {
+void updateCamera(Scene* scene, RenderState* renderer) {
     Camera* camera = scene->cameras[0];
     uint32_t cameraID = camera->entityID;
     uint32_t cameraTargetID = scene->player->cameraController->cameraTargetEntityID;
@@ -12,6 +12,8 @@ void updateCamera(Scene* scene) {
     setPosition(scene, cameraID, newPosition);
     setRotation(scene, cameraID, newRotation);
 
-    scene->matricesUBOData.view = mat4::sLookAt(newPosition, newPosition + forward(scene, cameraID), up(scene, cameraID));
-    scene->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, camera->aspectRatio, camera->nearPlane, camera->farPlane);
+    camera->aspectRatio = (float)renderer->windowData.viewportWidth / renderer->windowData.viewportHeight;
+
+    renderer->matricesUBOData.view = mat4::sLookAt(newPosition, newPosition + forward(scene, cameraID), up(scene, cameraID));
+    renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, camera->aspectRatio, camera->nearPlane, camera->farPlane);
 }

@@ -199,17 +199,8 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
 
     destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
-
-    if (destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID)) {
-        glUseProgram(scene->lightingShader);
-        glUniform1i(6, scene->spotLights.size());
-    }
-
-    if (destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID)) {
-        glUseProgram(scene->lightingShader);
-        glUniform1i(7, scene->pointLights.size());
-    }
-
+    destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID);
+    destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID);
     destroyComponent(scene->entities, scene->entityIndexMap, entityID);
 }
 
@@ -274,13 +265,13 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
     return animatorPtr;
 }
 
-Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float aspectRatio, float nearPlane, float farPlane) {
+Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float nearPlane, float farPlane) {
     Camera* camera = new Camera();
     scene->cameras.push_back(camera);
     camera->entityID = entityID;
     camera->fov = fov;
     camera->fovRadians = JPH::DegreesToRadians(fov);
-    camera->aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
+    camera->aspectRatio = 16.0f / 9.0f;
     camera->nearPlane = nearPlane;
     camera->farPlane = farPlane;
     return camera;

@@ -13,3 +13,7 @@ struct RigidBody;
 struct Camera;
 struct SpotLight;
 struct PointLight;
+struct Texture;
+struct EditorState;
+struct Resources;
+struct RenderState;

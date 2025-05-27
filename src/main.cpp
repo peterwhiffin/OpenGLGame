@@ -13,8 +13,8 @@
 #include "camera.h"
 #include "editor.h"
 
-void exitProgram(Scene* scene, int code) {
-    deleteBuffers(scene);
+void exitProgram(RenderState* renderer, Resources* resources, int code) {
+    deleteBuffers(renderer, resources);
     destroyEditor();
     glfwTerminate();
     exit(code);
@@ -28,30 +28,36 @@ void updateTime(Scene* scene) {
 
 int main() {
     Scene* scene = new Scene();
-    createContext(scene);
-    loadShaders(scene);
-    loadResources(scene);
+    Resources* resources = new Resources();
+    RenderState* renderer = new RenderState();
+    EditorState* editor = new EditorState();
+    InputActions* inputActions = new InputActions();
+    scene->input = inputActions;
+
+    createContext(scene, renderer);
+    loadShaders(renderer);
+    loadResources(scene, resources, renderer);
     initPhysics(scene);
-    loadScene(scene);
-    initRenderer(scene);
-    initEditor(scene);
+    loadScene(scene, resources);
+    initRenderer(renderer, scene, editor);
+    initEditor(editor, renderer->window);
 
     scene->currentFrame = static_cast<float>(glfwGetTime());
     scene->lastFrame = scene->currentFrame;
 
-    while (!glfwWindowShouldClose(scene->window)) {
+    while (!glfwWindowShouldClose(renderer->window)) {
         glfwPollEvents();
         updateTime(scene);
         updatePhysics(scene);
-        updateInput(scene);
-        updatePlayer(scene);
+        updateInput(inputActions, renderer->window);
+        updatePlayer(scene, resources, renderer);
         updateAnimators(scene);
-        updateCamera(scene);
-        renderScene(scene);
-        drawEditor(scene);
-        glfwSwapBuffers(scene->window);
+        updateCamera(scene, renderer);
+        renderScene(renderer, scene, editor);
+        drawEditor(scene, renderer, resources, editor);
+        glfwSwapBuffers(renderer->window);
     }
 
-    exitProgram(scene, 0);
+    exitProgram(renderer, resources, 0);
     return 0;
 }

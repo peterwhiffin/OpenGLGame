@@ -15,27 +15,28 @@
 #include "animation.h"
 #include "inspector.h"
 
-void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string directory);
+void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory);
+void ExportImGuiStyleSizes();
 
-void checkPicker(Scene* scene, glm::dvec2 pickPosition) {
-    if (!scene->isPicking) {
+void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor, glm::dvec2 pickPosition) {
+    if (!editor->isPicking) {
         return;
     }
 
-    scene->isPicking = false;
+    editor->isPicking = false;
     unsigned char pixel[3];
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->pickingFBO);
-    glReadPixels(pickPosition.x, scene->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->pickingFBO);
+    glReadPixels(pickPosition.x, renderer->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
     uint32_t id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
 
     if (scene->entityIndexMap.count(id)) {
-        scene->nodeClicked = id;
+        editor->nodeClicked = id;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
+void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
     Entity* entity = getEntity(scene, entityID);
     Transform* transform = getTransform(scene, entityID);
 
@@ -57,14 +58,14 @@ void createEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_f
     std::string title = entity->name;
     bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
     if (ImGui::IsItemClicked()) {
-        scene->nodeClicked = entity->entityID;
-        scene->inspectorState = SceneEntity;
+        editor->nodeClicked = entity->entityID;
+        editor->inspectorState = SceneEntity;
         // scene->fileClicked = "";
     }
 
     if (node_open) {
         for (uint32_t childEntityID : transform->childEntityIds) {
-            createEntityTree(scene, childEntityID, node_flags, selection);
+            createEntityTree(scene, editor, childEntityID, node_flags, selection);
         }
         ImGui::TreePop();
     }
@@ -72,7 +73,7 @@ void createEntityTree(Scene* scene, uint32_t entityID, ImGuiTreeNodeFlags node_f
     ImGui::PopID();
 }
 
-void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string directory) {
+void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(directory)) {
         if (dir.is_directory()) {
             node_flags = 0;
@@ -83,7 +84,7 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string 
             bool isOpen = ImGui::TreeNodeEx(name.c_str(), node_flags);
 
             if (isOpen) {
-                createProjectTree(scene, node_flags, fullPath);
+                createProjectTree(scene, editor, node_flags, fullPath);
                 ImGui::TreePop();
             }
             ImGui::PopID();
@@ -96,15 +97,15 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string 
 
             node_flags = ImGuiTreeNodeFlags_Leaf;
 
-            if (scene->fileClicked == dir.path().string()) {
+            if (editor->fileClicked == dir.path().string()) {
                 node_flags |= ImGuiTreeNodeFlags_Selected;
             }
 
             ImGui::TreeNodeEx(fileString.c_str(), node_flags);
 
             if (ImGui::IsItemClicked()) {
-                scene->fileClicked = dir.path().string();
-                scene->inspectorState = Resource;
+                editor->fileClicked = dir.path().string();
+                editor->inspectorState = Resource;
                 // scene->nodeClicked = INVALID_ID;
             }
 
@@ -114,7 +115,7 @@ void createProjectTree(Scene* scene, ImGuiTreeNodeFlags node_flags, std::string 
     }
 }
 
-void ShowExampleMenuFile(Scene* scene) {
+void ShowExampleMenuFile(Scene* scene, Resources* resources) {
     ImGui::MenuItem("(demo menu)", NULL, false, false);
     if (ImGui::MenuItem("New")) {
     }
@@ -128,7 +129,7 @@ void ShowExampleMenuFile(Scene* scene) {
             ImGui::MenuItem("Hello");
             ImGui::MenuItem("Sailor");
             if (ImGui::BeginMenu("Recurse..")) {
-                ShowExampleMenuFile(scene);
+                ShowExampleMenuFile(scene, resources);
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
@@ -136,7 +137,8 @@ void ShowExampleMenuFile(Scene* scene) {
         ImGui::EndMenu();
     }
     if (ImGui::MenuItem("Save", "Ctrl+S")) {
-        saveScene(scene);
+        saveScene(scene, resources);
+        ExportImGuiStyleSizes();
     }
     if (ImGui::MenuItem("Save As..")) {
     }
@@ -191,10 +193,10 @@ void ShowExampleMenuFile(Scene* scene) {
     }
 }
 
-void buildMainMenu(Scene* scene) {
+void buildMainMenu(Scene* scene, Resources* resources) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            ShowExampleMenuFile(scene);
+            ShowExampleMenuFile(scene, resources);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Edit")) {
@@ -215,30 +217,30 @@ void buildMainMenu(Scene* scene) {
     }
 }
 
-void buildSceneView(Scene* scene) {
+void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("EditViewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
 
-    if (scene->timeAccum >= 1.0f) {
-        scene->FPS = scene->frameCount / scene->timeAccum;
-        scene->frameTime = (scene->timeAccum / scene->frameCount) * 1000.0f;
-        scene->timeAccum = 0.0f;
-        scene->frameCount = 0;
+    if (editor->timeAccum >= 1.0f) {
+        editor->FPS = editor->frameCount / editor->timeAccum;
+        editor->frameTime = (editor->timeAccum / editor->frameCount) * 1000.0f;
+        editor->timeAccum = 0.0f;
+        editor->frameCount = 0;
     } else {
-        scene->timeAccum += scene->deltaTime;
-        scene->frameCount++;
+        editor->timeAccum += scene->deltaTime;
+        editor->frameCount++;
     }
 
-    std::string fps = std::to_string(scene->FPS);
-    std::string frameTime = std::to_string(scene->frameTime);
+    std::string fps = std::to_string(editor->FPS);
+    std::string frameTime = std::to_string(editor->frameTime);
     fps = fps.substr(0, fps.find_first_of('.'));
     frameTime = frameTime.substr(0, frameTime.find_first_of('.') + 3);
     ImGui::Text(("FPS: " + fps + " / Frame Time: " + frameTime + "ms").c_str());
     ImGui::Separator();
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
-    float aspectRatio = (float)scene->windowData.viewportWidth / scene->windowData.viewportHeight;
+    float aspectRatio = (float)renderer->windowData.viewportWidth / renderer->windowData.viewportHeight;
 
-    ImVec2 imageSize = ImVec2(scene->windowData.viewportWidth, scene->windowData.viewportHeight);
+    ImVec2 imageSize = ImVec2(renderer->windowData.viewportWidth, renderer->windowData.viewportHeight);
     imageSize.y = glm::clamp(imageSize.y, 0.0f, availableSize.y);
     imageSize.x = imageSize.y * aspectRatio;
 
@@ -248,12 +250,12 @@ void buildSceneView(Scene* scene) {
     }
 
     ImGui::SetCursorPos(ImVec2((availableSize.x - imageSize.x) / 2, (availableSize.y - imageSize.y) / 2));
-    ImGui::Image((ImTextureID)(intptr_t)scene->editorTex, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((ImTextureID)(intptr_t)renderer->editorTex, imageSize, ImVec2(0, 1), ImVec2(1, 0));
     ImGui::End();
     ImGui::PopStyleVar();
 }
 
-void buildSceneHierarchy(Scene* scene) {
+void buildSceneHierarchy(Scene* scene, EditorState* editor) {
     ImGui::Begin("SceneHierarchy");
     static ImGuiSelectionBasicStorage selection;
     ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
@@ -262,7 +264,7 @@ void buildSceneHierarchy(Scene* scene) {
 
     for (int i = 0; i < scene->transforms.size(); i++) {
         if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createEntityTree(scene, scene->transforms[i].entityID, 0, selection);
+            createEntityTree(scene, editor, scene->transforms[i].entityID, 0, selection);
         }
     }
 
@@ -281,9 +283,9 @@ void buildSceneHierarchy(Scene* scene) {
         ImGui::EndPopup();
     }
 
-    if (scene->input.deleteKey) {
-        if (scene->canDelete) {
-            scene->canDelete = false;
+    if (scene->input->deleteKey) {
+        if (editor->canDelete) {
+            editor->canDelete = false;
 
             for (int i = 0; i < selection._Storage.Data.Size; ++i) {
                 ImGuiID key = selection._Storage.Data[i].key;
@@ -294,16 +296,16 @@ void buildSceneHierarchy(Scene* scene) {
             }
         }
     } else {
-        scene->canDelete = true;
+        editor->canDelete = true;
     }
 
     ImGui::End();
 }
 
-void buildProjectFiles(Scene* scene) {
+void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) {
     ImGui::Begin("Project");
 
-    createProjectTree(scene, 0, "..\\resources\\");
+    createProjectTree(scene, editor, 0, "..\\resources\\");
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("ProjectContextMenu");
@@ -323,41 +325,21 @@ void buildProjectFiles(Scene* scene) {
                 fileName = name + suffix + ext;
             }
 
-            name = name + suffix;
-            std::string textures = "white, white, white, white, white";
-            std::string baseColor = "1.0, 1.0, 1.0, 1.0";
-            std::string roughness = "1.0";
-            std::string metalness = "1.0";
-            std::string aoStrength = "1.0";
-            std::string normalStrength = "1.0";
-            std::string textureTiling = "1.0, 1.0";
-
-            std::ofstream stream("..\\resources\\" + fileName);
-            stream << "Material {" << std::endl;
-            stream << "textures: " << textures << std::endl;
-            stream << "textureTiling: " << textureTiling << std::endl;
-            stream << "baseColor: " << baseColor << std::endl;
-            stream << "roughness: " << roughness << std::endl;
-            stream << "metalness: " << metalness << std::endl;
-            stream << "aoStrength: " << aoStrength << std::endl;
-            stream << "normalStrength: " << normalStrength << std::endl;
-            stream << "}" << std::endl
-                   << std::endl;
-
             Material* newMat = new Material();
             newMat->name = fileName;
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["black"]);
-            newMat->textures.push_back(scene->textureMap["white"]);
-            newMat->textures.push_back(scene->textureMap["blue"]);
+            newMat->textures.push_back(resources->textureMap["white"]);
+            newMat->textures.push_back(resources->textureMap["white"]);
+            newMat->textures.push_back(resources->textureMap["black"]);
+            newMat->textures.push_back(resources->textureMap["white"]);
+            newMat->textures.push_back(resources->textureMap["blue"]);
             newMat->textureTiling = glm::vec2(1.0f, 1.0f);
             newMat->baseColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
             newMat->roughness = 1.0f;
             newMat->metalness = 1.0f;
             newMat->aoStrength = 1.0f;
             newMat->normalStrength = 1.0f;
-            scene->materialMap[fileName] = newMat;
+            resources->materialMap[fileName] = newMat;
+            writeMaterial(scene, resources, "..\\resources\\" + fileName);
         }
 
         ImGui::EndPopup();
@@ -365,7 +347,7 @@ void buildProjectFiles(Scene* scene) {
     ImGui::End();
 }
 
-void buildEnvironmentSettings(Scene* scene) {
+void buildEnvironmentSettings(RenderState* scene) {
     ImGui::Begin("Post-Process");
     ImGui::DragFloat("Exposure", &scene->exposure, 0.01f, 0, 1000.0f);
     ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
@@ -390,7 +372,7 @@ bool checkFilenameUnique(std::string path, std::string filename) {
     return true;
 }
 
-void drawEditor(Scene* scene) {
+void drawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
     // drawPickingScene(scene);
     // checkPicker(scene, scene->input.cursorPosition);
 
@@ -399,20 +381,20 @@ void drawEditor(Scene* scene) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    ImGui::ShowDemoWindow(&scene->showDemoWindow);
+    ImGui::ShowDemoWindow(&editor->showDemoWindow);
 
-    buildMainMenu(scene);
-    buildSceneView(scene);
-    buildSceneHierarchy(scene);
-    buildProjectFiles(scene);
-    buildInspector(scene);
-    buildEnvironmentSettings(scene);
+    buildMainMenu(scene, resources);
+    buildSceneView(scene, renderer, editor);
+    buildSceneHierarchy(scene, editor);
+    buildProjectFiles(scene, resources, editor);
+    buildInspector(scene, resources, renderer, editor);
+    buildEnvironmentSettings(renderer);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void initEditor(Scene* scene) {
+void initEditor(EditorState* editor, GLFWwindow* window) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -421,57 +403,91 @@ void initEditor(Scene* scene) {
     float aspectRatio = 1920.0f / 1080.0f;
     io.Fonts->AddFontFromFileTTF("../resources/fonts/Karla-Regular.ttf", aspectRatio * 8);
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(scene->window, true);
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
 
-    scene->debugRenderer = new MyDebugRenderer();
-    JPH::DebugRenderer::sInstance = scene->debugRenderer;
     JPH::BodyManager::DrawSettings drawSettings;
     drawSettings.mDrawShape = true;
     drawSettings.mDrawShapeWireframe = true;
     drawSettings.mDrawShapeColor = JPH::BodyManager::EShapeColor::MotionTypeColor;
 
+    ImGuiStyle style = ImGui::GetStyle();
+    style.Alpha = 1.00f;
+    style.DisabledAlpha = 0.60f;
+    style.WindowPadding = ImVec2(7.00f, 8.00f);
+    style.WindowRounding = 0.00f;
+    style.WindowBorderSize = 0.00f;
+    style.WindowMinSize = ImVec2(32.00f, 32.00f);
+    style.WindowTitleAlign = ImVec2(0.00f, 0.50f);
+    style.ChildRounding = 0.00f;
+    style.ChildBorderSize = 0.00f;
+    style.PopupRounding = 0.00f;
+    style.PopupBorderSize = 0.00f;
+    style.FramePadding = ImVec2(4.00f, 3.00f);
+    style.FrameRounding = 0.00f;
+    style.FrameBorderSize = 1.00f;
+    style.ItemSpacing = ImVec2(4.00f, 4.00f);
+    style.ItemInnerSpacing = ImVec2(3.00f, 4.00f);
+    style.IndentSpacing = 21.00f;
+    style.CellPadding = ImVec2(6.00f, 1.00f);
+    style.ScrollbarSize = 9.00f;
+    style.ScrollbarRounding = 0.00f;
+    style.GrabMinSize = 18.00f;
+    style.GrabRounding = 0.00f;
+    style.TabRounding = 0.15f;
+    style.TabBorderSize = 0.00f;
+    style.TabCloseButtonMinWidthSelected = 18.00f;
+    style.TabCloseButtonMinWidthUnselected = 1.00f;
+    style.DisplayWindowPadding = ImVec2(0.00f, 14.00f);
+    style.DisplaySafeAreaPadding = ImVec2(7.00f, 3.00f);
+    style.MouseCursorScale = 1.00f;
+    style.AntiAliasedLines = true;
+    style.AntiAliasedLinesUseTex = true;
+    style.AntiAliasedFill = true;
+    style.CurveTessellationTol = 1.25f;
+    style.CircleTessellationMaxError = 0.30f;
+
     ImVec4* colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.12f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
     colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
     colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
     colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
     colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.29f, 0.48f, 0.54f);
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.14f, 0.14f, 0.14f, 0.66f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.56f, 1.00f, 1.00f);
     colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.05f, 0.05f, 0.05f, 1.00f);
     colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-    colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-    colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
-    colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
-    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.00f);
+    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.11f, 0.61f, 0.97f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.27f, 0.80f, 0.98f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.00f, 0.39f, 1.00f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.00f, 0.77f, 1.00f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.77f, 0.77f, 0.77f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.23f, 0.48f, 1.00f, 1.00f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.75f, 0.75f, 0.75f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.41f, 0.46f, 1.00f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.19f, 0.39f, 0.80f, 1.00f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.56f, 0.98f, 1.00f);
     colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_Separator] = ImVec4(0.13f, 0.66f, 1.00f, 1.00f);
     colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
     colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
-    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.20f);
+    colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
     colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
     colors[ImGuiCol_InputTextCursor] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_TabHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-    colors[ImGuiCol_Tab] = ImVec4(0.18f, 0.35f, 0.58f, 0.86f);
-    colors[ImGuiCol_TabSelected] = ImVec4(0.20f, 0.41f, 0.68f, 1.00f);
+    colors[ImGuiCol_TabHovered] = ImVec4(0.17f, 0.59f, 0.99f, 1.00f);
+    colors[ImGuiCol_Tab] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_TabSelected] = ImVec4(0.28f, 0.67f, 1.00f, 1.00f);
     colors[ImGuiCol_TabSelectedOverline] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_TabDimmed] = ImVec4(0.07f, 0.10f, 0.15f, 0.97f);
-    colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.14f, 0.26f, 0.42f, 1.00f);
+    colors[ImGuiCol_TabDimmed] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+    colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
     colors[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0.50f, 0.50f, 0.50f, 0.00f);
     colors[ImGuiCol_DockingPreview] = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
     colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
@@ -482,7 +498,7 @@ void initEditor(Scene* scene) {
     colors[ImGuiCol_TableHeaderBg] = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
     colors[ImGuiCol_TableBorderStrong] = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
     colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
-    colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBg] = ImVec4(1.00f, 0.24f, 0.24f, 1.00f);
     colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
     colors[ImGuiCol_TextLink] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
@@ -492,6 +508,46 @@ void initEditor(Scene* scene) {
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+}
+
+void ExportImGuiStyleSizes() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    printf("ImGuiStyle style = ImGui::GetStyle();\n");
+
+    printf("style.Alpha = %.2ff;\n", style.Alpha);
+    printf("style.DisabledAlpha = %.2ff;\n", style.DisabledAlpha);
+    printf("style.WindowPadding = ImVec2(%.2ff, %.2ff);\n", style.WindowPadding.x, style.WindowPadding.y);
+    printf("style.WindowRounding = %.2ff;\n", style.WindowRounding);
+    printf("style.WindowBorderSize = %.2ff;\n", style.WindowBorderSize);
+    printf("style.WindowMinSize = ImVec2(%.2ff, %.2ff);\n", style.WindowMinSize.x, style.WindowMinSize.y);
+    printf("style.WindowTitleAlign = ImVec2(%.2ff, %.2ff);\n", style.WindowTitleAlign.x, style.WindowTitleAlign.y);
+    printf("style.ChildRounding = %.2ff;\n", style.ChildRounding);
+    printf("style.ChildBorderSize = %.2ff;\n", style.ChildBorderSize);
+    printf("style.PopupRounding = %.2ff;\n", style.PopupRounding);
+    printf("style.PopupBorderSize = %.2ff;\n", style.PopupBorderSize);
+    printf("style.FramePadding = ImVec2(%.2ff, %.2ff);\n", style.FramePadding.x, style.FramePadding.y);
+    printf("style.FrameRounding = %.2ff;\n", style.FrameRounding);
+    printf("style.FrameBorderSize = %.2ff;\n", style.FrameBorderSize);
+    printf("style.ItemSpacing = ImVec2(%.2ff, %.2ff);\n", style.ItemSpacing.x, style.ItemSpacing.y);
+    printf("style.ItemInnerSpacing = ImVec2(%.2ff, %.2ff);\n", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
+    printf("style.IndentSpacing = %.2ff;\n", style.IndentSpacing);
+    printf("style.CellPadding = ImVec2(%.2ff, %.2ff);\n", style.CellPadding.x, style.CellPadding.y);
+    printf("style.ScrollbarSize = %.2ff;\n", style.ScrollbarSize);
+    printf("style.ScrollbarRounding = %.2ff;\n", style.ScrollbarRounding);
+    printf("style.GrabMinSize = %.2ff;\n", style.GrabMinSize);
+    printf("style.GrabRounding = %.2ff;\n", style.GrabRounding);
+    printf("style.TabRounding = %.2ff;\n", style.TabRounding);
+    printf("style.TabBorderSize = %.2ff;\n", style.TabBorderSize);
+    printf("style.TabCloseButtonMinWidthSelected = %.2ff;\n", style.TabCloseButtonMinWidthSelected);
+    printf("style.TabCloseButtonMinWidthUnselected = %.2ff;\n", style.TabCloseButtonMinWidthUnselected);
+    printf("style.DisplayWindowPadding = ImVec2(%.2ff, %.2ff);\n", style.DisplayWindowPadding.x, style.DisplayWindowPadding.y);
+    printf("style.DisplaySafeAreaPadding = ImVec2(%.2ff, %.2ff);\n", style.DisplaySafeAreaPadding.x, style.DisplaySafeAreaPadding.y);
+    printf("style.MouseCursorScale = %.2ff;\n", style.MouseCursorScale);
+    printf("style.AntiAliasedLines = %s;\n", style.AntiAliasedLines ? "true" : "false");
+    printf("style.AntiAliasedLinesUseTex = %s;\n", style.AntiAliasedLinesUseTex ? "true" : "false");
+    printf("style.AntiAliasedFill = %s;\n", style.AntiAliasedFill ? "true" : "false");
+    printf("style.CurveTessellationTol = %.2ff;\n", style.CurveTessellationTol);
+    printf("style.CircleTessellationMaxError = %.2ff;\n", style.CircleTessellationMaxError);
 }
 
 void destroyEditor() {

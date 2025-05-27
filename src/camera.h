@@ -1,6 +1,7 @@
 #pragma once
 #include "utils/mathutils.h"
 struct Scene;
+struct RenderState;
 
 struct Camera {
     uint32_t entityID;
@@ -11,4 +12,4 @@ struct Camera {
     float farPlane;
 };
 
-void updateCamera(Scene* scene);
+void updateCamera(Scene* scene, RenderState* renderer);

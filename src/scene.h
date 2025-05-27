@@ -19,11 +19,27 @@
 #include "inspector.h"
 
 struct Scene {
+    bool menuOpen = false;
+    bool menuCanOpen = true;
+    bool useDeferred = false;
+
+    double physicsAccum = 0.0f;
+    double currentFrame = 0.0f;
+    double lastFrame = 0.0f;
+    double deltaTime;
+
+    float gravity = -18.81f;
+
+    uint32_t nextEntityID = 1;
+    vec3 wrenchOffset = vec3(0.0f, -0.42f, 0.37f);
+
     std::string name = "default";
     std::string scenePath = "";
-    GLFWwindow* window;
-    WindowData windowData;
-    InputActions input;
+
+    InputActions* input;
+    Player* player;
+    DirectionalLight sun;
+
     JPH::PhysicsSystem physicsSystem;
     JPH::BodyInterface* bodyInterface;
     JPH::TempAllocatorImpl* tempAllocator;
@@ -31,64 +47,7 @@ struct Scene {
     JPH::BroadPhaseLayerInterface* broad_phase_layer_interface;
     JPH::ObjectVsBroadPhaseLayerFilter* object_vs_broadphase_layer_filter;
     JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
-    JPH::DebugRendererSimple* debugRenderer;
-
-    uint32_t trashCanEntity;
-    GLuint pickingFBO, pickingRBO, litFBO, litRBO, ssaoFBO;
-    GLuint pickingTex, litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
-    GLuint blurFBO[2], blurSwapTex[2];
-    GLuint fullscreenVAO, fullscreenVBO;
-    GLuint editorFBO, editorRBO, editorTex;
-    GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, pickingShader, shadowBlurShader, debugShader;
-
-    double timeAccum = 0.0f;
-    double physicsAccum = 0.0f;
-    double currentFrame = 0.0f;
-    double lastFrame = 0.0f;
-    double deltaTime;
-    float gravity = -18.81f;
-    float normalStrength = 1.06f;
-    float exposure = 1.0f;
-    float bloomThreshold = 0.39f;
-    float bloomAmount = 0.1f;
-    float ambient = 0.004f;
-    float AORadius = 0.5f;
-    float AOBias = 0.025f;
-    float AOAmount = 1.0f;
-    float AOPower = 2.0f;
-
-    bool menuOpen = false;
-    bool menuCanOpen = true;
-    bool useDeferred = false;
-    bool horizontalBlur = true;
-
-    // editor
-    float FPS = 0.0f;
-    float frameTime = 0.0f;
-    float frameCount = 0;
-    bool isPicking = false;
-    bool canPick = true;
-    bool canDelete = true;
-    bool showDemoWindow = true;
-    InspectorState inspectorState;
-    uint32_t nodeClicked = INVALID_ID;
-    std::string fileClicked = "";
-    ContextMenuType contextType;
-    std::unordered_set<uint32_t> selectedEntities;
-    // editor
-
-    GLuint matricesUBO;
-    GlobalUBO matricesUBOData;
-    uint32_t nextEntityID = 1;
-    vec3 wrenchOffset = vec3(0.0f, -0.42f, 0.37f);
-
-    Model* testRoom;
-    Model* wrench;
-    Model* arms;
-    Model* wrenchArms;
-    Player* player;
-
-    DirectionalLight sun;
+    std::unordered_set<uint32_t> movingRigidbodies;
 
     std::vector<Entity> entities;
     std::vector<Transform> transforms;
@@ -99,8 +58,6 @@ struct Scene {
     std::vector<SpotLight> spotLights;
     std::vector<Camera*> cameras;
 
-    std::unordered_set<uint32_t> movingRigidbodies;
-
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
     std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
@@ -108,17 +65,4 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
     std::unordered_map<uint32_t, size_t> spotLightIndexMap;
-
-    // std::vector<Texture> textures;
-    std::unordered_map<std::string, Mesh*> meshMap;
-    std::unordered_map<std::string, Animation*> animationMap;
-    std::unordered_map<std::string, Material*> materialMap;
-    std::unordered_map<std::string, Texture*> textureMap;
-    std::unordered_map<std::string, Model*> modelMap;
-
-    std::unordered_map<std::string, TextureSettings> textureImportMap;
-    std::unordered_map<std::string, ModelSettings> modelImportMap;
-    std::vector<Model*> models;
-    std::vector<vec3> ssaoKernel;
-    std::vector<vec3> ssaoNoise;
 };

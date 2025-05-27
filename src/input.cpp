@@ -4,10 +4,7 @@
 #include "input.h"
 #include "scene.h"
 
-void updateInput(Scene* scene) {
-    InputActions* actions = &scene->input;
-    GLFWwindow* window = scene->window;
-
+void updateInput(InputActions* actions, GLFWwindow* window) {
     actions->movement.x = 0;
     actions->movement.y = 0;
 

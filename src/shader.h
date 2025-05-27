@@ -5,7 +5,10 @@
 constexpr char* shaderPath = "../src/shaders/";
 
 struct Scene;
-void loadShaders(Scene* scene);
+struct EditorState;
+struct RenderState;
+
+void loadShaders(RenderState* scene);
 
 namespace vertex_attribute_location {
 constexpr unsigned int kVertexPosition = 0;
