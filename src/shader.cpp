@@ -93,8 +93,34 @@ unsigned int loadShader(std::string vertexFile, std::string fragmentFile) {
     return shaderProgram;
 }
 
+void PrintActiveUniforms(GLuint program) {
+    GLint numUniforms = 0;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+    std::cout << "Active Uniforms in Program " << program << ":\n";
+
+    char nameBuffer[256];
+    for (GLint i = 0; i < numUniforms; ++i) {
+        GLsizei length = 0;
+        GLint size = 0;
+        GLenum type = 0;
+
+        glGetActiveUniform(program, i, sizeof(nameBuffer), &length, &size, &type, nameBuffer);
+        GLint location = glGetUniformLocation(program, nameBuffer);
+
+        std::cout << "  #" << i << ": " << nameBuffer
+                  << " | Type: 0x" << std::hex << type
+                  << " | Size: " << std::dec << size
+                  << " | Location: " << location << '\n';
+    }
+}
+
 void loadShaders(RenderState *scene) {
+#ifdef PETESEDITOR
     scene->pickingShader = loadShader("pickingshader.vs", "pickingshader.fs");
+    scene->debugShader = loadShader("debugShader.vs", "debugShader.fs");
+#endif
+
     scene->depthShader = loadShader("depthprepassshader.vs", "depthprepassshader.fs");
     scene->lightingShader = loadShader("pbrlitshader.vs", "pbrlitshader.fs");
     scene->ssaoShader = loadShader("SSAOshader.vs", "SSAOshader.fs");
@@ -102,5 +128,4 @@ void loadShaders(RenderState *scene) {
     scene->simpleBlurShader = loadShader("SSAOshader.vs", "SSAOblurshader.fs");
     scene->blurShader = loadShader("gaussianblurshader.vs", "gaussianblurshader.fs");
     scene->postProcessShader = loadShader("postprocessshader.vs", "postprocessshader.fs");
-    scene->debugShader = loadShader("debugShader.vs", "debugShader.fs");
 }

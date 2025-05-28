@@ -71,7 +71,7 @@ void buildColor4Row(std::string label, float* value, ImGuiColorEditFlags flags) 
     ImGui::ColorEdit4(("##" + label).c_str(), value, flags);
 }
 
-void buildTextureMapRow(Resources* resources, std::string label, Texture* tex, float* value, bool color = false) {
+void buildTextureMapRow(Resources* resources, std::string label, Texture* tex, float* value, float max = 1.0f, bool color = false) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
@@ -94,36 +94,39 @@ void buildTextureMapRow(Resources* resources, std::string label, Texture* tex, f
 
     if (color) {
         ImGui::TableSetColumnIndex(2);
-        ImGui::ColorEdit4("##color", value, ImGuiColorEditFlags_HDR);
+        ImGui::ColorEdit4(("##" + label + "color").c_str(), value, ImGuiColorEditFlags_HDR);
     } else {
         ImGui::TableSetColumnIndex(2);
-        ImGui::DragFloat("##roughness", value, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(("##max" + label).c_str(), value, 0.001f, 0.0f, max);
     }
 }
 
-void buildMaterialInspector(Resources* resources, Material* material) {
+Material* buildMaterialInspector(Resources* resources, Material* material, bool forMesh) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Material");
     ImGui::TableSetColumnIndex(1);
-    if (ImGui::BeginCombo("##currentMaterial", material->name.c_str())) {
-        const bool isSelected = false;
+    if (forMesh) {
+        if (ImGui::BeginCombo("##currentMaterial", material->name.c_str())) {
+            const bool isSelected = false;
 
-        for (auto& pair : resources->materialMap) {
-            if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
-                material = pair.second;
+            for (auto& pair : resources->materialMap) {
+                if (ImGui::Selectable(pair.first.c_str(), isSelected)) {
+                    material = pair.second;
+                }
             }
-        }
 
-        ImGui::EndCombo();
+            ImGui::EndCombo();
+        }
     }
 
     buildTextureMapRow(resources, "Albedo", material->textures[0], material->baseColor.mF32, true);
     buildTextureMapRow(resources, "Roughness", material->textures[1], &material->roughness);
     buildTextureMapRow(resources, "Metalness", material->textures[2], &material->metalness);
     buildTextureMapRow(resources, "AO", material->textures[3], &material->aoStrength);
-    buildTextureMapRow(resources, "Normal", material->textures[4], &material->normalStrength);
+    buildTextureMapRow(resources, "Normal", material->textures[4], &material->normalStrength, 0.0f);
     buildFloat2Row("Tiling", glm::value_ptr(material->textureTiling), 0.001f);
+    return material;
 }
 
 void buildTransformInspector(Scene* scene, Transform* transform) {
@@ -205,7 +208,9 @@ void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer
             }
 
             if (renderer->mesh != nullptr) {
-                buildMaterialInspector(resources, renderer->mesh->subMeshes[0].material);
+                Material* mat = renderer->mesh->subMeshes[0].material;
+                mat = buildMaterialInspector(resources, mat, true);
+                renderer->mesh->subMeshes[0].material = mat;
             }
 
             ImGui::EndTable();
@@ -501,7 +506,7 @@ void buildResourceInspector(Scene* scene, Resources* resources, EditorState* edi
                     }
                 }
 
-                buildMaterialInspector(resources, material);
+                buildMaterialInspector(resources, material, false);
             }
             ImGui::EndTable();
         }

@@ -257,6 +257,7 @@ void MyDebugRenderer::Clear() {
 }
 
 void renderDebug(RenderState* scene) {
+    glDisable(GL_DEPTH_TEST);
     glUseProgram(scene->debugShader);
     MyDebugRenderer* debug = static_cast<MyDebugRenderer*>(scene->debugRenderer);
     std::vector<DebugVertex> lineVerts;
@@ -309,11 +310,13 @@ void renderDebug(RenderState* scene) {
     glDeleteVertexArrays(1, &triVAO);
 
     debug->Clear();
+    glEnable(GL_DEPTH_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void drawFullScreenQuad(RenderState* scene) {
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER, scene->editorFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->finalBuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(scene->postProcessShader);
@@ -327,13 +330,6 @@ void drawFullScreenQuad(RenderState* scene) {
     glBindTexture(GL_TEXTURE_2D, scene->blurSwapTex[scene->horizontalBlur]);
     glBindVertexArray(scene->fullscreenVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    // renderDebug(scene);
-    glDisable(GL_DEPTH_TEST);
-    renderDebug(scene);
-    glEnable(GL_DEPTH_TEST);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void createPickingFBO(RenderState* scene) {
@@ -835,9 +831,7 @@ void updateBufferData(RenderState* renderer, Scene* scene) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
 }
 
-void renderScene(RenderState* renderer, Scene* scene, EditorState* editor) {
-    updateBufferData(renderer, scene);
-    drawPickingScene(renderer, scene);
+void renderScene(RenderState* renderer, Scene* scene) {
     drawShadowMaps(renderer, scene);
     drawScene(renderer, scene);
     drawSSAO(renderer);
@@ -875,6 +869,7 @@ void mapBones(Scene* scene, MeshRenderer* renderer) {
 
     findBones(scene, renderer, parent);
 }
+
 void createCameraUBO(RenderState* scene) {
     glGenBuffers(1, &scene->matricesUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
@@ -883,9 +878,8 @@ void createCameraUBO(RenderState* scene) {
     glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
 }
 
-void initRenderer(RenderState* renderer, Scene* scene, EditorState* editor) {
+void initRenderer(RenderState* renderer, Scene* scene) {
     setInitialFlags();
-    createPickingFBO(renderer);
     createSSAOBuffer(renderer);
     createShadowMapDepthBuffers(scene);
     for (SpotLight& light : scene->spotLights) {
@@ -894,11 +888,15 @@ void initRenderer(RenderState* renderer, Scene* scene, EditorState* editor) {
     createForwardBuffer(renderer);
     createBlurBuffers(renderer);
     createFullScreenQuad(renderer);
-    createEditorBuffer(renderer);
     generateSSAOKernel(renderer);
     createCameraUBO(renderer);
     initializeLights(renderer, scene, renderer->lightingShader);
+}
 
+void initRendererEditor(RenderState* renderer) {
+    createPickingFBO(renderer);
+    createEditorBuffer(renderer);
+    renderer->finalBuffer = renderer->editorFBO;
     renderer->debugRenderer = new MyDebugRenderer();
     JPH::DebugRenderer::sInstance = renderer->debugRenderer;
 }

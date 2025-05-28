@@ -153,6 +153,7 @@ struct RenderState {
     GLuint blurFBO[2], blurSwapTex[2];
     GLuint fullscreenVAO, fullscreenVBO;
     GLuint lightingShader, postProcessShader, blurShader, simpleBlurShader, depthShader, ssaoShader, shadowBlurShader, debugShader;
+    GLuint finalBuffer = 0;
 
     GLuint pickingFBO;
     GLuint pickingRBO;
@@ -181,12 +182,16 @@ struct RenderState {
 };
 
 void createContext(Scene* scene, RenderState* renderer);
-void initRenderer(RenderState* renderer, Scene* scene, EditorState* editor);
+void initRenderer(RenderState* renderer, Scene* scene);
 void mapBones(Scene* scene, MeshRenderer* renderer);
-void renderScene(RenderState* renderer, Scene* scene, EditorState* editor);
 void deleteBuffers(RenderState* scene, Resources* resources);
 void createSpotLightShadowMap(Scene* scene, SpotLight* light);
 void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light);
+void renderScene(RenderState* renderer, Scene* scene);
+void initRendererEditor(RenderState* renderer);
+void updateBufferData(RenderState* renderer, Scene* scene);
+void drawPickingScene(RenderState* renderer, Scene* scene);
+void renderDebug(RenderState* scene);
 
 class MyDebugRenderer : public JPH::DebugRendererSimple {
    public:

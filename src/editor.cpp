@@ -137,7 +137,7 @@ void ShowExampleMenuFile(Scene* scene, Resources* resources) {
     }
     if (ImGui::MenuItem("Save", "Ctrl+S")) {
         saveScene(scene, resources);
-        ExportImGuiStyleSizes();
+        // ExportImGuiStyleSizes();
     }
     if (ImGui::MenuItem("Save As..")) {
     }

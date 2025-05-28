@@ -99,9 +99,6 @@ void updatePhysicsBodyPositions(Scene* scene) {
     const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (uint32_t entityID : scene->movingRigidbodies) {
         RigidBody* rigidbody = getRigidbody(scene, entityID);
-        if (bodyInterface->GetObjectLayer(rigidbody->joltBody) == Layers::NON_MOVING) {
-            continue;
-        }
 
         const vec3 newPos = lerp(rigidbody->lastPosition, bodyInterface->GetPosition(rigidbody->joltBody), t);
         setPosition(scene, rigidbody->entityID, newPos);
@@ -117,15 +114,9 @@ void setPreviousTransforms(Scene* scene) {
     const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (uint32_t entityID : scene->movingRigidbodies) {
         RigidBody* rigidbody = getRigidbody(scene, entityID);
-        if (bodyInterface->GetObjectLayer(rigidbody->joltBody) == Layers::NON_MOVING) {
-            continue;
-        }
 
-        const vec3 currentPosition = bodyInterface->GetPosition(rigidbody->joltBody);
-        const quat currentRotation = bodyInterface->GetRotation(rigidbody->joltBody);
-
-        rigidbody->lastPosition = currentPosition;
-        rigidbody->lastRotation = currentRotation;
+        rigidbody->lastPosition = bodyInterface->GetPosition(rigidbody->joltBody);
+        rigidbody->lastRotation = bodyInterface->GetRotation(rigidbody->joltBody);
     }
 }
 
