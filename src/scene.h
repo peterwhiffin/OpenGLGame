@@ -21,7 +21,6 @@
 struct Scene {
     bool menuOpen = false;
     bool menuCanOpen = true;
-    bool useDeferred = false;
 
     double physicsAccum = 0.0f;
     double currentFrame = 0.0f;
@@ -40,7 +39,7 @@ struct Scene {
     Player* player;
     DirectionalLight sun;
 
-    JPH::PhysicsSystem physicsSystem;
+    JPH::PhysicsSystem* physicsSystem;
     JPH::BodyInterface* bodyInterface;
     JPH::TempAllocatorImpl* tempAllocator;
     JPH::JobSystemThreadPool* jobSystem;
@@ -66,3 +65,5 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
     std::unordered_map<uint32_t, size_t> spotLightIndexMap;
 };
+
+void clearScene(Scene* scene);

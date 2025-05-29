@@ -23,12 +23,12 @@ void buildTextRow(std::string label, std::string value) {
     ImGui::Text(value.c_str());
 }
 
-void buildBoolRow(std::string label, bool* value) {
+bool buildBoolRow(std::string label, bool* value) {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text(label.c_str());
     ImGui::TableSetColumnIndex(1);
-    ImGui::Checkbox(("##" + label).c_str(), value);
+    return ImGui::Checkbox(("##" + label).c_str(), value);
 }
 
 void buildFloatRow(std::string label, float* value, float speed = 0.01f, float min = 0.0f, float max = 0.0f) {
@@ -319,6 +319,7 @@ void buildSpotLightInspector(SpotLight* spotLight) {
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
+            buildBoolRow("Enabled", &spotLight->isActive);
             buildFloatRow("Brightness", &spotLight->brightness);
             buildColor3Row("Color", spotLight->color.mF32, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_HDR);
             buildFloatRow("Inner Angle", &spotLight->cutoff, 0.01f, 0.0f, spotLight->outerCutoff - 0.01f);
@@ -326,8 +327,15 @@ void buildSpotLightInspector(SpotLight* spotLight) {
             buildFloatRow("Range", &spotLight->range);
             buildFloatRow("Light Radius UV", &spotLight->lightRadiusUV, 0.0001f, 0.0f, 180.0f);
             buildFloatRow("Blocker Search UV", &spotLight->blockerSearchUV, 0.0001f, 0.0f, 180.0f);
+            if (buildBoolRow("Shadows", &spotLight->enableShadows)) {
+                if (spotLight->enableShadows) {
+                    createSpotLightShadowMap(spotLight);
+                } else {
+                    deleteSpotLightShadowMap(spotLight);
+                }
+            }
 
-            if (ImGui::CollapsingHeader("Shadow Map")) {
+            if (spotLight->enableShadows && ImGui::CollapsingHeader("Shadow Map")) {
                 ImGui::Image((ImTextureID)(intptr_t)spotLight->depthTex, ImVec2(200, 200));
             }
 
@@ -425,7 +433,7 @@ void buildAddComponentCombo(Scene* scene, EditorState* editor) {
                 light->color = vec3(1.0f, 1.0f, 1.0f);
                 light->cutoff = 1.0f;
                 light->outerCutoff = 15.0f;
-                createSpotLightShadowMap(scene, light);
+                createSpotLightShadowMap(light);
             }
         }
         ImGui::EndCombo();

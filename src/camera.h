@@ -1,4 +1,5 @@
 #pragma once
+#include "forward.h"
 #include "utils/mathutils.h"
 struct Scene;
 struct RenderState;
@@ -11,4 +12,5 @@ struct Camera {
     float farPlane;
 };
 
+void updateEditorCamera(EditorState* editor, Scene* scene, InputActions* input, RenderState* renderer);
 void updateCamera(Scene* scene);

@@ -13,10 +13,10 @@
 #include "camera.h"
 #include "editor.h"
 
-void exitProgram(RenderState* renderer, Resources* resources, int code) {
+void exitProgram(RenderState* renderer, Resources* resources) {
     deleteBuffers(renderer, resources);
     glfwTerminate();
-    exit(code);
+    exit(0);
 }
 
 void updateTime(Scene* scene) {
@@ -26,6 +26,7 @@ void updateTime(Scene* scene) {
 }
 
 #ifdef PETES_EDITOR
+
 int main() {
     Scene* scene = new Scene();
     Resources* resources = new Resources();
@@ -36,13 +37,14 @@ int main() {
     EditorState* editor = new EditorState();
 
     createContext(scene, renderer);
+    loadEditorShaders(renderer);
     loadShaders(renderer);
     loadResources(resources, renderer);
     initPhysics(scene);
-    loadScene(scene, resources);
     initRenderer(renderer, scene);
     initRendererEditor(renderer);
     initEditor(editor, renderer->window);
+    loadFirstFoundScene(scene, resources);
 
     scene->currentFrame = static_cast<float>(glfwGetTime());
     scene->lastFrame = scene->currentFrame;
@@ -51,21 +53,35 @@ int main() {
         glfwPollEvents();
         updateTime(scene);
         updateInput(inputActions, renderer->window);
-        updatePhysics(scene);
-        updatePlayer(scene, resources, renderer);
-        updatePhysicsBodyPositions(scene);
-        updateAnimators(scene);
-        updateCamera(scene);
-        updateBufferData(renderer, scene);
-        drawPickingScene(renderer, scene);
-        renderScene(renderer, scene);
-        renderDebug(renderer);
-        drawEditor(scene, renderer, resources, editor);
+
+        switch (editor->mode) {
+            case Edit:
+                drawEditor(scene, renderer, resources, editor);
+                updateEditorCamera(editor, scene, inputActions, renderer);
+                updateBufferData(renderer, scene);
+                drawPickingScene(renderer, scene);
+                renderScene(renderer, scene);
+                renderDebug(renderer);
+                break;
+            case Play:
+                updatePhysics(scene);
+                updatePlayer(scene, resources, renderer);
+                updatePhysicsBodyPositions(scene);
+                updateAnimators(scene);
+                updateCamera(scene);
+                updateBufferData(renderer, scene);
+                drawPickingScene(renderer, scene);
+                renderScene(renderer, scene);
+                renderDebug(renderer);
+                drawEditor(scene, renderer, resources, editor);
+                break;
+        }
+
         glfwSwapBuffers(renderer->window);
     }
 
     destroyEditor();
-    exitProgram(renderer, resources, 0);
+    exitProgram(renderer, resources);
     return 0;
 }
 

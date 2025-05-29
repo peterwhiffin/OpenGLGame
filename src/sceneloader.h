@@ -32,7 +32,8 @@ struct ComponentBlock {
     std::unordered_map<std::string, std::string> memberValueMap;
 };
 
-void loadScene(Scene* scene, Resources* resources);
+void loadScene(Resources* resources, Scene* scene);
+void loadFirstFoundScene(Scene* scene, Resources* resources);
 bool findLastScene(Scene* scene);
 void saveScene(Scene* scene, Resources* resources);
 void loadMaterials(Resources* resources, RenderState* renderer);

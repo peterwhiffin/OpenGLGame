@@ -21,14 +21,15 @@ struct Entity {
     bool isActive;
 };
 
+uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 uint32_t getEntityID(Scene* scene);
-Transform* addTransform(Scene* scene, uint32_t entityID);
 Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1, bool createTransform = true);
+
+Transform* addTransform(Scene* scene, uint32_t entityID);
 MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float nearPlane, float farPlane);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
 SpotLight* addSpotLight(Scene* scene, uint32_t entityID);

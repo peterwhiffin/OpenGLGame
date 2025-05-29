@@ -55,6 +55,10 @@ void drawShadowMaps(RenderState* renderer, Scene* scene) {
     GLint boneMatrixLoc = glGetUniformLocation(renderer->depthShader, "finalBoneMatrices[0]");
 
     for (SpotLight& light : scene->spotLights) {
+        if (!light.enableShadows || !light.isActive) {
+            continue;
+        }
+
         position = getPosition(scene, light.entityID);
         viewMatrix = mat4::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
         projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light.outerCutoff) * 2.0f, 1.0f, 2.1f, light.range);
@@ -70,32 +74,33 @@ void drawShadowMaps(RenderState* renderer, Scene* scene) {
         glUniform3fv(glGetUniformLocation(renderer->depthShader, "lightPos"), 1, position.mF32);
         glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"), 200.0f);
 
-        for (MeshRenderer& renderer : scene->meshRenderers) {
-            if (renderer.mesh == nullptr) {
+        for (MeshRenderer& meshRenderer : scene->meshRenderers) {
+            if (meshRenderer.mesh == nullptr) {
                 continue;
             }
 
-            model = getTransform(scene, renderer.entityID)->worldTransform;
+            model = getTransform(scene, meshRenderer.entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 
-            if (renderer.boneMatrices.size() > 0) {
+            if (!meshRenderer.boneMatricesSet && meshRenderer.boneMatrices.size() > 0) {
                 Transform* boneTransform;
                 uint32_t index;
                 mat4 offset;
+                meshRenderer.boneMatricesSet = true;
 
-                for (const auto& pair : renderer.transformBoneMap) {
+                for (const auto& pair : meshRenderer.transformBoneMap) {
                     boneTransform = getTransform(scene, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
-                    renderer.boneMatrices[index] = (getTransform(scene, renderer.rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    meshRenderer.boneMatrices[index] = (getTransform(scene, meshRenderer.rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
 
-                glUniformMatrix4fv(boneMatrixLoc, renderer.boneMatrices.size(), GL_FALSE, &renderer.boneMatrices[0](0, 0));
+                glUniformMatrix4fv(boneMatrixLoc, meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
             }
 
-            glBindVertexArray(renderer.mesh->VAO);
+            glBindVertexArray(meshRenderer.mesh->VAO);
 
-            for (SubMesh& subMesh : renderer.mesh->subMeshes) {
+            for (SubMesh& subMesh : meshRenderer.mesh->subMeshes) {
                 glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(GLsizei)));
             }
         }
@@ -141,13 +146,15 @@ void drawScene(RenderState* renderer, Scene* scene) {
 
     for (uint32_t i = 0; i < scene->spotLights.size(); i++) {
         SpotLight& spotLight = scene->spotLights[i];
-        offset = i * 7;
+        offset = i * 8;
         glUniform3fv(120 + 0 + offset, 1, getPosition(scene, spotLight.entityID).mF32);
         glUniform3fv(120 + 1 + offset, 1, forward(scene, spotLight.entityID).mF32);
         glUniform3fv(120 + 2 + offset, 1, spotLight.color.mF32);
         glUniform1f(120 + 3 + offset, spotLight.brightness);
         glUniform1f(120 + 4 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.cutoff)));
         glUniform1f(120 + 5 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.outerCutoff)));
+        glUniform1i(120 + 6 + offset, spotLight.isActive);
+        glUniform1i(120 + 7 + offset, spotLight.enableShadows);
         glUniformMatrix4fv(15 + i, 1, GL_FALSE, &spotLight.lightSpaceMatrix(0, 0));
         glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_LightRadiusUV"), spotLight.lightRadiusUV);
         glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_BlockerSearchUV"), spotLight.blockerSearchUV);
@@ -162,6 +169,21 @@ void drawScene(RenderState* renderer, Scene* scene) {
         }
 
         if (meshRenderer.boneMatrices.size() > 0) {
+            if (!meshRenderer.boneMatricesSet) {
+                Transform* boneTransform;
+                uint32_t index;
+                mat4 offset;
+                meshRenderer.boneMatricesSet = true;
+
+                for (const auto& pair : meshRenderer.transformBoneMap) {
+                    boneTransform = getTransform(scene, pair.first);
+                    index = pair.second.id;
+                    offset = pair.second.offset;
+                    meshRenderer.boneMatrices[index] = (getTransform(scene, meshRenderer.rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                }
+            }
+            // glUniformMatrix4fv(boneMatrixLoc, meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
+            meshRenderer.boneMatricesSet = false;
             glUniformMatrix4fv(glGetUniformLocation(renderer->lightingShader, "finalBoneMatrices[0]"), meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
         }
 
@@ -357,48 +379,8 @@ void createPickingFBO(RenderState* scene) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light) {
-    light->shadowWidth = 512.0f;
-    light->shadowHeight = 512.0f;
-    glGenFramebuffers(1, &light->depthFrameBuffer);
-    glGenTextures(1, &light->depthTex);
-    glBindTexture(GL_TEXTURE_2D, light->depthTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light->shadowWidth, light->shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glBindFramebuffer(GL_FRAMEBUFFER, light->depthFrameBuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light->depthTex, 0);
 
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
-    }
-
-    glGenFramebuffers(1, &light->blurDepthFrameBuffer);
-    glGenTextures(1, &light->blurDepthTex);
-    glBindFramebuffer(GL_FRAMEBUFFER, light->blurDepthFrameBuffer);
-    glBindTexture(GL_TEXTURE_2D, light->blurDepthTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, light->shadowWidth, light->shadowHeight, 0, GL_RED, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light->blurDepthTex, 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR::FRAMEBUFFER:: Depth framebuffer is not complete!" << std::endl;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void createSpotLightShadowMap(Scene* scene, SpotLight* light) {
+void createSpotLightShadowMap(SpotLight* light) {
     light->shadowWidth = 1024.0f;
     light->shadowHeight = 1024.0f;
     glGenFramebuffers(1, &light->depthFrameBuffer);
@@ -437,6 +419,13 @@ void createSpotLightShadowMap(Scene* scene, SpotLight* light) {
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void deleteSpotLightShadowMap(SpotLight* light) {
+    GLuint textures[2] = {light->depthTex, light->blurDepthTex};
+    GLuint frameBuffers[2] = {light->depthFrameBuffer, light->blurDepthFrameBuffer};
+    glDeleteTextures(2, textures);
+    glDeleteFramebuffers(2, frameBuffers);
 }
 
 void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be callable per light, not looping over every light.
@@ -483,9 +472,9 @@ void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be calla
 }
 
 void createForwardBuffer(RenderState* scene) {
-    unsigned int width = scene->windowData.viewportWidth;
-    unsigned int height = scene->windowData.viewportHeight;
-    unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    GLsizei width = scene->windowData.viewportWidth;
+    GLsizei height = scene->windowData.viewportHeight;
+    GLenum attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
 
     glGenFramebuffers(1, &scene->litFBO);
     glGenTextures(1, &scene->litColorTex);
@@ -703,10 +692,6 @@ void createFullScreenQuad(RenderState* scene) {
     glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
-float ourLerp(float a, float b, float f) {
-    return a + f * (b - a);
-}
-
 void generateSSAOKernel(RenderState* scene) {
     std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator;
@@ -730,7 +715,7 @@ void generateSSAOKernel(RenderState* scene) {
         // Apply random scaling to bring samples closer to origin
         float scale = static_cast<float>(i) / 8.0f;
         // Stronger bias toward center → scale^3 instead of scale^2
-        scale = ourLerp(0.05f, 1.0f, scale * scale * scale);
+        scale = lerp(0.05f, 1.0f, scale * scale * scale);
         sample *= scale;
 
         scene->ssaoKernel.push_back(sample);
@@ -759,23 +744,23 @@ void generateSSAOKernel(RenderState* scene) {
     }
 }
 
-void deleteBuffers(RenderState* scene, Resources* resources) {
-    unsigned int textures[5] = {scene->pickingTex, scene->litColorTex, scene->bloomSSAOTex, scene->blurTex, scene->ssaoNoiseTex};
-    unsigned int rbo[2] = {scene->pickingRBO, scene->litRBO};
-    unsigned int frameBuffers[3] = {scene->pickingFBO, scene->ssaoFBO, scene->litFBO};
+void deleteBuffers(RenderState* renderer, Resources* resources) {
+    unsigned int textures[5] = {renderer->pickingTex, renderer->litColorTex, renderer->bloomSSAOTex, renderer->blurTex, renderer->ssaoNoiseTex};
+    unsigned int rbo[2] = {renderer->pickingRBO, renderer->litRBO};
+    unsigned int frameBuffers[3] = {renderer->pickingFBO, renderer->ssaoFBO, renderer->litFBO};
 
     glDeleteTextures(5, textures);
     glDeleteRenderbuffers(2, rbo);
     glDeleteFramebuffers(3, frameBuffers);
-    glDeleteShader(scene->lightingShader);
-    glDeleteShader(scene->pickingShader);
-    glDeleteShader(scene->postProcessShader);
-    glDeleteShader(scene->blurShader);
-    glDeleteShader(scene->depthShader);
-    glDeleteShader(scene->ssaoShader);
+    glDeleteShader(renderer->lightingShader);
+    glDeleteShader(renderer->pickingShader);
+    glDeleteShader(renderer->postProcessShader);
+    glDeleteShader(renderer->blurShader);
+    glDeleteShader(renderer->depthShader);
+    glDeleteShader(renderer->ssaoShader);
 
-    glDeleteBuffers(1, &scene->fullscreenVBO);
-    glDeleteVertexArrays(1, &scene->fullscreenVAO);
+    glDeleteBuffers(1, &renderer->fullscreenVBO);
+    glDeleteVertexArrays(1, &renderer->fullscreenVAO);
     for (auto& pair : resources->textureMap) {
         glDeleteTextures(1, &pair.second->id);
     }
@@ -789,7 +774,7 @@ void deleteBuffers(RenderState* scene, Resources* resources) {
 }
 
 void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) {
-    glUseProgram(shader);
+    /* glUseProgram(shader);
     int numPointLights = scene->pointLights.size();
     int numSpotLights = scene->spotLights.size();
     glUniform1i(6, numSpotLights);
@@ -811,7 +796,7 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
         glUniform1f(glGetUniformLocation(shader, (base + ".brightness").c_str()), spotLight->brightness);
         glUniform1f(glGetUniformLocation(shader, (base + ".cutOff").c_str()), glm::cos(glm::radians(spotLight->cutoff)));
         glUniform1f(glGetUniformLocation(shader, (base + ".outerCutOff").c_str()), glm::cos(glm::radians(spotLight->outerCutoff)));
-    }
+    } */
 
     vec2 v(renderer->windowData.viewportWidth / 4.0f, renderer->windowData.viewportHeight / 4.0f);
     glUseProgram(renderer->ssaoShader);
@@ -870,21 +855,21 @@ void mapBones(Scene* scene, MeshRenderer* renderer) {
     findBones(scene, renderer, parent);
 }
 
-void createCameraUBO(RenderState* scene) {
-    glGenBuffers(1, &scene->matricesUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+void createCameraUBO(RenderState* renderer) {
+    glGenBuffers(1, &renderer->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, renderer->matricesUBO);
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(mat4), NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, scene->matricesUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, scene->matricesUBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, renderer->matricesUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, renderer->matricesUBO);
 }
 
 void initRenderer(RenderState* renderer, Scene* scene) {
     setInitialFlags();
     createSSAOBuffer(renderer);
-    createShadowMapDepthBuffers(scene);
-    for (SpotLight& light : scene->spotLights) {
-        createSpotLightShadowMap(scene, &light);
-    }
+    // createShadowMapDepthBuffers(scene);
+    /* for (SpotLight& light : scene->spotLights) {
+        createSpotLightShadowMap(&light);
+    } */
     createForwardBuffer(renderer);
     createBlurBuffers(renderer);
     createFullScreenQuad(renderer);

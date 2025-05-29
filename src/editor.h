@@ -11,6 +11,22 @@ struct Resources;
 struct GLFWwindow;
 enum InspectorState;
 
+struct EditorCameraController {
+    uint32_t entityID;
+    uint32_t cameraTargetEntityID;
+    uint32_t cameraEntityID;
+    Camera* camera;
+    float pitch = 0;
+    float yaw = 0;
+    float sensitivity = .3;
+    float moveSpeed = 10;
+};
+
+enum EditorMode {
+    Edit,
+    Play
+};
+
 struct EditorState {
     double timeAccum = 0.0f;
 
@@ -23,6 +39,9 @@ struct EditorState {
     bool canDelete = true;
     bool showDemoWindow = true;
 
+    Scene* playScene;
+    EditorCameraController cameraController;
+    EditorMode mode = Edit;
     ContextMenuType contextType;
     InspectorState inspectorState;
 

@@ -84,6 +84,7 @@ struct MeshRenderer {
     uint32_t rootEntity;
     GLint vao;
     Mesh* mesh;
+    bool boneMatricesSet = false;
     std::vector<Material*> materials;
     std::vector<SubMesh> subMeshes;
     std::vector<mat4> boneMatrices;
@@ -128,7 +129,7 @@ struct SpotLight {
     float blockerSearchUV = 0.0025f;
     float range = 20.0f;
     bool enableShadows = true;
-    bool isActive;
+    bool isActive = true;
 };
 
 struct WindowData {
@@ -181,12 +182,12 @@ struct RenderState {
     std::vector<vec3> ssaoNoise;
 };
 
+void deleteSpotLightShadowMap(SpotLight* light);
 void createContext(Scene* scene, RenderState* renderer);
 void initRenderer(RenderState* renderer, Scene* scene);
 void mapBones(Scene* scene, MeshRenderer* renderer);
 void deleteBuffers(RenderState* scene, Resources* resources);
-void createSpotLightShadowMap(Scene* scene, SpotLight* light);
-void createSpotLightShadowMapHDRedux(Scene* scene, SpotLight* light);
+void createSpotLightShadowMap(SpotLight* light);
 void renderScene(RenderState* renderer, Scene* scene);
 void initRendererEditor(RenderState* renderer);
 void updateBufferData(RenderState* renderer, Scene* scene);

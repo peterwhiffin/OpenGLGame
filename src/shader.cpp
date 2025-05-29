@@ -115,12 +115,12 @@ void PrintActiveUniforms(GLuint program) {
     }
 }
 
-void loadShaders(RenderState *scene) {
-#ifdef PETESEDITOR
-    scene->pickingShader = loadShader("pickingshader.vs", "pickingshader.fs");
-    scene->debugShader = loadShader("debugShader.vs", "debugShader.fs");
-#endif
+void loadEditorShaders(RenderState *renderer) {
+    renderer->pickingShader = loadShader("pickingshader.vs", "pickingshader.fs");
+    renderer->debugShader = loadShader("debugShader.vs", "debugShader.fs");
+}
 
+void loadShaders(RenderState *scene) {
     scene->depthShader = loadShader("depthprepassshader.vs", "depthprepassshader.fs");
     scene->lightingShader = loadShader("pbrlitshader.vs", "pbrlitshader.fs");
     scene->ssaoShader = loadShader("SSAOshader.vs", "SSAOshader.fs");

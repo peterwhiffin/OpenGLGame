@@ -17,3 +17,4 @@ struct Texture;
 struct EditorState;
 struct Resources;
 struct RenderState;
+struct InputActions;

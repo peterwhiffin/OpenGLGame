@@ -15,6 +15,10 @@ using quat = JPH::Quat;
 using mat4 = JPH::Mat44;
 using color = JPH::Color;
 
+inline float lerp(const float a, const float b, float t) {
+    return a + (b - a) * t;
+}
+
 inline vec3 lerp(const vec3 a, const vec3 b, float t) {
     return a + (b - a) * t;
 }

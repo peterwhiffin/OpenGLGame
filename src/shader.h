@@ -8,6 +8,7 @@ struct Scene;
 struct EditorState;
 struct RenderState;
 
+void loadEditorShaders(RenderState* renderer);
 void loadShaders(RenderState* scene);
 
 namespace vertex_attribute_location {

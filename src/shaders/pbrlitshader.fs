@@ -22,7 +22,8 @@ struct SpotLight{
     float brightness;//3
     float cutOff;//4
     float outerCutOff;//5
-    bool isEnabled;//6
+    int isEnabled;//6
+    int shadows; //7
 };
 
 const float PI = 3.14159265359;
@@ -193,7 +194,7 @@ void main() {
     float shadowCalc = 0.0;
 
 for(int i = 0; i < fromVert.numSpotLights; ++i) {
-         if(spotLights[i].brightness == 0){
+         if(spotLights[i].brightness == 0 || spotLights[i].isEnabled == 0){
             continue;
         } 
 
@@ -210,8 +211,10 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
         radiance *= intensityRadiance;
 
         // shadowCalc = ShadowCalculation(i, N);
-        
-        shadowCalc = ShadowPCSS(i, N);
+        if(spotLights[i].shadows != 0){
+            shadowCalc = ShadowPCSS(i, N);
+        }
+
         float NDF = DistributionGGX(N, H, roughness);        
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       

@@ -84,14 +84,15 @@ void initPhysics(Scene* scene) {
     JPH_IF_ENABLE_ASSERTS(AssertFailed = AssertFailedImpl;)
     Factory::sInstance = new Factory();
     RegisterTypes();
+    scene->physicsSystem = new JPH::PhysicsSystem();
     scene->tempAllocator = new TempAllocatorImpl(10 * 1024 * 1024);
     scene->jobSystem = new JobSystemThreadPool(cMaxPhysicsJobs, cMaxPhysicsBarriers, thread::hardware_concurrency() - 1);
     scene->broad_phase_layer_interface = new MyBroadPhaseLayerInterface();
     scene->object_vs_broadphase_layer_filter = new MyObjectVsBroadPhaseLayerFilter();
     scene->object_vs_object_layer_filter = new MyObjectLayerPairFilter();
-    scene->physicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *scene->broad_phase_layer_interface, *scene->object_vs_broadphase_layer_filter, *scene->object_vs_object_layer_filter);
-    scene->physicsSystem.SetGravity(vec3(0.0f, -18.0f, 0.0f));
-    scene->bodyInterface = &scene->physicsSystem.GetBodyInterface();
+    scene->physicsSystem->Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *scene->broad_phase_layer_interface, *scene->object_vs_broadphase_layer_filter, *scene->object_vs_object_layer_filter);
+    scene->physicsSystem->SetGravity(vec3(0.0f, -18.0f, 0.0f));
+    scene->bodyInterface = &scene->physicsSystem->GetBodyInterface();
 }
 
 void updatePhysicsBodyPositions(Scene* scene) {
@@ -127,7 +128,7 @@ void updatePhysics(Scene* scene) {
     }
 
     setPreviousTransforms(scene);
-    scene->physicsSystem.Update(cDeltaTime, cCollisionSteps, scene->tempAllocator, scene->jobSystem);
+    scene->physicsSystem->Update(cDeltaTime, cCollisionSteps, scene->tempAllocator, scene->jobSystem);
     scene->physicsAccum -= cDeltaTime;
 }
 

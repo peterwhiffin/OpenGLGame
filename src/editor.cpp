@@ -114,7 +114,7 @@ void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags nod
     }
 }
 
-void ShowExampleMenuFile(Scene* scene, Resources* resources) {
+void ShowExampleMenuFile(Scene* scene, Resources* resources, EditorState* editor) {
     ImGui::MenuItem("(demo menu)", NULL, false, false);
     if (ImGui::MenuItem("New")) {
     }
@@ -128,15 +128,19 @@ void ShowExampleMenuFile(Scene* scene, Resources* resources) {
             ImGui::MenuItem("Hello");
             ImGui::MenuItem("Sailor");
             if (ImGui::BeginMenu("Recurse..")) {
-                ShowExampleMenuFile(scene, resources);
+                ShowExampleMenuFile(scene, resources, editor);
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
         ImGui::EndMenu();
     }
-    if (ImGui::MenuItem("Save", "Ctrl+S")) {
-        saveScene(scene, resources);
+
+    static bool enabled = true;
+    if (ImGui::MenuItem("Save", "Ctrl+S", &enabled, editor->mode == Edit)) {
+        if (editor->mode == Edit) {
+            saveScene(scene, resources);
+        }
         // ExportImGuiStyleSizes();
     }
     if (ImGui::MenuItem("Save As..")) {
@@ -192,10 +196,10 @@ void ShowExampleMenuFile(Scene* scene, Resources* resources) {
     }
 }
 
-void buildMainMenu(Scene* scene, Resources* resources) {
+void buildMainMenu(Scene* scene, Resources* resources, EditorState* editor) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            ShowExampleMenuFile(scene, resources);
+            ShowExampleMenuFile(scene, resources, editor);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Edit")) {
@@ -216,7 +220,7 @@ void buildMainMenu(Scene* scene, Resources* resources) {
     }
 }
 
-void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor) {
+void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Resources* resources) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("EditViewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
 
@@ -235,6 +239,19 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor) {
     fps = fps.substr(0, fps.find_first_of('.'));
     frameTime = frameTime.substr(0, frameTime.find_first_of('.') + 3);
     ImGui::Text(("FPS: " + fps + " / Frame Time: " + frameTime + "ms").c_str());
+    ImGui::SameLine();
+
+    if (editor->mode == Edit) {
+        if (ImGui::Button("Play", ImVec2(20, 20))) {
+            editor->mode = Play;
+        }
+    } else if (editor->mode = Play) {
+        if (ImGui::Button("Stop", ImVec2(20, 20))) {
+            editor->mode = Edit;
+            clearScene(scene);
+            loadScene(resources, scene);
+        }
+    }
     ImGui::Separator();
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
     float aspectRatio = (float)renderer->windowData.viewportWidth / renderer->windowData.viewportHeight;
@@ -382,8 +399,8 @@ void drawEditor(Scene* scene, RenderState* renderer, Resources* resources, Edito
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     ImGui::ShowDemoWindow(&editor->showDemoWindow);
 
-    buildMainMenu(scene, resources);
-    buildSceneView(scene, renderer, editor);
+    buildMainMenu(scene, resources, editor);
+    buildSceneView(scene, renderer, editor, resources);
     buildSceneHierarchy(scene, editor);
     buildProjectFiles(scene, resources, editor);
     buildInspector(scene, resources, renderer, editor);

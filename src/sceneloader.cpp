@@ -619,6 +619,7 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     float cutoff = 45.0f;
     float outerCutoff = 60.0f;
     vec3 color = vec3(1.0f, 1.0f, 1.0f);
+    bool shadowsEnabled = false;
     unsigned int shadowWidth = 800;
     unsigned int shadowHeight = 600;
 
@@ -645,6 +646,10 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
         outerCutoff = std::stof(block.memberValueMap["outerCutoff"]);
     }
 
+    if (block.memberValueMap.count("shadows")) {
+        shadowsEnabled = block.memberValueMap["shadows"] == "true" ? true : false;
+    }
+
     if (block.memberValueMap.count("shadowWidth")) {
         shadowWidth = std::stof(block.memberValueMap["shadowWidth"]);
     }
@@ -667,8 +672,13 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     light->cutoff = cutoff;
     light->outerCutoff = outerCutoff;
     light->color = color;
+    light->enableShadows = shadowsEnabled;
     light->shadowWidth = shadowWidth;
     light->shadowHeight = shadowHeight;
+
+    if (light->enableShadows) {
+        createSpotLightShadowMap(light);
+    }
 }
 
 void createPlayer(Scene* scene, ComponentBlock block) {
@@ -880,7 +890,42 @@ void loadResourceSettings(Resources* resources, std::unordered_set<std::string>&
     }
 }
 
-void loadScene(Scene* scene, Resources* resources) {
+void loadScene(Resources* resources, Scene* scene) {
+    std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
+    scene->name = fileName.substr(0, fileName.find('.'));
+    std::ifstream stream(scene->scenePath);
+    std::vector<Token> tokens;
+    std::vector<ComponentBlock> components;
+    getTokens(&stream, &tokens);
+    createComponentBlocks(&tokens, &components);
+    // logComponentBlocks(&components);
+    createComponents(scene, resources, &components);
+
+    for (int i = 0; i < scene->transforms.size(); i++) {
+        updateTransformMatrices(scene, &scene->transforms[i]);
+    }
+
+    for (int i = 0; i < scene->rigidbodies.size(); i++) {
+        RigidBody* rb = &scene->rigidbodies[i];
+        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(scene, rb->entityID);
+        rb->lastRotation = getRotation(scene, rb->entityID);
+
+        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            scene->movingRigidbodies.insert(rb->entityID);
+        }
+    }
+
+    for (MeshRenderer& renderer : scene->meshRenderers) {
+        mapBones(scene, &renderer);
+    }
+
+    if (scene->player != nullptr) {
+        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+    }
+}
+
+void loadFirstFoundScene(Scene* scene, Resources* resources) {
     if (!findLastScene(scene)) {
         loadDefaultScene(scene, resources);
         return;
@@ -1204,6 +1249,7 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
         std::string cutoff = std::to_string(light.cutoff);
         std::string outerCutoff = std::to_string(light.outerCutoff);
         std::string color = std::to_string(light.color.GetX()) + ", " + std::to_string(light.color.GetY()) + ", " + std::to_string(light.color.GetZ());
+        std::string shadows = light.enableShadows ? "true" : "false";
         std::string shadowWidth = std::to_string(light.shadowWidth);
         std::string shadowHeight = std::to_string(light.shadowHeight);
 
@@ -1214,6 +1260,7 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
         stream << "cutoff: " << cutoff << std::endl;
         stream << "outerCutoff: " << outerCutoff << std::endl;
         stream << "color: " << color << std::endl;
+        stream << "shadows: " << shadows << std::endl;
         stream << "shadowWidth: " << shadowWidth << std::endl;
         stream << "shadowHeight: " << shadowHeight << std::endl;
         stream << "}" << std::endl
