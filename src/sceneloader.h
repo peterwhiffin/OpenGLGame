@@ -40,3 +40,5 @@ void loadMaterials(Resources* resources, RenderState* renderer);
 void loadResourceSettings(Resources* resources, std::unordered_set<std::string>& metaPaths);
 void writeMaterial(Resources* resources, std::filesystem::path path);
 void writeTextureSettings(TextureSettings settings);
+void writeTempScene(Scene* scene, Resources* resources);
+void loadTempScene(Resources* resources, Scene* scene);

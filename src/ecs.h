@@ -43,7 +43,15 @@ PointLight* getPointLight(Scene* scene, const uint32_t entityID);
 SpotLight* getSpotLight(Scene* scene, const uint32_t entityID);
 Camera* getCamera(Scene* scene, const uint32_t entityID);
 
+void removeMeshRenderer(Scene* scene, uint32_t entityID);
+void removeAnimator(Scene* scene, uint32_t entityID);
+void removeRigidbody(Scene* scene, uint32_t entityID);
+void removeSpotLight(Scene* scene, uint32_t entityID);
+void removePointLight(Scene* scene, uint32_t entityID);
 void destroyEntity(Scene* scene, uint32_t entityID);
+
+void setRigidbodyMoving(Scene* scene, uint32_t getEntityID);
+void setRigidbodyNonMoving(Scene* scene, uint32_t getEntityID);
 
 template <typename Component>
 bool destroyComponent(std::vector<Component>& components, std::unordered_map<uint32_t, size_t>& indexMap, uint32_t entityID) {

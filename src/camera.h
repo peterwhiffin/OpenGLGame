@@ -12,5 +12,5 @@ struct Camera {
     float farPlane;
 };
 
-void updateEditorCamera(EditorState* editor, Scene* scene, InputActions* input, RenderState* renderer);
+void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer);
 void updateCamera(Scene* scene);

@@ -509,6 +509,7 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
         bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
     }
 
+    bodySettings.mAllowDynamicOrKinematic = true;
     JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
     scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
 
@@ -890,6 +891,41 @@ void loadResourceSettings(Resources* resources, std::unordered_set<std::string>&
     }
 }
 
+void loadTempScene(Resources* resources, Scene* scene) {
+    std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
+    scene->name = fileName.substr(0, fileName.find('.'));
+    std::ifstream stream("..\\data\\scenes\\temp.tempscene");
+    std::vector<Token> tokens;
+    std::vector<ComponentBlock> components;
+    getTokens(&stream, &tokens);
+    createComponentBlocks(&tokens, &components);
+    // logComponentBlocks(&components);
+    createComponents(scene, resources, &components);
+
+    for (int i = 0; i < scene->transforms.size(); i++) {
+        updateTransformMatrices(scene, &scene->transforms[i]);
+    }
+
+    for (int i = 0; i < scene->rigidbodies.size(); i++) {
+        RigidBody* rb = &scene->rigidbodies[i];
+        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(scene, rb->entityID);
+        rb->lastRotation = getRotation(scene, rb->entityID);
+
+        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            scene->movingRigidbodies.insert(rb->entityID);
+        }
+    }
+
+    for (MeshRenderer& renderer : scene->meshRenderers) {
+        mapBones(scene, &renderer);
+    }
+
+    if (scene->player != nullptr) {
+        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+    }
+}
+
 void loadScene(Resources* resources, Scene* scene) {
     std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
     scene->name = fileName.substr(0, fileName.find('.'));
@@ -923,6 +959,8 @@ void loadScene(Resources* resources, Scene* scene) {
     if (scene->player != nullptr) {
         scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
     }
+
+    writeTempScene(scene, resources);
 }
 
 void loadFirstFoundScene(Scene* scene, Resources* resources) {
@@ -963,6 +1001,7 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
     if (scene->player != nullptr) {
         scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
     }
+    writeTempScene(scene, resources);
 }
 
 void writeEntities(Scene* scene, std::ofstream& stream) {
@@ -1311,6 +1350,7 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
 }
 
 void saveScene(Scene* scene, Resources* resources) {
+    writeTempScene(scene, resources);
     std::ofstream stream(scene->scenePath);
     writeEntities(scene, stream);
     writeTransforms(scene, stream);
@@ -1322,4 +1362,18 @@ void saveScene(Scene* scene, Resources* resources) {
     writeCameras(scene, stream);
     writePlayer(scene, stream);
     writeMaterials(resources);
+}
+
+void writeTempScene(Scene* scene, Resources* resources) {
+    std::ofstream stream("..\\data\\scenes\\temp.tempscene");
+    writeEntities(scene, stream);
+    writeTransforms(scene, stream);
+    writeMeshRenderers(scene, stream);
+    writeRigidbodies(scene, stream);
+    writeAnimators(scene, stream);
+    writePointLights(scene, stream);
+    writeSpotLights(scene, stream);
+    writeCameras(scene, stream);
+    writePlayer(scene, stream);
+    // writeMaterials(resources);
 }

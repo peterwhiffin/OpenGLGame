@@ -28,19 +28,23 @@ void drawPickingScene(RenderState* renderer, Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(renderer->pickingShader);
 
-    for (MeshRenderer& renderer : scene->meshRenderers) {
-        Transform* transform = getTransform(scene, renderer.entityID);
+    for (MeshRenderer& meshRenderer : scene->meshRenderers) {
+        if (meshRenderer.mesh == nullptr) {
+            continue;
+        }
+
+        Transform* transform = getTransform(scene, meshRenderer.entityID);
 
         mat4 model = transform->worldTransform;
-        glBindVertexArray(renderer.mesh->VAO);
-        unsigned char r = renderer.entityID & 0xFF;
-        unsigned char g = (renderer.entityID >> 8) & 0xFF;
-        unsigned char b = (renderer.entityID >> 16) & 0xFF;
+        glBindVertexArray(meshRenderer.mesh->VAO);
+        unsigned char r = meshRenderer.entityID & 0xFF;
+        unsigned char g = (meshRenderer.entityID >> 8) & 0xFF;
+        unsigned char b = (meshRenderer.entityID >> 16) & 0xFF;
         vec3 idColor = vec3(r, g, b) / 255.0f;
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, &model(0, 0));
         glUniform3fv(uniform_location::kColor, 1, idColor.mF32);
 
-        for (SubMesh& subMesh : renderer.mesh->subMeshes) {
+        for (SubMesh& subMesh : meshRenderer.mesh->subMeshes) {
             glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
         }
     }
@@ -799,8 +803,11 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
     } */
 
     vec2 v(renderer->windowData.viewportWidth / 4.0f, renderer->windowData.viewportHeight / 4.0f);
+    float test[2];
+    test[0] = renderer->windowData.viewportWidth / 4.0f;
+    test[1] = renderer->windowData.viewportHeight / 4.0f;
     glUseProgram(renderer->ssaoShader);
-    glUniform2fv(8, 1, &v.x);
+    glUniform2fv(8, 1, test);
 
     renderer->AORadius = 0.06f;
     renderer->AOBias = 0.04f;
@@ -892,7 +899,11 @@ void onScreenChanged(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     glUseProgram(renderer->ssaoShader);
     vec2 v(renderer->windowData.viewportWidth / 4.0f, renderer->windowData.viewportHeight / 4.0f);
-    glUniform2fv(8, 1, &v.x);
+    // glUniform2fv(8, 1, &v.x);
+    float test[2];
+    test[0] = renderer->windowData.viewportWidth / 4.0f;
+    test[1] = renderer->windowData.viewportHeight / 4.0f;
+    glUniform2fv(8, 1, test);
 
     resizeBuffers(renderer);
 }
@@ -901,6 +912,7 @@ void createContext(Scene* scene, RenderState* renderer) {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSwapInterval(0);
 

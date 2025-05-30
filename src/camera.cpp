@@ -2,7 +2,8 @@
 #include "scene.h"
 #include "transform.h"
 
-void updateEditorCamera(EditorState* editor, Scene* scene, InputActions* input, RenderState* renderer) {
+void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer) {
+    InputActions* input = scene->input;
     if (input->menu) {
         if (scene->menuCanOpen) {
             scene->menuOpen = !scene->menuOpen;

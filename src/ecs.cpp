@@ -139,6 +139,65 @@ SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
     return &scene->spotLights[index];
 }
 
+static void removeTransform(Scene* scene, uint32_t entityID) {
+    destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
+}
+
+void removeMeshRenderer(Scene* scene, uint32_t entityID) {
+    destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
+}
+
+void removeAnimator(Scene* scene, uint32_t entityID) {
+    destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
+}
+
+void setRigidbodyMoving(Scene* scene, uint32_t entityID) {
+    RigidBody* rb = getRigidbody(scene, entityID);
+    if (rb != nullptr) {
+        if (!scene->movingRigidbodies.count(rb->entityID)) {
+            scene->movingRigidbodies.insert(rb->entityID);
+        }
+    }
+}
+
+void setRigidbodyNonMoving(Scene* scene, uint32_t entityID) {
+    RigidBody* rb = getRigidbody(scene, entityID);
+    if (rb != nullptr) {
+        if (scene->movingRigidbodies.count(rb->entityID)) {
+            scene->movingRigidbodies.erase(rb->entityID);
+        }
+    }
+}
+
+void removeRigidbody(Scene* scene, uint32_t entityID) {
+    RigidBody* rb = getRigidbody(scene, entityID);
+    if (rb != nullptr) {
+        /*         if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+                    scene->movingRigidbodies.erase(rb->entityID);
+                } */
+
+        if (scene->movingRigidbodies.count(rb->entityID)) {
+            scene->movingRigidbodies.erase(rb->entityID);
+        }
+
+        scene->bodyInterface->RemoveBody(rb->joltBody);
+        scene->bodyInterface->DestroyBody(rb->joltBody);
+    }
+
+    destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
+}
+void removeSpotLight(Scene* scene, uint32_t entityID) {
+    SpotLight* spotLight = getSpotLight(scene, entityID);
+    if (spotLight != nullptr && spotLight->enableShadows) {
+        deleteSpotLightShadowMap(spotLight);
+    }
+
+    destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID);
+}
+void removePointLight(Scene* scene, uint32_t entityID) {
+    destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID);
+}
+
 void destroyEntity(Scene* scene, uint32_t entityID) {
     if (!scene->entityIndexMap.count(entityID)) {
         return;
@@ -168,8 +227,6 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
                 break;
             }
         }
-
-        // parent->childEntityIds.erase(std::remove(parent->childEntityIds.begin(), parent->childEntityIds.end(), entityID), parent->childEntityIds.end());
     }
 
     std::vector<uint32_t> temp;
@@ -181,26 +238,12 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
         destroyEntity(scene, id);
     }
 
-    /* for (size_t i = 0; i < transform->childEntityIds.size(); i++) {
-        destroyEntity(scene, transform->childEntityIds[i]);
-    } */
-
-    destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
-    destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
-
-    RigidBody* rb = getRigidbody(scene, entityID);
-    if (rb != nullptr) {
-        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            scene->movingRigidbodies.erase(rb->entityID);
-        }
-        scene->bodyInterface->RemoveBody(rb->joltBody);
-        scene->bodyInterface->DestroyBody(rb->joltBody);
-    }
-
-    destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
-    destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
-    destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID);
-    destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID);
+    removeTransform(scene, entityID);
+    removeMeshRenderer(scene, entityID);
+    removeAnimator(scene, entityID);
+    removeRigidbody(scene, entityID);
+    removeSpotLight(scene, entityID);
+    removePointLight(scene, entityID);
     destroyComponent(scene->entities, scene->entityIndexMap, entityID);
 }
 

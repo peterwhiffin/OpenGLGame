@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include "utils/imgui.h"
 #include "utils/mathutils.h"
 #include "physics.h"
 #include "ecs.h"
@@ -39,6 +40,12 @@ struct EditorState {
     bool canDelete = true;
     bool showDemoWindow = true;
 
+    ImVec2 viewportStart = ImVec2(0.0f, 0.0f);
+    ImVec2 viewportEnd = ImVec2(0.0f, 0.0f);
+    ImVec2 cursorPos = ImVec2(0.0f, 0.0f);
+    ImVec2 windowPos = ImVec2(0.0f, 0.0f);
+
+    vec3 worldPos = vec3(0.0f, 0.0f, 0.0f);
     Scene* playScene;
     EditorCameraController cameraController;
     EditorMode mode = Edit;
@@ -53,6 +60,6 @@ struct EditorState {
 
 void initEditor(EditorState* editor, GLFWwindow* window);
 void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor, glm::dvec2 pickPosition);
-void drawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor);
+void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor);
 bool checkFilenameUnique(std::string path, std::string filename);
 void destroyEditor();

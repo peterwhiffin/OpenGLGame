@@ -7872,7 +7872,7 @@ entityID: 524
 parentEntityID: -1
 childEntityIds: 3
 localPosition: 15.856215, 3.934215, -7.079369
-localRotation: 0.051970, -0.398909, 0.022651, 0.915236
+localRotation: -0.127103, -0.195988, 0.025628, -0.971996
 localScale: 1.000000, 1.000000, 1.000000
 }
 

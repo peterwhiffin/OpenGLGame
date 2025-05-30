@@ -101,6 +101,15 @@ void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags nod
             }
 
             ImGui::TreeNodeEx(fileString.c_str(), node_flags);
+            bool dropped = ImGui::BeginDragDropSource(ImGuiDragDropFlags_None);
+            if (dropped) {
+                // Set payload to carry the index of our item (could be anything)
+                ImGui::SetDragDropPayload("prefab", &fileString, sizeof(fileString));
+
+                // Display preview (could be anything, e.g. when dragging an image we could decide to display
+                // the filename and a small preview of the image, etc.)
+                ImGui::EndDragDropSource();
+            }
 
             if (ImGui::IsItemClicked()) {
                 editor->fileClicked = dir.path().string();
@@ -244,16 +253,18 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Re
     if (editor->mode == Edit) {
         if (ImGui::Button("Play", ImVec2(20, 20))) {
             editor->mode = Play;
+            writeTempScene(scene, resources);
         }
     } else if (editor->mode = Play) {
         if (ImGui::Button("Stop", ImVec2(20, 20))) {
             editor->mode = Edit;
             clearScene(scene);
-            loadScene(resources, scene);
+            loadTempScene(resources, scene);
         }
     }
     ImGui::Separator();
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
+
     float aspectRatio = (float)renderer->windowData.viewportWidth / renderer->windowData.viewportHeight;
 
     ImVec2 imageSize = ImVec2(renderer->windowData.viewportWidth, renderer->windowData.viewportHeight);
@@ -265,8 +276,29 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Re
         imageSize.y = imageSize.x * (1 / aspectRatio);
     }
 
-    ImGui::SetCursorPos(ImVec2((availableSize.x - imageSize.x) / 2, (availableSize.y - imageSize.y) / 2));
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    editor->windowPos = windowPos;
+    ImVec2 start = ImVec2((availableSize.x - imageSize.x) / 2, (availableSize.y - imageSize.y) / 2);
+    editor->viewportStart = ImVec2(windowPos.x + start.x, windowPos.y + start.y);
+    editor->viewportEnd = ImVec2(windowPos.x + start.x + imageSize.x, windowPos.y + start.y + imageSize.y);
+
+    ImGui::SetCursorPos(start);
     ImGui::Image((ImTextureID)(intptr_t)renderer->editorTex, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+    bool droppedPrefab = ImGui::BeginDragDropTarget();
+
+    if (droppedPrefab) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("prefab")) {
+            // IM_ASSERT(payload->DataSize == sizeof(int));
+            std::string payload_n = *(const std::string*)payload->Data;
+            Model* prefab = resources->modelMap[payload_n];
+            uint32_t id = createEntityFromModel(scene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+            vec3 pos = getPosition(scene, scene->cameras[0]->entityID) + (editor->worldPos * 2.0f);
+            setPosition(scene, id, pos);
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
     ImGui::End();
     ImGui::PopStyleVar();
 }
@@ -363,15 +395,44 @@ void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) 
     ImGui::End();
 }
 
-void buildEnvironmentSettings(RenderState* scene) {
+void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene* scene) {
     ImGui::Begin("Post-Process");
-    ImGui::DragFloat("Exposure", &scene->exposure, 0.01f, 0, 1000.0f);
-    ImGui::DragFloat("Bloom Threshold", &scene->bloomThreshold, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Bloom Amount", &scene->bloomAmount, 0.01f, 0, 100.0f);
-    ImGui::DragFloat("Ambient", &scene->ambient, 0.001f, 0, 100.0f);
-    ImGui::DragFloat("SSAO radius", &scene->AORadius, 0.001f, 0.0f, 90.0f);
-    ImGui::DragFloat("SSAO bias", &scene->AOBias, 0.001f, 0.0f, 25.0f);
-    ImGui::DragFloat("SSAO power", &scene->AOPower, 0.001f, 0.0f, 50.0f);
+    ImGui::DragFloat("Exposure", &renderer->exposure, 0.01f, 0, 1000.0f);
+    ImGui::DragFloat("Bloom Threshold", &renderer->bloomThreshold, 0.01f, 0, 100.0f);
+    ImGui::DragFloat("Bloom Amount", &renderer->bloomAmount, 0.01f, 0, 100.0f);
+    ImGui::DragFloat("Ambient", &renderer->ambient, 0.001f, 0, 100.0f);
+    ImGui::DragFloat("SSAO radius", &renderer->AORadius, 0.001f, 0.0f, 90.0f);
+    ImGui::DragFloat("SSAO bias", &renderer->AOBias, 0.001f, 0.0f, 25.0f);
+    ImGui::DragFloat("SSAO power", &renderer->AOPower, 0.001f, 0.0f, 50.0f);
+    bool isMouseInViewport = false;
+    vec2 cursorPos(scene->input->cursorPosition.x, scene->input->cursorPosition.y);
+    float sizeX = editor->viewportEnd.x - editor->viewportStart.x;
+    float sizeY = editor->viewportEnd.y - editor->viewportStart.y;
+    float u = (cursorPos.x - editor->viewportStart.x) / sizeX;
+    float v = (cursorPos.y - editor->viewportStart.y) / sizeY;
+    vec4 rayClip = vec4(u * 2.0f - 1.0f, v * 2.0f - 1.0f, -1.0f, 1.0f);
+    mat4 proj = renderer->matricesUBOData.projection;
+    mat4 view = renderer->matricesUBOData.view;
+
+    vec4 rayEye = proj.Inversed() * rayClip;
+    rayEye = vec4(rayEye.GetX(), rayEye.GetY(), -1.0f, 0.0f);
+    vec4 rawWorld = view.Inversed() * rayEye;
+    vec3 rayWorld = vec3(rawWorld.GetX(), rawWorld.GetY(), rawWorld.GetZ());
+    rayWorld = rayWorld.Normalized();
+    editor->worldPos = rayWorld;
+
+    if (cursorPos.x > editor->viewportStart.x && cursorPos.x < editor->viewportEnd.x && cursorPos.y > editor->viewportStart.y && cursorPos.y < editor->viewportEnd.y) {
+        isMouseInViewport = true;
+    }
+
+    ImGui::Checkbox("Is in viewport", &isMouseInViewport);
+
+    ImGui::DragFloat2("cursor pos", &cursorPos.x);
+    ImGui::DragFloat2("start", &editor->viewportStart.x);
+    ImGui::DragFloat2("end", &editor->viewportEnd.x);
+    ImGui::DragFloat2("CursorNDC", rayClip.mF32);
+    ImGui::DragFloat3("world pos", rayWorld.mF32);
+
     ImGui::End();
 }
 
@@ -388,7 +449,7 @@ bool checkFilenameUnique(std::string path, std::string filename) {
     return true;
 }
 
-void drawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
+void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
     // drawPickingScene(scene);
     // checkPicker(scene, scene->input.cursorPosition);
 
@@ -404,7 +465,7 @@ void drawEditor(Scene* scene, RenderState* renderer, Resources* resources, Edito
     buildSceneHierarchy(scene, editor);
     buildProjectFiles(scene, resources, editor);
     buildInspector(scene, resources, renderer, editor);
-    buildEnvironmentSettings(renderer);
+    buildEnvironmentSettings(renderer, editor, scene);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

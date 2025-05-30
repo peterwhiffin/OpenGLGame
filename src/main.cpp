@@ -27,6 +27,21 @@ void updateTime(Scene* scene) {
 
 #ifdef PETES_EDITOR
 
+void updateSceneEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+    switch (editor->mode) {
+        case Edit:
+            updateEditorCamera(editor, scene, renderer);
+            break;
+        case Play:
+            updatePhysics(scene);
+            updatePlayer(scene, resources, renderer);
+            updatePhysicsBodyPositions(scene);
+            updateAnimators(scene);
+            updateCamera(scene);
+            break;
+    }
+}
+
 int main() {
     Scene* scene = new Scene();
     Resources* resources = new Resources();
@@ -53,30 +68,12 @@ int main() {
         glfwPollEvents();
         updateTime(scene);
         updateInput(inputActions, renderer->window);
-
-        switch (editor->mode) {
-            case Edit:
-                drawEditor(scene, renderer, resources, editor);
-                updateEditorCamera(editor, scene, inputActions, renderer);
-                updateBufferData(renderer, scene);
-                drawPickingScene(renderer, scene);
-                renderScene(renderer, scene);
-                renderDebug(renderer);
-                break;
-            case Play:
-                updatePhysics(scene);
-                updatePlayer(scene, resources, renderer);
-                updatePhysicsBodyPositions(scene);
-                updateAnimators(scene);
-                updateCamera(scene);
-                updateBufferData(renderer, scene);
-                drawPickingScene(renderer, scene);
-                renderScene(renderer, scene);
-                renderDebug(renderer);
-                drawEditor(scene, renderer, resources, editor);
-                break;
-        }
-
+        updateAndDrawEditor(scene, renderer, resources, editor);
+        updateSceneEditor(scene, resources, renderer, editor);
+        updateBufferData(renderer, scene);
+        drawPickingScene(renderer, scene);
+        renderScene(renderer, scene);
+        renderDebug(renderer);
         glfwSwapBuffers(renderer->window);
     }
 
