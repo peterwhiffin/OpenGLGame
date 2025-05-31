@@ -175,6 +175,11 @@ struct RenderState {
     float AOBias = 0.025f;
     float AOAmount = 1.0f;
     float AOPower = 2.0f;
+    float fogDensity = 0.06f;
+    float maxFogDistance = 450.0f;
+    float minFogDistance = 9.74f;
+
+    vec3 fogColor = vec3(1.0f, 1.0f, 1.0f);
 
     bool horizontalBlur = true;
 

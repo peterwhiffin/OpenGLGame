@@ -18,19 +18,24 @@
 void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory);
 void ExportImGuiStyleSizes();
 
-void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor, glm::dvec2 pickPosition) {
-    if (!editor->isPicking) {
+void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor) {
+    /* if (!editor->isPicking) {
         return;
-    }
+    } */
 
-    editor->isPicking = false;
+    editor->isPicking = true;
     unsigned char pixel[3];
     glBindFramebuffer(GL_FRAMEBUFFER, renderer->pickingFBO);
-    glReadPixels(pickPosition.x, renderer->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+    // glReadPixels(pickPosition.x, renderer->windowData.height - pickPosition.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+
+    float xPos = editor->cursorPos.x * renderer->windowData.width;
+    float yPos = (1.0 - editor->cursorPos.y) * renderer->windowData.height;
+    glReadPixels(xPos, yPos, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
     uint32_t id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
 
     if (scene->entityIndexMap.count(id)) {
         editor->nodeClicked = id;
+        scene->pickedEntity = id;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -59,6 +64,7 @@ void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGu
     bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
     if (ImGui::IsItemClicked()) {
         editor->nodeClicked = entity->entityID;
+        scene->pickedEntity = entity->entityID;
         editor->inspectorState = SceneEntity;
     }
 
@@ -146,11 +152,8 @@ void ShowExampleMenuFile(Scene* scene, Resources* resources, EditorState* editor
     }
 
     static bool enabled = true;
-    if (ImGui::MenuItem("Save", "Ctrl+S", &enabled, editor->mode == Edit)) {
-        if (editor->mode == Edit) {
-            saveScene(scene, resources);
-        }
-        // ExportImGuiStyleSizes();
+    if (ImGui::MenuItem("Save", "Ctrl+S", &enabled, !editor->playing)) {
+        saveScene(scene, resources);
     }
     if (ImGui::MenuItem("Save As..")) {
     }
@@ -250,14 +253,14 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Re
     ImGui::Text(("FPS: " + fps + " / Frame Time: " + frameTime + "ms").c_str());
     ImGui::SameLine();
 
-    if (editor->mode == Edit) {
-        if (ImGui::Button("Play", ImVec2(20, 20))) {
-            editor->mode = Play;
+    if (!editor->playing) {
+        if (ImGui::Button("Play", ImVec2(40, 20))) {
+            editor->playing = true;
             writeTempScene(scene, resources);
         }
-    } else if (editor->mode = Play) {
-        if (ImGui::Button("Stop", ImVec2(20, 20))) {
-            editor->mode = Edit;
+    } else if (editor->playing) {
+        if (ImGui::Button("Stop", ImVec2(40, 20))) {
+            editor->playing = false;
             clearScene(scene);
             loadTempScene(resources, scene);
         }
@@ -404,7 +407,10 @@ void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene*
     ImGui::DragFloat("SSAO radius", &renderer->AORadius, 0.001f, 0.0f, 90.0f);
     ImGui::DragFloat("SSAO bias", &renderer->AOBias, 0.001f, 0.0f, 25.0f);
     ImGui::DragFloat("SSAO power", &renderer->AOPower, 0.001f, 0.0f, 50.0f);
-    bool isMouseInViewport = false;
+    ImGui::DragFloat("Fog Density", &renderer->fogDensity, 0.01f);
+    ImGui::DragFloat("Min Fog Distance", &renderer->minFogDistance, 0.01f);
+    ImGui::DragFloat("Max Fog Distance", &renderer->maxFogDistance, 0.01f);
+    ImGui::ColorEdit3("Fog Color", renderer->fogColor.mF32);
     vec2 cursorPos(scene->input->cursorPosition.x, scene->input->cursorPosition.y);
     float sizeX = editor->viewportEnd.x - editor->viewportStart.x;
     float sizeY = editor->viewportEnd.y - editor->viewportStart.y;
@@ -421,17 +427,23 @@ void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene*
     rayWorld = rayWorld.Normalized();
     editor->worldPos = rayWorld;
 
+    editor->cursorPos.x = u;
+    editor->cursorPos.y = v;
+
     if (cursorPos.x > editor->viewportStart.x && cursorPos.x < editor->viewportEnd.x && cursorPos.y > editor->viewportStart.y && cursorPos.y < editor->viewportEnd.y) {
-        isMouseInViewport = true;
+        editor->mouseInViewport = true;
+    } else {
+        editor->mouseInViewport = false;
     }
 
-    ImGui::Checkbox("Is in viewport", &isMouseInViewport);
+    ImGui::Checkbox("Is in viewport", &editor->mouseInViewport);
 
     ImGui::DragFloat2("cursor pos", &cursorPos.x);
     ImGui::DragFloat2("start", &editor->viewportStart.x);
     ImGui::DragFloat2("end", &editor->viewportEnd.x);
     ImGui::DragFloat2("CursorNDC", rayClip.mF32);
     ImGui::DragFloat3("world pos", rayWorld.mF32);
+    ImGui::DragFloat2("cursor UV", &editor->cursorPos.x);
 
     ImGui::End();
 }
@@ -451,7 +463,7 @@ bool checkFilenameUnique(std::string path, std::string filename) {
 
 void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
     // drawPickingScene(scene);
-    // checkPicker(scene, scene->input.cursorPosition);
+    // checkPicker(scene, renderer, editor, scene->input->cursorPosition);
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
     ImGui_ImplOpenGL3_NewFrame();
@@ -469,6 +481,80 @@ void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resourc
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+    InputActions* input = scene->input;
+    Camera* cam = scene->cameras[0];
+    Transform* transform = getTransform(scene, cam->entityID);
+
+    float xOffset = input->lookX * editor->cameraController.sensitivity;
+    float yOffset = input->lookY * editor->cameraController.sensitivity;
+    float pitch = editor->cameraController.pitch;
+    float yaw = editor->cameraController.yaw;
+
+    yaw -= xOffset;
+    pitch -= yOffset;
+
+    if (pitch > 89.0f) {
+        pitch = 89.0f;
+    }
+
+    if (pitch < -89.0f) {
+        pitch = -89.0f;
+    }
+
+    editor->cameraController.pitch = pitch;
+    editor->cameraController.yaw = yaw;
+
+    vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(editor->cameraController.pitch), JPH::DegreesToRadians(editor->cameraController.yaw), 0.0f);
+
+    setRotation(scene, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
+
+    vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
+    vec3 forwardDir = forward(scene, transform->entityID);
+    vec3 rightDir = right(scene, transform->entityID);
+    moveDir += input->movement.y * forwardDir + input->movement.x * rightDir;
+    vec3 finalMove = moveDir * editor->cameraController.moveSpeed * scene->deltaTime;
+    vec3 currentPos = getPosition(scene, transform->entityID);
+    setPosition(scene, transform->entityID, currentPos + finalMove);
+
+    if (!scene->input->altFire) {
+        glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        editor->editorMode = Default;
+    }
+}
+
+void defaultUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+    if (editor->mouseInViewport) {
+        if (scene->input->fire) {
+            checkPicker(scene, renderer, editor);
+            editor->editorMode = Picking;
+        } else if (scene->input->altFire) {
+            glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            editor->editorMode = CameraControl;
+        }
+    }
+}
+
+void pickingUpdate(Scene* scene, EditorState* editor, RenderState* renderer) {
+    if (!scene->input->fire) {
+        editor->editorMode = Default;
+    }
+}
+
+void updateEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+    switch (editor->editorMode) {
+        case Default:
+            defaultUpdate(scene, resources, renderer, editor);
+            break;
+        case CameraControl:
+            cameraControlUpdate(scene, resources, renderer, editor);
+            break;
+        case Picking:
+            pickingUpdate(scene, editor, renderer);
+            break;
+    }
 }
 
 void initEditor(EditorState* editor, GLFWwindow* window) {

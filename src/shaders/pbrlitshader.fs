@@ -81,6 +81,15 @@ const vec2 poissonDisk[POISSON_SAMPLES] = vec2[](
 
 uniform float u_LightRadiusUV    = 0.005;
 uniform float u_BlockerSearchUV  = 0.0025;
+uniform vec3 fogColor = vec3(1.0, 1.0, 1.0);
+uniform float maxFogDistance = 65.0;
+uniform float minFogDistance = 1.0;
+uniform float fogDensity = 10.0;
+
+float remap(float value, float inputMin, float inputMax, float outputMin, float outputMax) {
+  float normalizedValue = (value - inputMin) / (inputMax - inputMin);
+  return normalizedValue * (outputMax - outputMin) + outputMin;
+}
 
   float ShadowPCSS(int index, vec3 N)
 {
@@ -258,11 +267,20 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }     
   
+    
+    
+    float fragDistance = length(fromVert.fragPos - camPos);
+    float fogFactor = remap(fragDistance, minFogDistance, maxFogDistance, 0, 1); 
+    fogFactor = clamp(fogFactor, 0, 1);
+    vec3 fog = fogColor * fogFactor * fogDensity;
     vec3 ambient = ambientBrightness * albedo * ao;
     vec3 color = ambient + Lo;
+    color += fog;
     FragColor = vec4(color * baseColor, 1.0);
-    
-    float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+
+    float brightness = dot(FragColor.xyz, vec3(0.2126, 0.7152, 0.0722));
+
+
 
     if(brightness > bloomThreshold){
         BloomColor = vec4(FragColor.rgb, 1.0);

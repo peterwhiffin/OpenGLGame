@@ -139,6 +139,10 @@ void drawScene(RenderState* renderer, Scene* scene) {
     glUniform1f(35, renderer->ambient);
     glUniform1i(6, scene->spotLights.size());
     glUniform1i(7, scene->pointLights.size());
+    glUniform1f(glGetUniformLocation(renderer->lightingShader, "fogDensity"), renderer->fogDensity);
+    glUniform1f(glGetUniformLocation(renderer->lightingShader, "minFogDistance"), renderer->minFogDistance);
+    glUniform1f(glGetUniformLocation(renderer->lightingShader, "maxFogDistance"), renderer->maxFogDistance);
+    glUniform3fv(glGetUniformLocation(renderer->lightingShader, "fogColor"), 1, renderer->fogColor.mF32);
 
     for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
         const PointLight& pointLight = scene->pointLights[i];
@@ -199,13 +203,17 @@ void drawScene(RenderState* renderer, Scene* scene) {
             material = subMesh.material;
             const std::vector<Texture*>& textures = material->textures;
 
-            // vec4 baseColor = scene->nodeClicked == renderer.entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
-
             glUniform1f(10, material->metalness);
             glUniform1f(11, material->roughness);
             glUniform1f(12, material->aoStrength);
             glUniform1f(13, material->normalStrength);
+
+#ifdef PETES_EDITOR
+            vec4 baseColor = scene->pickedEntity == meshRenderer.entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
+            glUniform3fv(14, 1, baseColor.mF32);
+#else
             glUniform3fv(14, 1, material->baseColor.mF32);
+#endif
             glUniform2fv(glGetUniformLocation(renderer->lightingShader, "textureTiling"), 1, glm::value_ptr(material->textureTiling));
 
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureAlbedoUnit);

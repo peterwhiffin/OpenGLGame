@@ -28,17 +28,14 @@ void updateTime(Scene* scene) {
 #ifdef PETES_EDITOR
 
 void updateSceneEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
-    switch (editor->mode) {
-        case Edit:
-            updateEditorCamera(editor, scene, renderer);
-            break;
-        case Play:
-            updatePhysics(scene);
-            updatePlayer(scene, resources, renderer);
-            updatePhysicsBodyPositions(scene);
-            updateAnimators(scene);
-            updateCamera(scene);
-            break;
+    if (editor->playing) {
+        updatePhysics(scene);
+        updatePlayer(scene, resources, renderer);
+        updatePhysicsBodyPositions(scene);
+        updateAnimators(scene);
+        updateCamera(scene);
+    } else {
+        updateEditor(scene, resources, renderer, editor);
     }
 }
 

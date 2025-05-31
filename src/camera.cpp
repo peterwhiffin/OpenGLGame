@@ -4,18 +4,32 @@
 
 void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer) {
     InputActions* input = scene->input;
-    if (input->menu) {
-        if (scene->menuCanOpen) {
-            scene->menuOpen = !scene->menuOpen;
-            scene->menuCanOpen = false;
+    /*     if (input->menu) {
+            if (scene->menuCanOpen) {
+                scene->menuOpen = !scene->menuOpen;
+                scene->menuCanOpen = false;
 
-            glfwSetInputMode(renderer->window, GLFW_CURSOR, scene->menuOpen ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+                glfwSetInputMode(renderer->window, GLFW_CURSOR, scene->menuOpen ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+            }
+        } else {
+            scene->menuCanOpen = true;
+        }
+
+        if (scene->menuOpen) {
+            return;
+        } */
+
+    if (input->altFire) {
+        if (editor->mouseInViewport && !editor->cameraActive) {
+            glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            editor->cameraActive = true;
         }
     } else {
-        scene->menuCanOpen = true;
-    }
+        if (editor->cameraActive) {
+            glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            editor->cameraActive = false;
+        }
 
-    if (scene->menuOpen) {
         return;
     }
 

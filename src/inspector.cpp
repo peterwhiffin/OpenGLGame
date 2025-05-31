@@ -120,7 +120,7 @@ Material* buildMaterialInspector(Resources* resources, Material* material, bool 
         }
     }
 
-    buildTextureMapRow(resources, "Albedo", material->textures[0], material->baseColor.mF32, true);
+    buildTextureMapRow(resources, "Albedo", material->textures[0], material->baseColor.mF32, 1.0f, true);
     buildTextureMapRow(resources, "Roughness", material->textures[1], &material->roughness);
     buildTextureMapRow(resources, "Metalness", material->textures[2], &material->metalness);
     buildTextureMapRow(resources, "AO", material->textures[3], &material->aoStrength);

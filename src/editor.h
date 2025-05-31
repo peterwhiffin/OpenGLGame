@@ -24,8 +24,9 @@ struct EditorCameraController {
 };
 
 enum EditorMode {
-    Edit,
-    Play
+    Default,
+    CameraControl,
+    Picking
 };
 
 struct EditorState {
@@ -39,6 +40,9 @@ struct EditorState {
     bool canPick = true;
     bool canDelete = true;
     bool showDemoWindow = true;
+    bool mouseInViewport = false;
+    bool cameraActive = false;
+    bool playing = false;
 
     ImVec2 viewportStart = ImVec2(0.0f, 0.0f);
     ImVec2 viewportEnd = ImVec2(0.0f, 0.0f);
@@ -48,7 +52,7 @@ struct EditorState {
     vec3 worldPos = vec3(0.0f, 0.0f, 0.0f);
     Scene* playScene;
     EditorCameraController cameraController;
-    EditorMode mode = Edit;
+    EditorMode editorMode = Default;
     ContextMenuType contextType;
     InspectorState inspectorState;
 
@@ -59,7 +63,8 @@ struct EditorState {
 };
 
 void initEditor(EditorState* editor, GLFWwindow* window);
-void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor, glm::dvec2 pickPosition);
+void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor);
 void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor);
 bool checkFilenameUnique(std::string path, std::string filename);
 void destroyEditor();
+void updateEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor);
