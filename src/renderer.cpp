@@ -11,7 +11,7 @@
 #include "camera.h"
 #define M_PI 3.14159265358979323846
 
-void setInitialFlags() {
+static void setInitialFlags() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -20,7 +20,10 @@ void setInitialFlags() {
 }
 
 void drawPickingScene(RenderState* renderer, Scene* scene) {
-    Camera* camera = scene->cameras[0];
+    Camera* camera = &scene->cameras[0];
+    MeshRenderer* meshRenderer;
+    Mesh* mesh;
+    SubMesh* subMesh;
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer->pickingFBO);
     glViewport(0, 0, renderer->windowData.viewportWidth, renderer->windowData.viewportHeight);
@@ -28,49 +31,56 @@ void drawPickingScene(RenderState* renderer, Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(renderer->pickingShader);
 
-    for (MeshRenderer& meshRenderer : scene->meshRenderers) {
-        if (meshRenderer.mesh == nullptr) {
+    for (int i = 0; i < scene->meshRenderers.size(); i++) {
+        meshRenderer = &scene->meshRenderers[i];
+        mesh = meshRenderer->mesh;
+        if (mesh == nullptr) {
             continue;
         }
 
-        Transform* transform = getTransform(scene, meshRenderer.entityID);
+        Transform* transform = getTransform(scene, meshRenderer->entityID);
 
         mat4 model = transform->worldTransform;
-        glBindVertexArray(meshRenderer.mesh->VAO);
-        unsigned char r = meshRenderer.entityID & 0xFF;
-        unsigned char g = (meshRenderer.entityID >> 8) & 0xFF;
-        unsigned char b = (meshRenderer.entityID >> 16) & 0xFF;
+        glBindVertexArray(mesh->VAO);
+        unsigned char r = meshRenderer->entityID & 0xFF;
+        unsigned char g = (meshRenderer->entityID >> 8) & 0xFF;
+        unsigned char b = (meshRenderer->entityID >> 16) & 0xFF;
         vec3 idColor = vec3(r, g, b) / 255.0f;
         glUniformMatrix4fv(uniform_location::kModelMatrix, 1, GL_FALSE, &model(0, 0));
         glUniform3fv(uniform_location::kColor, 1, idColor.mF32);
 
-        for (SubMesh& subMesh : meshRenderer.mesh->subMeshes) {
-            glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
+        for (int i = 0; i < mesh->subMeshes.size(); i++) {
+            subMesh = &mesh->subMeshes[i];
+            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
     }
 }
 
-void drawShadowMaps(RenderState* renderer, Scene* scene) {
+static void drawShadowMaps(RenderState* renderer, Scene* scene) {
     vec3 position;
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjection;
     mat4 model;
     GLint boneMatrixLoc = glGetUniformLocation(renderer->depthShader, "finalBoneMatrices[0]");
+    MeshRenderer* meshRenderer;
+    Mesh* mesh;
+    SubMesh* subMesh;
 
-    for (SpotLight& light : scene->spotLights) {
-        if (!light.enableShadows || !light.isActive) {
+    for (int i = 0; i < scene->spotLights.size(); i++) {
+        SpotLight* light = &scene->spotLights[i];
+        if (!light->enableShadows || !light->isActive) {
             continue;
         }
 
-        position = getPosition(scene, light.entityID);
-        viewMatrix = mat4::sLookAt(position, position + forward(scene, light.entityID), up(scene, light.entityID));
-        projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light.outerCutoff) * 2.0f, 1.0f, 2.1f, light.range);
+        position = getPosition(scene, light->entityID);
+        viewMatrix = mat4::sLookAt(position, position + transformForward(scene, light->entityID), transformUp(scene, light->entityID));
+        projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light->outerCutoff) * 2.0f, 1.0f, 2.1f, light->range);
         viewProjection = projectionMatrix * viewMatrix;
-        light.lightSpaceMatrix = viewProjection;
+        light->lightSpaceMatrix = viewProjection;
 
-        glViewport(0, 0, light.shadowWidth, light.shadowHeight);
-        glBindFramebuffer(GL_FRAMEBUFFER, light.depthFrameBuffer);
+        glViewport(0, 0, light->shadowWidth, light->shadowHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, light->depthFrameBuffer);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(renderer->depthShader);
@@ -78,42 +88,45 @@ void drawShadowMaps(RenderState* renderer, Scene* scene) {
         glUniform3fv(glGetUniformLocation(renderer->depthShader, "lightPos"), 1, position.mF32);
         glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"), 200.0f);
 
-        for (MeshRenderer& meshRenderer : scene->meshRenderers) {
-            if (meshRenderer.mesh == nullptr) {
+        for (int i = 0; i < scene->meshRenderers.size(); i++) {
+            meshRenderer = &scene->meshRenderers[i];
+            mesh = meshRenderer->mesh;
+            if (mesh == nullptr) {
                 continue;
             }
 
-            model = getTransform(scene, meshRenderer.entityID)->worldTransform;
+            model = getTransform(scene, meshRenderer->entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 
-            if (!meshRenderer.boneMatricesSet && meshRenderer.boneMatrices.size() > 0) {
+            if (!meshRenderer->boneMatricesSet && meshRenderer->boneMatrices.size() > 0) {
                 Transform* boneTransform;
                 uint32_t index;
                 mat4 offset;
-                meshRenderer.boneMatricesSet = true;
+                meshRenderer->boneMatricesSet = true;
 
-                for (const auto& pair : meshRenderer.transformBoneMap) {
+                for (const auto& pair : meshRenderer->transformBoneMap) {
                     boneTransform = getTransform(scene, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
-                    meshRenderer.boneMatrices[index] = (getTransform(scene, meshRenderer.rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    meshRenderer->boneMatrices[index] = (getTransform(scene, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
 
-                glUniformMatrix4fv(boneMatrixLoc, meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
+                glUniformMatrix4fv(boneMatrixLoc, meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
             }
 
-            glBindVertexArray(meshRenderer.mesh->VAO);
+            glBindVertexArray(mesh->VAO);
 
-            for (SubMesh& subMesh : meshRenderer.mesh->subMeshes) {
-                glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(GLsizei)));
+            for (int i = 0; i < mesh->subMeshes.size(); i++) {
+                subMesh = &mesh->subMeshes[i];
+                glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(GLsizei)));
             }
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, light.blurDepthFrameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, light->blurDepthFrameBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(renderer->shadowBlurShader);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, light.depthTex);
+        glBindTexture(GL_TEXTURE_2D, light->depthTex);
         glBindVertexArray(renderer->fullscreenVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
@@ -121,14 +134,16 @@ void drawShadowMaps(RenderState* renderer, Scene* scene) {
     glViewport(0, 0, renderer->windowData.viewportWidth, renderer->windowData.viewportHeight);
 }
 
-void drawScene(RenderState* renderer, Scene* scene) {
-    Mesh* mesh;
-    Material* material;
+static void drawScene(RenderState* renderer, Scene* scene) {
     uint32_t offset;
     mat4 model;
-
-    const Camera* camera = scene->cameras[0];
-    const std::vector<MeshRenderer>& meshRenderers = scene->meshRenderers;
+    MeshRenderer* meshRenderer;
+    Mesh* mesh;
+    SubMesh* subMesh;
+    Material* material;
+    PointLight* pointLight;
+    SpotLight* spotLight;
+    Camera* camera = &scene->cameras[0];
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,62 +160,64 @@ void drawScene(RenderState* renderer, Scene* scene) {
     glUniform3fv(glGetUniformLocation(renderer->lightingShader, "fogColor"), 1, renderer->fogColor.mF32);
 
     for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
-        const PointLight& pointLight = scene->pointLights[i];
+        pointLight = &scene->pointLights[i];
         offset = i * 4;
-        glUniform3fv(36 + 0 + offset, 1, getPosition(scene, pointLight.entityID).mF32);
-        glUniform3fv(36 + 1 + offset, 1, pointLight.color.mF32);
-        glUniform1f(36 + 2 + offset, pointLight.brightness);
+        glUniform3fv(36 + 0 + offset, 1, getPosition(scene, pointLight->entityID).mF32);
+        glUniform3fv(36 + 1 + offset, 1, pointLight->color.mF32);
+        glUniform1f(36 + 2 + offset, pointLight->brightness);
     }
 
     for (uint32_t i = 0; i < scene->spotLights.size(); i++) {
-        SpotLight& spotLight = scene->spotLights[i];
+        spotLight = &scene->spotLights[i];
         offset = i * 8;
-        glUniform3fv(120 + 0 + offset, 1, getPosition(scene, spotLight.entityID).mF32);
-        glUniform3fv(120 + 1 + offset, 1, forward(scene, spotLight.entityID).mF32);
-        glUniform3fv(120 + 2 + offset, 1, spotLight.color.mF32);
-        glUniform1f(120 + 3 + offset, spotLight.brightness);
-        glUniform1f(120 + 4 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.cutoff)));
-        glUniform1f(120 + 5 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight.outerCutoff)));
-        glUniform1i(120 + 6 + offset, spotLight.isActive);
-        glUniform1i(120 + 7 + offset, spotLight.enableShadows);
-        glUniformMatrix4fv(15 + i, 1, GL_FALSE, &spotLight.lightSpaceMatrix(0, 0));
-        glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_LightRadiusUV"), spotLight.lightRadiusUV);
-        glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_BlockerSearchUV"), spotLight.blockerSearchUV);
+        glUniform3fv(120 + 0 + offset, 1, getPosition(scene, spotLight->entityID).mF32);
+        glUniform3fv(120 + 1 + offset, 1, transformForward(scene, spotLight->entityID).mF32);
+        glUniform3fv(120 + 2 + offset, 1, spotLight->color.mF32);
+        glUniform1f(120 + 3 + offset, spotLight->brightness);
+        glUniform1f(120 + 4 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight->cutoff)));
+        glUniform1f(120 + 5 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight->outerCutoff)));
+        glUniform1i(120 + 6 + offset, spotLight->isActive);
+        glUniform1i(120 + 7 + offset, spotLight->enableShadows);
+        glUniformMatrix4fv(15 + i, 1, GL_FALSE, &spotLight->lightSpaceMatrix(0, 0));
+        glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_LightRadiusUV"), spotLight->lightRadiusUV);
+        glUniform1f(glGetUniformLocation(renderer->lightingShader, "u_BlockerSearchUV"), spotLight->blockerSearchUV);
         glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureShadowMapUnit + i);
-        glBindTexture(GL_TEXTURE_2D, spotLight.blurDepthTex);
+        glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
     }
 
-    for (MeshRenderer& meshRenderer : scene->meshRenderers) {
-        mesh = meshRenderer.mesh;
+    for (int i = 0; i < scene->meshRenderers.size(); i++) {
+        meshRenderer = &scene->meshRenderers[i];
+        mesh = meshRenderer->mesh;
         if (mesh == nullptr) {
             continue;
         }
 
-        if (meshRenderer.boneMatrices.size() > 0) {
-            if (!meshRenderer.boneMatricesSet) {
+        if (meshRenderer->boneMatrices.size() > 0) {
+            if (!meshRenderer->boneMatricesSet) {
                 Transform* boneTransform;
                 uint32_t index;
                 mat4 offset;
-                meshRenderer.boneMatricesSet = true;
+                meshRenderer->boneMatricesSet = true;
 
-                for (const auto& pair : meshRenderer.transformBoneMap) {
+                for (const auto& pair : meshRenderer->transformBoneMap) {
                     boneTransform = getTransform(scene, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
-                    meshRenderer.boneMatrices[index] = (getTransform(scene, meshRenderer.rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    meshRenderer->boneMatrices[index] = (getTransform(scene, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
             }
             // glUniformMatrix4fv(boneMatrixLoc, meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
-            meshRenderer.boneMatricesSet = false;
-            glUniformMatrix4fv(glGetUniformLocation(renderer->lightingShader, "finalBoneMatrices[0]"), meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
+            meshRenderer->boneMatricesSet = false;
+            glUniformMatrix4fv(glGetUniformLocation(renderer->lightingShader, "finalBoneMatrices[0]"), meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
         }
 
-        model = getTransform(scene, meshRenderer.entityID)->worldTransform;
+        model = getTransform(scene, meshRenderer->entityID)->worldTransform;
         glUniformMatrix4fv(4, 1, GL_FALSE, &model(0, 0));
         glBindVertexArray(mesh->VAO);
 
-        for (SubMesh& subMesh : mesh->subMeshes) {
-            material = subMesh.material;
+        for (int i = 0; i < mesh->subMeshes.size(); i++) {
+            subMesh = &mesh->subMeshes[i];
+            material = subMesh->material;
             const std::vector<Texture*>& textures = material->textures;
 
             glUniform1f(10, material->metalness);
@@ -209,7 +226,7 @@ void drawScene(RenderState* renderer, Scene* scene) {
             glUniform1f(13, material->normalStrength);
 
 #ifdef PETES_EDITOR
-            vec4 baseColor = scene->pickedEntity == meshRenderer.entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
+            vec4 baseColor = scene->pickedEntity == meshRenderer->entityID ? vec4(0.0f, 1.0f, 0.0f, 1.0f) : material->baseColor;
             glUniform3fv(14, 1, baseColor.mF32);
 #else
             glUniform3fv(14, 1, material->baseColor.mF32);
@@ -227,12 +244,12 @@ void drawScene(RenderState* renderer, Scene* scene) {
             glActiveTexture(GL_TEXTURE0 + uniform_location::kTextureNormalUnit);
             glBindTexture(GL_TEXTURE_2D, textures[4]->id);
 
-            glDrawElements(GL_TRIANGLES, subMesh.indexCount, GL_UNSIGNED_INT, (void*)(subMesh.indexOffset * sizeof(unsigned int)));
+            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
     }
 }
 
-void drawSSAO(RenderState* scene) {
+static void drawSSAO(RenderState* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, scene->ssaoFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(scene->ssaoShader);
@@ -253,7 +270,7 @@ void drawSSAO(RenderState* scene) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-void drawBlurPass(RenderState* scene) {
+static void drawBlurPass(RenderState* scene) {
     scene->horizontalBlur = false;
     const uint32_t amount = 10;
     glUseProgram(scene->blurShader);
@@ -348,7 +365,7 @@ void renderDebug(RenderState* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void drawFullScreenQuad(RenderState* scene) {
+static void drawFullScreenQuad(RenderState* scene) {
     glViewport(0, 0, scene->windowData.viewportWidth, scene->windowData.viewportHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->finalBuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -366,7 +383,7 @@ void drawFullScreenQuad(RenderState* scene) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-void createPickingFBO(RenderState* scene) {
+static void createPickingFBO(RenderState* scene) {
     GLsizei width = scene->windowData.width;
     GLsizei height = scene->windowData.height;
 
@@ -440,7 +457,7 @@ void deleteSpotLightShadowMap(SpotLight* light) {
     glDeleteFramebuffers(2, frameBuffers);
 }
 
-void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be callable per light, not looping over every light.
+static void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be callable per light, not looping over every light.
     for (SpotLight& light : scene->spotLights) {
         light.shadowWidth = 512.0f;
         light.shadowHeight = 512.0f;
@@ -483,7 +500,7 @@ void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be calla
     }
 }
 
-void createForwardBuffer(RenderState* scene) {
+static void createForwardBuffer(RenderState* scene) {
     GLsizei width = scene->windowData.viewportWidth;
     GLsizei height = scene->windowData.viewportHeight;
     GLenum attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
@@ -539,7 +556,7 @@ void createForwardBuffer(RenderState* scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createEditorBuffer(RenderState* scene) {
+static void createEditorBuffer(RenderState* scene) {
     GLint width = scene->windowData.viewportWidth;
     GLint height = scene->windowData.viewportHeight;
 
@@ -563,7 +580,7 @@ void createEditorBuffer(RenderState* scene) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-void createSSAOBuffer(RenderState* scene) {
+static void createSSAOBuffer(RenderState* scene) {
     glGenFramebuffers(1, &scene->ssaoFBO);
     glGenTextures(1, &scene->blurTex);
 
@@ -580,7 +597,7 @@ void createSSAOBuffer(RenderState* scene) {
     }
 }
 
-void createBlurBuffers(RenderState* scene) {
+static void createBlurBuffers(RenderState* scene) {
     GLsizei width = scene->windowData.viewportWidth;
     GLsizei height = scene->windowData.viewportHeight;
 
@@ -604,7 +621,7 @@ void createBlurBuffers(RenderState* scene) {
     }
 }
 
-void resizeBuffers(RenderState* renderer) {
+static void resizeBuffers(RenderState* renderer) {
     uint32_t width = renderer->windowData.viewportWidth;
     uint32_t height = renderer->windowData.viewportHeight;
     GLenum attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
@@ -683,7 +700,7 @@ void resizeBuffers(RenderState* renderer) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createFullScreenQuad(RenderState* scene) {
+static void createFullScreenQuad(RenderState* scene) {
     float quadVertices[] = {
         -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,   // top-left
         -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // bottom-left
@@ -704,7 +721,7 @@ void createFullScreenQuad(RenderState* scene) {
     glVertexAttribPointer(vertex_attribute_location::kVertexTexCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 }
 
-void generateSSAOKernel(RenderState* scene) {
+static void generateSSAOKernel(RenderState* scene) {
     std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
     std::default_random_engine generator;
 
@@ -823,10 +840,10 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
 }
 
 void updateBufferData(RenderState* renderer, Scene* scene) {
-    Camera* camera = scene->cameras[0];
+    Camera* camera = &scene->cameras[0];
     vec3 position = getPosition(scene, camera->entityID);
 
-    renderer->matricesUBOData.view = mat4::sLookAt(position, position + forward(scene, camera->entityID), up(scene, camera->entityID));
+    renderer->matricesUBOData.view = mat4::sLookAt(position, position + transformForward(scene, camera->entityID), transformUp(scene, camera->entityID));
     renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
 }

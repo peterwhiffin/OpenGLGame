@@ -1,4 +1,5 @@
 #version 460 core
+precision highp float;
 
 struct DirectionalLight {
     vec3 position;
@@ -86,8 +87,13 @@ uniform float maxFogDistance = 65.0;
 uniform float minFogDistance = 1.0;
 uniform float fogDensity = 10.0;
 
-float remap(float value, float inputMin, float inputMax, float outputMin, float outputMax) {
-  float normalizedValue = (value - inputMin) / (inputMax - inputMin);
+float gradientNoise(in vec2 uv)
+{
+	return fract(52.9829189 * fract(dot(uv, vec2(0.06711056, 0.00583715))));
+}
+
+highp float remap(highp float value, highp float inputMin, highp float inputMax, highp float outputMin, highp float outputMax) {
+  highp float normalizedValue = (value - inputMin) / (inputMax - inputMin);
   return normalizedValue * (outputMax - outputMin) + outputMin;
 }
 
@@ -267,20 +273,15 @@ for(int i = 0; i < fromVert.numSpotLights; ++i) {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     }     
   
-    
-    
     float fragDistance = length(fromVert.fragPos - camPos);
     float fogFactor = remap(fragDistance, minFogDistance, maxFogDistance, 0, 1); 
     fogFactor = clamp(fogFactor, 0, 1);
     vec3 fog = fogColor * fogFactor * fogDensity;
     vec3 ambient = ambientBrightness * albedo * ao;
-    vec3 color = ambient + Lo;
-    color += fog;
-    FragColor = vec4(color * baseColor, 1.0);
+    vec3 color = (ambient + Lo) * baseColor;
+    FragColor = vec4(color + fog, 1.0);
 
     float brightness = dot(FragColor.xyz, vec3(0.2126, 0.7152, 0.0722));
-
-
 
     if(brightness > bloomThreshold){
         BloomColor = vec4(FragColor.rgb, 1.0);

@@ -13,13 +13,13 @@
 #include "camera.h"
 #include "editor.h"
 
-void exitProgram(RenderState* renderer, Resources* resources) {
+static void exitProgram(RenderState* renderer, Resources* resources) {
     deleteBuffers(renderer, resources);
     glfwTerminate();
     exit(0);
 }
 
-void updateTime(Scene* scene) {
+static void updateTime(Scene* scene) {
     scene->currentFrame = glfwGetTime();
     scene->deltaTime = scene->currentFrame - scene->lastFrame;
     scene->lastFrame = scene->currentFrame;
@@ -27,7 +27,7 @@ void updateTime(Scene* scene) {
 
 #ifdef PETES_EDITOR
 
-void updateSceneEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+static void updateSceneEditor(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
     if (editor->playing) {
         updatePhysics(scene);
         updatePlayer(scene, resources, renderer);

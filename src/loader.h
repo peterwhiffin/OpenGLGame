@@ -48,6 +48,25 @@ struct Resources {
 
     std::unordered_map<std::string, TextureSettings> textureImportMap;
     std::unordered_map<std::string, ModelSettings> modelImportMap;
+    std::unordered_map<std::string, uint32_t> prefabMap;
+
+    std::vector<Entity> entities;
+    std::vector<Transform> transforms;
+    std::vector<MeshRenderer> meshRenderers;
+    std::vector<Animator> animators;
+    std::vector<RigidBody> rigidbodies;
+    std::vector<PointLight> pointLights;
+    std::vector<SpotLight> spotLights;
+    std::vector<Camera> cameras;
+
+    std::unordered_map<uint32_t, size_t> entityIndexMap;
+    std::unordered_map<uint32_t, size_t> transformIndexMap;
+    std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
+    std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
+    std::unordered_map<uint32_t, size_t> animatorIndexMap;
+    std::unordered_map<uint32_t, size_t> pointLightIndexMap;
+    std::unordered_map<uint32_t, size_t> spotLightIndexMap;
+    std::unordered_map<uint32_t, size_t> cameraIndexMap;
 };
 
 void loadResources(Resources* resources, RenderState* renderer);

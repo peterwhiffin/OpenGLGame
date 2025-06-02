@@ -12,7 +12,7 @@
 #include "animation.h"
 #include "ecs.h"
 
-void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
+static void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
     Model* trashcanModel = resources->modelMap["trashcan.gltf"];
     uint32_t trashcanID = createEntityFromModel(scene, trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
     Transform* transform = getTransform(scene, trashcanID);
@@ -28,8 +28,8 @@ void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
 
     RigidBody* rb = addRigidbody(scene, trashcanID);
     rb->joltBody = floor->GetID();
-    vec3 camForward = forward(scene, player->cameraController->camera->entityID);
-    scene->bodyInterface->SetPosition(rb->joltBody, getPosition(scene, player->cameraController->camera->entityID) + camForward, JPH::EActivation::Activate);
+    vec3 camForward = transformForward(scene, player->cameraController.camera->entityID);
+    scene->bodyInterface->SetPosition(rb->joltBody, getPosition(scene, player->cameraController.camera->entityID) + camForward, JPH::EActivation::Activate);
     scene->bodyInterface->SetLinearVelocity(rb->joltBody, camForward * 20);
     rb->lastPosition = getPosition(scene, trashcanID);
     rb->lastRotation = getRotation(scene, trashcanID);
@@ -38,7 +38,7 @@ void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
 
 void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
     GLFWwindow* window = renderer->window;
-    Player* player = scene->player;
+    Player* player = &scene->player;
     InputActions* input = scene->input;
     Transform* transform = getTransform(scene, player->entityID);
 
@@ -66,10 +66,10 @@ void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
         player->canSpawnCan = true;
     }
 
-    float xOffset = input->lookX * player->cameraController->sensitivity;
-    float yOffset = input->lookY * player->cameraController->sensitivity;
-    float pitch = player->cameraController->pitch;
-    float yaw = player->cameraController->yaw;
+    float xOffset = input->lookX * player->cameraController.sensitivity;
+    float yOffset = input->lookY * player->cameraController.sensitivity;
+    float pitch = player->cameraController.pitch;
+    float yaw = player->cameraController.yaw;
 
     yaw -= xOffset;
     pitch -= yOffset;
@@ -82,18 +82,18 @@ void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
         pitch = -89.0f;
     }
 
-    player->cameraController->pitch = pitch;
-    player->cameraController->yaw = yaw;
+    player->cameraController.pitch = pitch;
+    player->cameraController.yaw = yaw;
 
-    vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(player->cameraController->pitch), 0.0f, 0.0f);
-    vec3 playerRotation = vec3(0.0f, JPH::DegreesToRadians(player->cameraController->yaw), 0.0f);
+    vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(player->cameraController.pitch), 0.0f, 0.0f);
+    vec3 playerRotation = vec3(0.0f, JPH::DegreesToRadians(player->cameraController.yaw), 0.0f);
 
     setRotation(scene, player->entityID, quat::sEulerAngles(playerRotation));
-    setLocalRotation(scene, player->cameraController->cameraTargetEntityID, quat::sEulerAngles(cameraTargetRotation));
+    setLocalRotation(scene, player->cameraController.cameraTargetEntityID, quat::sEulerAngles(cameraTargetRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
-    vec3 forwardDir = forward(scene, player->entityID);
-    vec3 rightDir = right(scene, player->entityID);
+    vec3 forwardDir = transformForward(scene, player->entityID);
+    vec3 rightDir = transformRight(scene, player->entityID);
     moveDir += input->movement.y * forwardDir + input->movement.x * rightDir;
     vec3 finalMove = moveDir * player->moveSpeed;
 
@@ -127,7 +127,8 @@ void updatePlayer(Scene* scene, Resources* resources, RenderState* renderer) {
 }
 
 Player* buildPlayer(Scene* scene) {
-    uint32_t playerEntityID = getNewEntity(scene, "Player")->entityID;
+    return nullptr;
+    /* uint32_t playerEntityID = getNewEntity(scene, "Player")->entityID;
     uint32_t cameraTargetEntityID = getNewEntity(scene, "CameraTarget")->entityID;
     uint32_t cameraEntityID = getNewEntity(scene, "Camera")->entityID;
 
@@ -165,5 +166,5 @@ Player* buildPlayer(Scene* scene) {
 
     scene->player = player;
     scene->movingRigidbodies.insert(rb->entityID);
-    return player;
+    return player; */
 }

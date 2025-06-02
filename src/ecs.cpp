@@ -62,16 +62,11 @@ SpotLight* getSpotLight(Scene* scene, const uint32_t entityID) {
 }
 
 Camera* getCamera(Scene* scene, const uint32_t entityID) {
-    Camera* foundCamera = nullptr;
-
-    for (Camera* camera : scene->cameras) {
-        if (camera->entityID == entityID) {
-            foundCamera = camera;
-            break;
-        }
+    if (!scene->cameraIndexMap.count(entityID)) {
+        return nullptr;
     }
 
-    return foundCamera;
+    return &scene->cameras[scene->cameraIndexMap[entityID]];
 }
 
 Transform* addTransform(Scene* scene, uint32_t entityID) {
@@ -137,6 +132,15 @@ SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
     scene->spotLights.push_back(spotLight);
     scene->spotLightIndexMap[entityID] = index;
     return &scene->spotLights[index];
+}
+
+Camera* addCamera(Scene* scene, uint32_t entityID) {
+    Camera camera;
+    camera.entityID = entityID;
+    size_t index = scene->cameras.size();
+    scene->cameras.push_back(camera);
+    scene->cameraIndexMap[entityID] = index;
+    return &scene->cameras[index];
 }
 
 static void removeTransform(Scene* scene, uint32_t entityID) {
@@ -306,17 +310,6 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
     mapAnimationChannels(scene, animatorPtr, entityID);
     animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
-}
-
-Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float nearPlane, float farPlane) {
-    Camera* camera = new Camera();
-    scene->cameras.push_back(camera);
-    camera->entityID = entityID;
-    camera->fov = fov;
-    camera->fovRadians = JPH::DegreesToRadians(fov);
-    camera->nearPlane = nearPlane;
-    camera->farPlane = farPlane;
-    return camera;
 }
 
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic) {

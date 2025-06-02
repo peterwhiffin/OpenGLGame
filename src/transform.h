@@ -14,9 +14,9 @@ struct Transform {
     std::vector<uint32_t> childEntityIds;
 };
 
-vec3 right(Scene* scene, uint32_t entityID);
-vec3 up(Scene* scene, uint32_t entityID);
-vec3 forward(Scene* scene, uint32_t entityID);
+vec3 transformRight(Scene* scene, uint32_t entityID);
+vec3 transformUp(Scene* scene, uint32_t entityID);
+vec3 transformForward(Scene* scene, uint32_t entityID);
 
 vec3 getLocalPosition(Scene* scene, uint32_t entityID);
 quat getLocalRotation(Scene* scene, uint32_t entityID);

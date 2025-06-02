@@ -21,6 +21,28 @@ struct Entity {
     bool isActive;
 };
 
+struct EntityGroup {
+    uint32_t nextEntityID = 1;
+
+    std::vector<Entity> entities;
+    std::vector<Transform> transforms;
+    std::vector<MeshRenderer> meshRenderers;
+    std::vector<Animator> animators;
+    std::vector<RigidBody> rigidbodies;
+    std::vector<PointLight> pointLights;
+    std::vector<SpotLight> spotLights;
+    std::vector<Camera> cameras;
+
+    std::unordered_map<uint32_t, size_t> entityIndexMap;
+    std::unordered_map<uint32_t, size_t> transformIndexMap;
+    std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
+    std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
+    std::unordered_map<uint32_t, size_t> animatorIndexMap;
+    std::unordered_map<uint32_t, size_t> pointLightIndexMap;
+    std::unordered_map<uint32_t, size_t> spotLightIndexMap;
+    std::unordered_map<uint32_t, size_t> cameraIndexMap;
+};
+
 uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 uint32_t getEntityID(Scene* scene);
 Entity* getNewEntity(Scene* scene, std::string name, uint32_t id = -1, bool createTransform = true);
@@ -30,7 +52,7 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID);
 RigidBody* addRigidbody(Scene* scene, uint32_t entityID);
 Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model);
 Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations);
-Camera* addCamera(Scene* scene, uint32_t entityID, float fov, float nearPlane, float farPlane);
+Camera* addCamera(Scene* scene, uint32_t entityID);
 PointLight* addPointLight(Scene* scene, uint32_t entityID);
 SpotLight* addSpotLight(Scene* scene, uint32_t entityID);
 

@@ -40,7 +40,7 @@ struct Scene {
     std::string scenePath = "";
 
     InputActions* input;
-    Player* player;
+    Player player;
     DirectionalLight sun;
 
     JPH::PhysicsSystem* physicsSystem;
@@ -59,7 +59,7 @@ struct Scene {
     std::vector<RigidBody> rigidbodies;
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
-    std::vector<Camera*> cameras;
+    std::vector<Camera> cameras;
 
     std::unordered_map<uint32_t, size_t> entityIndexMap;
     std::unordered_map<uint32_t, size_t> transformIndexMap;
@@ -68,6 +68,7 @@ struct Scene {
     std::unordered_map<uint32_t, size_t> animatorIndexMap;
     std::unordered_map<uint32_t, size_t> pointLightIndexMap;
     std::unordered_map<uint32_t, size_t> spotLightIndexMap;
+    std::unordered_map<uint32_t, size_t> cameraIndexMap;
 };
 
 void clearScene(Scene* scene);

@@ -29,15 +29,15 @@ vec3 QuaternionByVector3(quat rotation, vec3 point) {
     return rotation.Normalized() * point.Normalized();  // who knows
 }
 
-vec3 right(Scene* scene, uint32_t entityID) {
+vec3 transformRight(Scene* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(1.0f, 0.0f, 0.0f));
 }
 
-vec3 up(Scene* scene, uint32_t entityID) {
+vec3 transformUp(Scene* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(0.0f, 1.0f, 0.0f));
 }
 
-vec3 forward(Scene* scene, uint32_t entityID) {
+vec3 transformForward(Scene* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(0.0f, 0.0f, 1.0f));
 }
 
@@ -58,7 +58,7 @@ vec3 scaleFromMatrix(mat4& matrix) {
 }
 
 vec3 getPosition(Scene* scene, uint32_t entityID) {
-    const Transform* transform = getTransform(scene, entityID);
+    Transform* transform = getTransform(scene, entityID);
     return transform->worldTransform.GetTranslation();
 }
 

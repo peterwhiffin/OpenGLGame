@@ -25,7 +25,7 @@ layout (std140, binding = 0) uniform global{
 
 out VertToFrag{
     vec2 texCoord;
-    vec3 fragPos;
+    highp vec3 fragPos;
     vec3 normal;
     mat3 TBN;
     vec3 gPosition;
@@ -39,7 +39,7 @@ void main(){
     mat3 normalMatrix = transpose(inverse(mat3(model)));
     
         
-    vec4 totalPosition = vec4(0.0); 
+    highp vec4 totalPosition = vec4(0.0); 
     vec3 totalNormal = vec3(0.0);
  
     for(int i = 0; i < MAX_BONE_INFLUENCE; i++){
@@ -61,7 +61,7 @@ void main(){
 
     // vec4 modelPos = totalPosition;
 
-    vec4 modelPos = model * totalPosition;
+    highp vec4 modelPos = model * totalPosition;
 
     // modelPos = model * finalBoneMatrices[boneIds[0]] * vec4(aPos, 1.0);
     // modelPos = model * vec4(aPos, 1.0);

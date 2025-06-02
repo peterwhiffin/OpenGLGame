@@ -14,7 +14,7 @@ struct CameraController {
 
 struct Player {
     uint32_t entityID;
-    CameraController* cameraController;
+    CameraController cameraController;
     uint32_t armsID;
     bool isGrounded = false;
     bool canJump = true;

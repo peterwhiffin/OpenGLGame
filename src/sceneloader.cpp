@@ -575,7 +575,11 @@ void createCamera(Scene* scene, ComponentBlock block) {
         farPlane = std::stof(block.memberValueMap["farPlane"]);
     }
 
-    Camera* camera = addCamera(scene, entityID, fov, nearPlane, farPlane);
+    Camera* camera = addCamera(scene, entityID);
+    camera->fov = fov;
+    camera->fovRadians = JPH::DegreesToRadians(fov);
+    camera->nearPlane = nearPlane;
+    camera->farPlane = farPlane;
 }
 
 void createPointLights(Scene* scene, ComponentBlock block) {
@@ -729,18 +733,18 @@ void createPlayer(Scene* scene, ComponentBlock block) {
         sensitivity = std::stof(block.memberValueMap["sensitivity"]);
     }
 
-    Player* player = new Player();
-    player->cameraController = new CameraController();
-    player->entityID = entityID;
-    player->armsID = armsID;
-    player->jumpHeight = jumpHeight;
-    player->moveSpeed = moveSpeed;
-    player->groundCheckDistance = groundCheckDistance;
-    player->cameraController->entityID = cameraController_EntityID;
-    player->cameraController->cameraTargetEntityID = cameraController_CameraTargetEntityID;
-    player->cameraController->cameraEntityID = cameraController_CameraEntityID;
-    player->cameraController->sensitivity = sensitivity;
-    scene->player = player;
+    // Player* player = new Player();
+    // player->cameraController = new CameraController();
+    scene->player.entityID = entityID;
+    scene->player.armsID = armsID;
+    scene->player.jumpHeight = jumpHeight;
+    scene->player.moveSpeed = moveSpeed;
+    scene->player.groundCheckDistance = groundCheckDistance;
+    scene->player.cameraController.entityID = cameraController_EntityID;
+    scene->player.cameraController.cameraTargetEntityID = cameraController_CameraTargetEntityID;
+    scene->player.cameraController.cameraEntityID = cameraController_CameraEntityID;
+    scene->player.cameraController.sensitivity = sensitivity;
+    // scene->player = player;
 }
 
 void createModelSettings(Resources* resources, ComponentBlock block) {
@@ -825,7 +829,7 @@ void createComponents(Scene* scene, Resources* resources, std::vector<ComponentB
 }
 
 void loadDefaultScene(Scene* scene, Resources* resources) {
-    for (int i = 0; i < 2; i++) {
+    /* for (int i = 0; i < 2; i++) {
         Entity* pointLightEntity = getNewEntity(scene, "PointLight");
         PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
         setPosition(scene, pointLightEntity->entityID, vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
@@ -858,7 +862,7 @@ void loadDefaultScene(Scene* scene, Resources* resources) {
     setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
     // setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
     setLocalRotation(scene, spotLightEntityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
-    setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f));
+    setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f)); */
 }
 
 void loadMaterials(Resources* resources, RenderState* renderer) {
@@ -921,9 +925,11 @@ void loadTempScene(Resources* resources, Scene* scene) {
         mapBones(scene, &renderer);
     }
 
-    if (scene->player != nullptr) {
-        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-    }
+    /* if (scene->player != nullptr) {
+        scene.player.cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+    } */
+
+    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
 }
 
 void loadScene(Resources* resources, Scene* scene) {
@@ -956,10 +962,11 @@ void loadScene(Resources* resources, Scene* scene) {
         mapBones(scene, &renderer);
     }
 
-    if (scene->player != nullptr) {
-        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-    }
+    /*     if (scene->player != nullptr) {
+            scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+        } */
 
+    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
     writeTempScene(scene, resources);
 }
 
@@ -998,9 +1005,11 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
         mapBones(scene, &renderer);
     }
 
-    if (scene->player != nullptr) {
+    /* if (scene->player != nullptr) {
         scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-    }
+    } */
+
+    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
     writeTempScene(scene, resources);
 }
 
@@ -1308,15 +1317,15 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
 }
 
 void writePlayer(Scene* scene, std::ofstream& stream) {
-    std::string entityID = std::to_string(scene->player->entityID);
-    std::string armsID = std::to_string(scene->player->armsID);
-    std::string jumpHeight = std::to_string(scene->player->jumpHeight);
-    std::string moveSpeed = std::to_string(scene->player->moveSpeed);
-    std::string groundCheckDistance = std::to_string(scene->player->groundCheckDistance);
-    std::string cameraController_EntityID = std::to_string(scene->player->cameraController->entityID);
-    std::string cameraController_cameraTargetEntityID = std::to_string(scene->player->cameraController->cameraTargetEntityID);
-    std::string cameraController_cameraEntityID = std::to_string(scene->player->cameraController->cameraEntityID);
-    std::string cameraController_Sensitivity = std::to_string(scene->player->cameraController->sensitivity);
+    std::string entityID = std::to_string(scene->player.entityID);
+    std::string armsID = std::to_string(scene->player.armsID);
+    std::string jumpHeight = std::to_string(scene->player.jumpHeight);
+    std::string moveSpeed = std::to_string(scene->player.moveSpeed);
+    std::string groundCheckDistance = std::to_string(scene->player.groundCheckDistance);
+    std::string cameraController_EntityID = std::to_string(scene->player.cameraController.entityID);
+    std::string cameraController_cameraTargetEntityID = std::to_string(scene->player.cameraController.cameraTargetEntityID);
+    std::string cameraController_cameraEntityID = std::to_string(scene->player.cameraController.cameraEntityID);
+    std::string cameraController_Sensitivity = std::to_string(scene->player.cameraController.sensitivity);
 
     stream << "Player {" << std::endl;
     stream << "entityID: " << entityID << std::endl;
@@ -1333,7 +1342,9 @@ void writePlayer(Scene* scene, std::ofstream& stream) {
 }
 
 void writeCameras(Scene* scene, std::ofstream& stream) {
-    for (Camera* camera : scene->cameras) {
+    Camera* camera;
+    for (int i = 0; i < scene->cameras.size(); i++) {
+        camera = &scene->cameras[i];
         std::string entityID = std::to_string(camera->entityID);
         std::string fov = std::to_string(camera->fov);
         std::string nearPlane = std::to_string(camera->nearPlane);

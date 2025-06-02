@@ -15,10 +15,10 @@
 #include "animation.h"
 #include "inspector.h"
 
-void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory);
+static void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory);
 void ExportImGuiStyleSizes();
 
-void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor) {
+static void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor) {
     /* if (!editor->isPicking) {
         return;
     } */
@@ -41,7 +41,7 @@ void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
+static void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
     Entity* entity = getEntity(scene, entityID);
     Transform* transform = getTransform(scene, entityID);
 
@@ -78,7 +78,7 @@ void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGu
     ImGui::PopID();
 }
 
-void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory) {
+static void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags node_flags, std::string directory) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(directory)) {
         if (dir.is_directory()) {
             node_flags = 0;
@@ -129,7 +129,7 @@ void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFlags nod
     }
 }
 
-void ShowExampleMenuFile(Scene* scene, Resources* resources, EditorState* editor) {
+static void ShowExampleMenuFile(Scene* scene, Resources* resources, EditorState* editor) {
     ImGui::MenuItem("(demo menu)", NULL, false, false);
     if (ImGui::MenuItem("New")) {
     }
@@ -208,7 +208,7 @@ void ShowExampleMenuFile(Scene* scene, Resources* resources, EditorState* editor
     }
 }
 
-void buildMainMenu(Scene* scene, Resources* resources, EditorState* editor) {
+static void buildMainMenu(Scene* scene, Resources* resources, EditorState* editor) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             ShowExampleMenuFile(scene, resources, editor);
@@ -232,7 +232,7 @@ void buildMainMenu(Scene* scene, Resources* resources, EditorState* editor) {
     }
 }
 
-void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Resources* resources) {
+static void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Resources* resources) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("EditViewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
 
@@ -295,7 +295,7 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Re
             std::string payload_n = *(const std::string*)payload->Data;
             Model* prefab = resources->modelMap[payload_n];
             uint32_t id = createEntityFromModel(scene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
-            vec3 pos = getPosition(scene, scene->cameras[0]->entityID) + (editor->worldPos * 2.0f);
+            vec3 pos = getPosition(scene, scene->cameras[0].entityID) + (editor->worldPos * 2.0f);
             setPosition(scene, id, pos);
         }
 
@@ -306,7 +306,7 @@ void buildSceneView(Scene* scene, RenderState* renderer, EditorState* editor, Re
     ImGui::PopStyleVar();
 }
 
-void buildSceneHierarchy(Scene* scene, EditorState* editor) {
+static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
     ImGui::Begin("SceneHierarchy");
     static ImGuiSelectionBasicStorage selection;
     ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
@@ -353,7 +353,7 @@ void buildSceneHierarchy(Scene* scene, EditorState* editor) {
     ImGui::End();
 }
 
-void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) {
+static void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) {
     ImGui::Begin("Project");
 
     createProjectTree(scene, editor, 0, "..\\resources\\");
@@ -398,7 +398,7 @@ void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) 
     ImGui::End();
 }
 
-void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene* scene) {
+static void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene* scene) {
     ImGui::Begin("Post-Process");
     ImGui::DragFloat("Exposure", &renderer->exposure, 0.01f, 0, 1000.0f);
     ImGui::DragFloat("Bloom Threshold", &renderer->bloomThreshold, 0.01f, 0, 100.0f);
@@ -448,7 +448,7 @@ void buildEnvironmentSettings(RenderState* renderer, EditorState* editor, Scene*
     ImGui::End();
 }
 
-bool checkFilenameUnique(std::string path, std::string filename) {
+static bool checkFilenameUnique(std::string path, std::string filename) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(path)) {
         if (dir.is_regular_file()) {
             std::string fileString = dir.path().filename().string();
@@ -483,9 +483,9 @@ void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resourc
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+static void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
     InputActions* input = scene->input;
-    Camera* cam = scene->cameras[0];
+    Camera* cam = &scene->cameras[0];
     Transform* transform = getTransform(scene, cam->entityID);
 
     float xOffset = input->lookX * editor->cameraController.sensitivity;
@@ -512,8 +512,8 @@ void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* render
     setRotation(scene, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
-    vec3 forwardDir = forward(scene, transform->entityID);
-    vec3 rightDir = right(scene, transform->entityID);
+    vec3 forwardDir = transformForward(scene, transform->entityID);
+    vec3 rightDir = transformRight(scene, transform->entityID);
     moveDir += input->movement.y * forwardDir + input->movement.x * rightDir;
     vec3 finalMove = moveDir * editor->cameraController.moveSpeed * scene->deltaTime;
     vec3 currentPos = getPosition(scene, transform->entityID);
@@ -525,7 +525,7 @@ void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* render
     }
 }
 
-void defaultUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+static void defaultUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
     if (editor->mouseInViewport) {
         if (scene->input->fire) {
             checkPicker(scene, renderer, editor);
@@ -537,7 +537,7 @@ void defaultUpdate(Scene* scene, Resources* resources, RenderState* renderer, Ed
     }
 }
 
-void pickingUpdate(Scene* scene, EditorState* editor, RenderState* renderer) {
+static void pickingUpdate(Scene* scene, EditorState* editor, RenderState* renderer) {
     if (!scene->input->fire) {
         editor->editorMode = Default;
     }

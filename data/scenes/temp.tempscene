@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 16.068161, 4.839919, -13.709942
-localRotation: -0.048592, 0.588834, -0.035499, -0.806010
+localPosition: 16.314375, 3.741678, -10.392867
+localRotation: 0.001810, -0.990304, 0.138297, 0.012964
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -16081,6 +16081,27 @@ color: 1.000000, 0.283721, 0.283721
 shadows: true
 shadowWidth: 1024
 shadowHeight: 1024
+}
+
+Camera {
+entityID: 524
+fov: 68.000000
+nearPlane: 0.010000
+farPlane: 800.000000
+}
+
+Camera {
+entityID: 524
+fov: 68.000000
+nearPlane: 0.010000
+farPlane: 800.000000
+}
+
+Camera {
+entityID: 524
+fov: 68.000000
+nearPlane: 0.010000
+farPlane: 800.000000
 }
 
 Camera {

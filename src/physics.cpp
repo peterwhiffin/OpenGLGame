@@ -111,7 +111,7 @@ void updatePhysicsBodyPositions(Scene* scene) {
     }
 }
 
-void setPreviousTransforms(Scene* scene) {
+static void setPreviousTransforms(Scene* scene) {
     const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
     for (uint32_t entityID : scene->movingRigidbodies) {
         RigidBody* rigidbody = getRigidbody(scene, entityID);
