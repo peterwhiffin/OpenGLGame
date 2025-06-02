@@ -20,7 +20,8 @@ static void setInitialFlags() {
 }
 
 void drawPickingScene(RenderState* renderer, Scene* scene) {
-    Camera* camera = &scene->cameras[0];
+    EntityGroup* entities = &scene->entities;
+    Camera* camera = &entities->cameras[0];
     MeshRenderer* meshRenderer;
     Mesh* mesh;
     SubMesh* subMesh;
@@ -31,14 +32,14 @@ void drawPickingScene(RenderState* renderer, Scene* scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(renderer->pickingShader);
 
-    for (int i = 0; i < scene->meshRenderers.size(); i++) {
-        meshRenderer = &scene->meshRenderers[i];
+    for (int i = 0; i < entities->meshRenderers.size(); i++) {
+        meshRenderer = &entities->meshRenderers[i];
         mesh = meshRenderer->mesh;
         if (mesh == nullptr) {
             continue;
         }
 
-        Transform* transform = getTransform(scene, meshRenderer->entityID);
+        Transform* transform = getTransform(entities, meshRenderer->entityID);
 
         mat4 model = transform->worldTransform;
         glBindVertexArray(mesh->VAO);
@@ -62,19 +63,20 @@ static void drawShadowMaps(RenderState* renderer, Scene* scene) {
     mat4 projectionMatrix;
     mat4 viewProjection;
     mat4 model;
+    EntityGroup* entities = &scene->entities;
     GLint boneMatrixLoc = glGetUniformLocation(renderer->depthShader, "finalBoneMatrices[0]");
     MeshRenderer* meshRenderer;
     Mesh* mesh;
     SubMesh* subMesh;
 
-    for (int i = 0; i < scene->spotLights.size(); i++) {
-        SpotLight* light = &scene->spotLights[i];
+    for (int i = 0; i < entities->spotLights.size(); i++) {
+        SpotLight* light = &entities->spotLights[i];
         if (!light->enableShadows || !light->isActive) {
             continue;
         }
 
-        position = getPosition(scene, light->entityID);
-        viewMatrix = mat4::sLookAt(position, position + transformForward(scene, light->entityID), transformUp(scene, light->entityID));
+        position = getPosition(entities, light->entityID);
+        viewMatrix = mat4::sLookAt(position, position + transformForward(entities, light->entityID), transformUp(entities, light->entityID));
         projectionMatrix = mat4::sPerspective(JPH::DegreesToRadians(light->outerCutoff) * 2.0f, 1.0f, 2.1f, light->range);
         viewProjection = projectionMatrix * viewMatrix;
         light->lightSpaceMatrix = viewProjection;
@@ -88,14 +90,14 @@ static void drawShadowMaps(RenderState* renderer, Scene* scene) {
         glUniform3fv(glGetUniformLocation(renderer->depthShader, "lightPos"), 1, position.mF32);
         glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"), 200.0f);
 
-        for (int i = 0; i < scene->meshRenderers.size(); i++) {
-            meshRenderer = &scene->meshRenderers[i];
+        for (int i = 0; i < entities->meshRenderers.size(); i++) {
+            meshRenderer = &entities->meshRenderers[i];
             mesh = meshRenderer->mesh;
             if (mesh == nullptr) {
                 continue;
             }
 
-            model = getTransform(scene, meshRenderer->entityID)->worldTransform;
+            model = getTransform(entities, meshRenderer->entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 
             if (!meshRenderer->boneMatricesSet && meshRenderer->boneMatrices.size() > 0) {
@@ -105,10 +107,10 @@ static void drawShadowMaps(RenderState* renderer, Scene* scene) {
                 meshRenderer->boneMatricesSet = true;
 
                 for (const auto& pair : meshRenderer->transformBoneMap) {
-                    boneTransform = getTransform(scene, pair.first);
+                    boneTransform = getTransform(entities, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
-                    meshRenderer->boneMatrices[index] = (getTransform(scene, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    meshRenderer->boneMatrices[index] = (getTransform(entities, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
 
                 glUniformMatrix4fv(boneMatrixLoc, meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
@@ -143,35 +145,36 @@ static void drawScene(RenderState* renderer, Scene* scene) {
     Material* material;
     PointLight* pointLight;
     SpotLight* spotLight;
-    Camera* camera = &scene->cameras[0];
+    EntityGroup* entities = &scene->entities;
+    Camera* camera = &entities->cameras[0];
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(renderer->lightingShader);
-    glUniform3fv(8, 1, getLocalPosition(scene, camera->entityID).mF32);
+    glUniform3fv(8, 1, getLocalPosition(entities, camera->entityID).mF32);
     glUniform1f(9, renderer->bloomThreshold);
     glUniform1f(35, renderer->ambient);
-    glUniform1i(6, scene->spotLights.size());
-    glUniform1i(7, scene->pointLights.size());
+    glUniform1i(6, entities->spotLights.size());
+    glUniform1i(7, entities->pointLights.size());
     glUniform1f(glGetUniformLocation(renderer->lightingShader, "fogDensity"), renderer->fogDensity);
     glUniform1f(glGetUniformLocation(renderer->lightingShader, "minFogDistance"), renderer->minFogDistance);
     glUniform1f(glGetUniformLocation(renderer->lightingShader, "maxFogDistance"), renderer->maxFogDistance);
     glUniform3fv(glGetUniformLocation(renderer->lightingShader, "fogColor"), 1, renderer->fogColor.mF32);
 
-    for (uint32_t i = 0; i < scene->pointLights.size(); i++) {
-        pointLight = &scene->pointLights[i];
+    for (uint32_t i = 0; i < entities->pointLights.size(); i++) {
+        pointLight = &entities->pointLights[i];
         offset = i * 4;
-        glUniform3fv(36 + 0 + offset, 1, getPosition(scene, pointLight->entityID).mF32);
+        glUniform3fv(36 + 0 + offset, 1, getPosition(entities, pointLight->entityID).mF32);
         glUniform3fv(36 + 1 + offset, 1, pointLight->color.mF32);
         glUniform1f(36 + 2 + offset, pointLight->brightness);
     }
 
-    for (uint32_t i = 0; i < scene->spotLights.size(); i++) {
-        spotLight = &scene->spotLights[i];
+    for (uint32_t i = 0; i < entities->spotLights.size(); i++) {
+        spotLight = &entities->spotLights[i];
         offset = i * 8;
-        glUniform3fv(120 + 0 + offset, 1, getPosition(scene, spotLight->entityID).mF32);
-        glUniform3fv(120 + 1 + offset, 1, transformForward(scene, spotLight->entityID).mF32);
+        glUniform3fv(120 + 0 + offset, 1, getPosition(entities, spotLight->entityID).mF32);
+        glUniform3fv(120 + 1 + offset, 1, transformForward(entities, spotLight->entityID).mF32);
         glUniform3fv(120 + 2 + offset, 1, spotLight->color.mF32);
         glUniform1f(120 + 3 + offset, spotLight->brightness);
         glUniform1f(120 + 4 + offset, JPH::Cos(JPH::DegreesToRadians(spotLight->cutoff)));
@@ -185,8 +188,8 @@ static void drawScene(RenderState* renderer, Scene* scene) {
         glBindTexture(GL_TEXTURE_2D, spotLight->blurDepthTex);
     }
 
-    for (int i = 0; i < scene->meshRenderers.size(); i++) {
-        meshRenderer = &scene->meshRenderers[i];
+    for (int i = 0; i < entities->meshRenderers.size(); i++) {
+        meshRenderer = &entities->meshRenderers[i];
         mesh = meshRenderer->mesh;
         if (mesh == nullptr) {
             continue;
@@ -200,10 +203,10 @@ static void drawScene(RenderState* renderer, Scene* scene) {
                 meshRenderer->boneMatricesSet = true;
 
                 for (const auto& pair : meshRenderer->transformBoneMap) {
-                    boneTransform = getTransform(scene, pair.first);
+                    boneTransform = getTransform(entities, pair.first);
                     index = pair.second.id;
                     offset = pair.second.offset;
-                    meshRenderer->boneMatrices[index] = (getTransform(scene, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    meshRenderer->boneMatrices[index] = (getTransform(entities, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
             }
             // glUniformMatrix4fv(boneMatrixLoc, meshRenderer.boneMatrices.size(), GL_FALSE, &meshRenderer.boneMatrices[0](0, 0));
@@ -211,7 +214,7 @@ static void drawScene(RenderState* renderer, Scene* scene) {
             glUniformMatrix4fv(glGetUniformLocation(renderer->lightingShader, "finalBoneMatrices[0]"), meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
         }
 
-        model = getTransform(scene, meshRenderer->entityID)->worldTransform;
+        model = getTransform(entities, meshRenderer->entityID)->worldTransform;
         glUniformMatrix4fv(4, 1, GL_FALSE, &model(0, 0));
         glBindVertexArray(mesh->VAO);
 
@@ -451,13 +454,14 @@ void createSpotLightShadowMap(SpotLight* light) {
 }
 
 void deleteSpotLightShadowMap(SpotLight* light) {
+    // this may break if the textures/framebuffers haven't been created in the case of a prefab. we'll see.
     GLuint textures[2] = {light->depthTex, light->blurDepthTex};
     GLuint frameBuffers[2] = {light->depthFrameBuffer, light->blurDepthFrameBuffer};
     glDeleteTextures(2, textures);
     glDeleteFramebuffers(2, frameBuffers);
 }
 
-static void createShadowMapDepthBuffers(Scene* scene) {  // this needs to just be callable per light, not looping over every light.
+static void createShadowMapDepthBuffers(EntityGroup* scene) {  // this needs to just be callable per light, not looping over every light.
     for (SpotLight& light : scene->spotLights) {
         light.shadowWidth = 512.0f;
         light.shadowHeight = 512.0f;
@@ -840,10 +844,11 @@ void initializeLights(RenderState* renderer, Scene* scene, unsigned int shader) 
 }
 
 void updateBufferData(RenderState* renderer, Scene* scene) {
-    Camera* camera = &scene->cameras[0];
-    vec3 position = getPosition(scene, camera->entityID);
+    EntityGroup* entities = &scene->entities;
+    Camera* camera = &entities->cameras[0];
+    vec3 position = getPosition(entities, camera->entityID);
 
-    renderer->matricesUBOData.view = mat4::sLookAt(position, position + transformForward(scene, camera->entityID), transformUp(scene, camera->entityID));
+    renderer->matricesUBOData.view = mat4::sLookAt(position, position + transformForward(entities, camera->entityID), transformUp(entities, camera->entityID));
     renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
 }
@@ -857,13 +862,14 @@ void renderScene(RenderState* renderer, Scene* scene) {
 }
 
 void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
+    EntityGroup* entities = &scene->entities;
     for (int i = 0; i < parent->childEntityIds.size(); i++) {
-        Entity* child = getEntity(scene, parent->childEntityIds[i]);
+        Entity* child = getEntity(entities, parent->childEntityIds[i]);
         if (renderer->mesh->boneNameMap.count(child->name)) {
             renderer->transformBoneMap[child->entityID] = renderer->mesh->boneNameMap[child->name];
         }
 
-        findBones(scene, renderer, getTransform(scene, child->entityID));
+        findBones(scene, renderer, getTransform(entities, child->entityID));
     }
 }
 
@@ -872,16 +878,17 @@ void mapBones(Scene* scene, MeshRenderer* renderer) {
         return;
     }
 
+    EntityGroup* entities = &scene->entities;
     renderer->boneMatrices.reserve(100);
 
     for (int i = 0; i < 100; i++) {
         renderer->boneMatrices.push_back(mat4::sIdentity());
     }
 
-    Transform* parent = getTransform(scene, renderer->entityID);
+    Transform* parent = getTransform(entities, renderer->entityID);
 
     if (parent->parentEntityID != INVALID_ID) {
-        parent = getTransform(scene, parent->parentEntityID);
+        parent = getTransform(entities, parent->parentEntityID);
     }
 
     findBones(scene, renderer, parent);

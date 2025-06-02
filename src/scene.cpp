@@ -1,8 +1,9 @@
 #include "scene.h"
 
 void clearScene(Scene* scene) {
-    while (scene->entities.size() > 0) {
-        destroyEntity(scene, scene->entities[scene->entities.size() - 1].entityID);
+    EntityGroup* entities = &scene->entities;
+    while (entities->entities.size() > 0) {
+        destroyEntity(entities, entities->entities[entities->entities.size() - 1].entityID);
     }
 
     /*     for (Camera* cam : scene->cameras) {
@@ -22,8 +23,8 @@ void clearScene(Scene* scene) {
 
     // scene->player = nullptr;
 
-    Player newPlayer;
+    /* Player newPlayer;
     CameraController newCamController;
     scene->player = newPlayer;
-    scene->player.cameraController = newCamController;
+    scene->player.cameraController = newCamController; */
 }

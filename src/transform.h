@@ -3,6 +3,7 @@
 #include "utils/mathutils.h"
 
 struct Scene;
+struct EntityGroup;
 
 struct Transform {
     uint32_t entityID;
@@ -14,26 +15,26 @@ struct Transform {
     std::vector<uint32_t> childEntityIds;
 };
 
-vec3 transformRight(Scene* scene, uint32_t entityID);
-vec3 transformUp(Scene* scene, uint32_t entityID);
-vec3 transformForward(Scene* scene, uint32_t entityID);
+vec3 transformRight(EntityGroup* scene, uint32_t entityID);
+vec3 transformUp(EntityGroup* scene, uint32_t entityID);
+vec3 transformForward(EntityGroup* scene, uint32_t entityID);
 
-vec3 getLocalPosition(Scene* scene, uint32_t entityID);
-quat getLocalRotation(Scene* scene, uint32_t entityID);
-vec3 getLocalScale(Scene* scene, uint32_t entityID);
-vec3 getPosition(Scene* scene, uint32_t entityID);
-quat getRotation(Scene* scene, uint32_t entityID);
-vec3 getScale(Scene* scene, uint32_t entityID);
+vec3 getLocalPosition(EntityGroup* scene, uint32_t entityID);
+quat getLocalRotation(EntityGroup* scene, uint32_t entityID);
+vec3 getLocalScale(EntityGroup* scene, uint32_t entityID);
+vec3 getPosition(EntityGroup* scene, uint32_t entityID);
+quat getRotation(EntityGroup* scene, uint32_t entityID);
+vec3 getScale(EntityGroup* scene, uint32_t entityID);
 
-void updateTransformMatrices(Scene* scene, Transform* transform);
-void setLocalPosition(Scene* scene, uint32_t entityID, vec3 localPosition);
-void setLocalRotation(Scene* scene, uint32_t entityID, quat localRotation);
-void setLocalScale(Scene* scene, uint32_t entityID, vec3 localScale);
-void setPosition(Scene* scene, uint32_t entityID, vec3 position);
-void setRotation(Scene* scene, uint32_t entityID, quat rotation);
-void setScale(Scene* scene, uint32_t entityID, vec3 scale);
-void removeParent(Scene* scene, uint32_t entityID);
-void setParent(Scene* scene, uint32_t child, uint32_t parent);
+void updateTransformMatrices(EntityGroup* scene, Transform* transform);
+void setLocalPosition(EntityGroup* scene, uint32_t entityID, vec3 localPosition);
+void setLocalRotation(EntityGroup* scene, uint32_t entityID, quat localRotation);
+void setLocalScale(EntityGroup* scene, uint32_t entityID, vec3 localScale);
+void setPosition(EntityGroup* scene, uint32_t entityID, vec3 position);
+void setRotation(EntityGroup* scene, uint32_t entityID, quat rotation);
+void setScale(EntityGroup* scene, uint32_t entityID, vec3 scale);
+void removeParent(EntityGroup* scene, uint32_t entityID);
+void setParent(EntityGroup* scene, uint32_t child, uint32_t parent);
 
 vec3 scaleFromMatrix(mat4& matrix);
 quat quatFromMatrix(mat4& matrix);

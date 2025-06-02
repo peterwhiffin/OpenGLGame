@@ -40,35 +40,10 @@ struct Scene {
     std::string scenePath = "";
 
     InputActions* input;
-    Player player;
     DirectionalLight sun;
 
-    JPH::PhysicsSystem* physicsSystem;
-    JPH::BodyInterface* bodyInterface;
-    JPH::TempAllocatorImpl* tempAllocator;
-    JPH::JobSystemThreadPool* jobSystem;
-    JPH::BroadPhaseLayerInterface* broad_phase_layer_interface;
-    JPH::ObjectVsBroadPhaseLayerFilter* object_vs_broadphase_layer_filter;
-    JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
-    std::unordered_set<uint32_t> movingRigidbodies;
-
-    std::vector<Entity> entities;
-    std::vector<Transform> transforms;
-    std::vector<MeshRenderer> meshRenderers;
-    std::vector<Animator> animators;
-    std::vector<RigidBody> rigidbodies;
-    std::vector<PointLight> pointLights;
-    std::vector<SpotLight> spotLights;
-    std::vector<Camera> cameras;
-
-    std::unordered_map<uint32_t, size_t> entityIndexMap;
-    std::unordered_map<uint32_t, size_t> transformIndexMap;
-    std::unordered_map<uint32_t, size_t> meshRendererIndexMap;
-    std::unordered_map<uint32_t, size_t> rigidbodyIndexMap;
-    std::unordered_map<uint32_t, size_t> animatorIndexMap;
-    std::unordered_map<uint32_t, size_t> pointLightIndexMap;
-    std::unordered_map<uint32_t, size_t> spotLightIndexMap;
-    std::unordered_map<uint32_t, size_t> cameraIndexMap;
+    PhysicsScene physicsScene;
+    EntityGroup entities;
 };
 
 void clearScene(Scene* scene);

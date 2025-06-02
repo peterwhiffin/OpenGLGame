@@ -21,6 +21,16 @@
 
 JPH_SUPPRESS_WARNINGS
 
+struct PhysicsScene {
+    JPH::PhysicsSystem* physicsSystem;
+    JPH::BodyInterface* bodyInterface;
+    JPH::TempAllocatorImpl* tempAllocator;
+    JPH::JobSystemThreadPool* jobSystem;
+    JPH::BroadPhaseLayerInterface* broad_phase_layer_interface;
+    JPH::ObjectVsBroadPhaseLayerFilter* object_vs_broadphase_layer_filter;
+    JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
+};
+
 struct RigidBody {
     uint32_t entityID;
     JPH::Color color;

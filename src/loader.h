@@ -8,6 +8,8 @@
 
 constexpr char* resourcePath = "..\\resources\\";
 
+struct Entity;
+
 struct ModelSettings {
     std::string path;
 };

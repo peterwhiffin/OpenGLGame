@@ -23,6 +23,7 @@ static void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor
         return;
     } */
 
+    EntityGroup* entities = &scene->entities;
     editor->isPicking = true;
     unsigned char pixel[3];
     glBindFramebuffer(GL_FRAMEBUFFER, renderer->pickingFBO);
@@ -33,7 +34,7 @@ static void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor
     glReadPixels(xPos, yPos, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
     uint32_t id = pixel[0] + (pixel[1] << 8) + (pixel[2] << 16);
 
-    if (scene->entityIndexMap.count(id)) {
+    if (entities->entityIndexMap.count(id)) {
         editor->nodeClicked = id;
         scene->pickedEntity = id;
     }
@@ -42,8 +43,9 @@ static void checkPicker(Scene* scene, RenderState* renderer, EditorState* editor
 }
 
 static void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityID, ImGuiTreeNodeFlags node_flags, ImGuiSelectionBasicStorage& selection) {
-    Entity* entity = getEntity(scene, entityID);
-    Transform* transform = getTransform(scene, entityID);
+    EntityGroup* entities = &scene->entities;
+    Entity* entity = getEntity(entities, entityID);
+    Transform* transform = getTransform(entities, entityID);
 
     ImGui::PushID(entityID);
 
@@ -292,11 +294,12 @@ static void buildSceneView(Scene* scene, RenderState* renderer, EditorState* edi
     if (droppedPrefab) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("prefab")) {
             // IM_ASSERT(payload->DataSize == sizeof(int));
+            EntityGroup* entities = &scene->entities;
             std::string payload_n = *(const std::string*)payload->Data;
             Model* prefab = resources->modelMap[payload_n];
-            uint32_t id = createEntityFromModel(scene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
-            vec3 pos = getPosition(scene, scene->cameras[0].entityID) + (editor->worldPos * 2.0f);
-            setPosition(scene, id, pos);
+            uint32_t id = createEntityFromModel(&scene->entities, &scene->physicsScene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+            vec3 pos = getPosition(entities, entities->cameras[0].entityID) + (editor->worldPos * 2.0f);
+            setPosition(entities, id, pos);
         }
 
         ImGui::EndDragDropTarget();
@@ -307,15 +310,16 @@ static void buildSceneView(Scene* scene, RenderState* renderer, EditorState* edi
 }
 
 static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
+    EntityGroup* entities = &scene->entities;
     ImGui::Begin("SceneHierarchy");
     static ImGuiSelectionBasicStorage selection;
     ImGuiMultiSelectFlags selectFlags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
-    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, scene->entities.size());
+    ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(selectFlags, selection.Size, entities->entities.size());
     selection.ApplyRequests(ms_io);
 
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        if (scene->transforms[i].parentEntityID == INVALID_ID) {
-            createEntityTree(scene, editor, scene->transforms[i].entityID, 0, selection);
+    for (int i = 0; i < entities->transforms.size(); i++) {
+        if (entities->transforms[i].parentEntityID == INVALID_ID) {
+            createEntityTree(scene, editor, entities->transforms[i].entityID, 0, selection);
         }
     }
 
@@ -328,7 +332,7 @@ static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
 
     if (ImGui::BeginPopup("HierarchyContextMenu")) {
         if (ImGui::MenuItem("Create Entity")) {
-            getNewEntity(scene, "NewEntity");
+            getNewEntity(entities, "NewEntity");
         }
 
         ImGui::EndPopup();
@@ -342,7 +346,7 @@ static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
                 ImGuiID key = selection._Storage.Data[i].key;
                 if (selection._Storage.GetInt(key, 0) != 0) {
                     uint32_t entityID = static_cast<uint32_t>(key);
-                    destroyEntity(scene, entityID);
+                    destroyEntity(entities, entityID);
                 }
             }
         }
@@ -484,9 +488,10 @@ void updateAndDrawEditor(Scene* scene, RenderState* renderer, Resources* resourc
 }
 
 static void cameraControlUpdate(Scene* scene, Resources* resources, RenderState* renderer, EditorState* editor) {
+    EntityGroup* entities = &scene->entities;
     InputActions* input = scene->input;
-    Camera* cam = &scene->cameras[0];
-    Transform* transform = getTransform(scene, cam->entityID);
+    Camera* cam = &entities->cameras[0];
+    Transform* transform = getTransform(entities, cam->entityID);
 
     float xOffset = input->lookX * editor->cameraController.sensitivity;
     float yOffset = input->lookY * editor->cameraController.sensitivity;
@@ -509,15 +514,15 @@ static void cameraControlUpdate(Scene* scene, Resources* resources, RenderState*
 
     vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(editor->cameraController.pitch), JPH::DegreesToRadians(editor->cameraController.yaw), 0.0f);
 
-    setRotation(scene, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
+    setRotation(entities, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
-    vec3 forwardDir = transformForward(scene, transform->entityID);
-    vec3 rightDir = transformRight(scene, transform->entityID);
+    vec3 forwardDir = transformForward(entities, transform->entityID);
+    vec3 rightDir = transformRight(entities, transform->entityID);
     moveDir += input->movement.y * forwardDir + input->movement.x * rightDir;
     vec3 finalMove = moveDir * editor->cameraController.moveSpeed * scene->deltaTime;
-    vec3 currentPos = getPosition(scene, transform->entityID);
-    setPosition(scene, transform->entityID, currentPos + finalMove);
+    vec3 currentPos = getPosition(entities, transform->entityID);
+    setPosition(entities, transform->entityID, currentPos + finalMove);
 
     if (!scene->input->altFire) {
         glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

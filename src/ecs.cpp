@@ -2,7 +2,7 @@
 #include "scene.h"
 #include "loader.h"
 
-uint32_t getEntityID(Scene* scene) {
+uint32_t getEntityID(EntityGroup* scene) {
     uint32_t newID = scene->nextEntityID++;
 
     while (scene->entityIndexMap.count(newID)) {
@@ -13,15 +13,15 @@ uint32_t getEntityID(Scene* scene) {
     return newID;
 }
 
-Entity* getEntity(Scene* scene, const uint32_t entityID) {
+Entity* getEntity(EntityGroup* scene, const uint32_t entityID) {
     return &scene->entities[scene->entityIndexMap[entityID]];
 }
 
-Transform* getTransform(Scene* scene, const uint32_t entityID) {
+Transform* getTransform(EntityGroup* scene, const uint32_t entityID) {
     return &scene->transforms[scene->transformIndexMap[entityID]];
 }
 
-MeshRenderer* getMeshRenderer(Scene* scene, const uint32_t entityID) {
+MeshRenderer* getMeshRenderer(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->meshRendererIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -29,7 +29,7 @@ MeshRenderer* getMeshRenderer(Scene* scene, const uint32_t entityID) {
     return &scene->meshRenderers[scene->meshRendererIndexMap[entityID]];
 }
 
-RigidBody* getRigidbody(Scene* scene, const uint32_t entityID) {
+RigidBody* getRigidbody(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->rigidbodyIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -37,7 +37,7 @@ RigidBody* getRigidbody(Scene* scene, const uint32_t entityID) {
     return &scene->rigidbodies[scene->rigidbodyIndexMap[entityID]];
 }
 
-Animator* getAnimator(Scene* scene, const uint32_t entityID) {
+Animator* getAnimator(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->animatorIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -45,7 +45,15 @@ Animator* getAnimator(Scene* scene, const uint32_t entityID) {
     return &scene->animators[scene->animatorIndexMap[entityID]];
 }
 
-PointLight* getPointLight(Scene* scene, const uint32_t entityID) {
+Player* getPlayer(EntityGroup* scene, const uint32_t entityID) {
+    if (!scene->playerIndexMap.count(entityID)) {
+        return nullptr;
+    }
+
+    return &scene->players[scene->playerIndexMap[entityID]];
+}
+
+PointLight* getPointLight(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->pointLightIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -53,7 +61,7 @@ PointLight* getPointLight(Scene* scene, const uint32_t entityID) {
     return &scene->pointLights[scene->pointLightIndexMap[entityID]];
 }
 
-SpotLight* getSpotLight(Scene* scene, const uint32_t entityID) {
+SpotLight* getSpotLight(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->spotLightIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -61,7 +69,7 @@ SpotLight* getSpotLight(Scene* scene, const uint32_t entityID) {
     return &scene->spotLights[scene->spotLightIndexMap[entityID]];
 }
 
-Camera* getCamera(Scene* scene, const uint32_t entityID) {
+Camera* getCamera(EntityGroup* scene, const uint32_t entityID) {
     if (!scene->cameraIndexMap.count(entityID)) {
         return nullptr;
     }
@@ -69,7 +77,7 @@ Camera* getCamera(Scene* scene, const uint32_t entityID) {
     return &scene->cameras[scene->cameraIndexMap[entityID]];
 }
 
-Transform* addTransform(Scene* scene, uint32_t entityID) {
+Transform* addTransform(EntityGroup* scene, uint32_t entityID) {
     Transform transform;
     transform.entityID = entityID;
     transform.parentEntityID = INVALID_ID;
@@ -79,7 +87,7 @@ Transform* addTransform(Scene* scene, uint32_t entityID) {
     return &scene->transforms[index];
 }
 
-Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTransform) {
+Entity* getNewEntity(EntityGroup* scene, std::string name, uint32_t id, bool createTransform) {
     Entity entity;
     if (id == INVALID_ID) {
         entity.entityID = getEntityID(scene);
@@ -98,7 +106,7 @@ Entity* getNewEntity(Scene* scene, std::string name, uint32_t id, bool createTra
     return &scene->entities[index];
 }
 
-MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {
+MeshRenderer* addMeshRenderer(EntityGroup* scene, uint32_t entityID) {
     MeshRenderer meshRenderer;
     meshRenderer.entityID = entityID;
     size_t index = scene->meshRenderers.size();
@@ -107,7 +115,7 @@ MeshRenderer* addMeshRenderer(Scene* scene, uint32_t entityID) {
     return &scene->meshRenderers[index];
 }
 
-RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
+RigidBody* addRigidbody(EntityGroup* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
     size_t index = scene->rigidbodies.size();
@@ -116,7 +124,7 @@ RigidBody* addRigidbody(Scene* scene, uint32_t entityID) {
     return &scene->rigidbodies[index];
 }
 
-PointLight* addPointLight(Scene* scene, uint32_t entityID) {
+PointLight* addPointLight(EntityGroup* scene, uint32_t entityID) {
     PointLight pointLight;
     pointLight.entityID = entityID;
     size_t index = scene->pointLights.size();
@@ -125,7 +133,7 @@ PointLight* addPointLight(Scene* scene, uint32_t entityID) {
     return &scene->pointLights[index];
 }
 
-SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
+SpotLight* addSpotLight(EntityGroup* scene, uint32_t entityID) {
     SpotLight spotLight;
     spotLight.entityID = entityID;
     size_t index = scene->spotLights.size();
@@ -134,7 +142,7 @@ SpotLight* addSpotLight(Scene* scene, uint32_t entityID) {
     return &scene->spotLights[index];
 }
 
-Camera* addCamera(Scene* scene, uint32_t entityID) {
+Camera* addCamera(EntityGroup* scene, uint32_t entityID) {
     Camera camera;
     camera.entityID = entityID;
     size_t index = scene->cameras.size();
@@ -143,19 +151,32 @@ Camera* addCamera(Scene* scene, uint32_t entityID) {
     return &scene->cameras[index];
 }
 
-static void removeTransform(Scene* scene, uint32_t entityID) {
+Player* addPlayer(EntityGroup* scene, uint32_t entityID) {
+    Player player;
+    player.entityID = entityID;
+    size_t index = scene->players.size();
+    scene->players.push_back(player);
+    scene->playerIndexMap[entityID] = index;
+    return &scene->players[index];
+}
+
+static void removeTransform(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->transforms, scene->transformIndexMap, entityID);
 }
 
-void removeMeshRenderer(Scene* scene, uint32_t entityID) {
+void removeMeshRenderer(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->meshRenderers, scene->meshRendererIndexMap, entityID);
 }
 
-void removeAnimator(Scene* scene, uint32_t entityID) {
+void removePlayer(EntityGroup* scene, uint32_t entityID) {
+    destroyComponent(scene->players, scene->playerIndexMap, entityID);
+}
+
+void removeAnimator(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
 }
 
-void setRigidbodyMoving(Scene* scene, uint32_t entityID) {
+void setRigidbodyMoving(EntityGroup* scene, uint32_t entityID) {
     RigidBody* rb = getRigidbody(scene, entityID);
     if (rb != nullptr) {
         if (!scene->movingRigidbodies.count(rb->entityID)) {
@@ -164,7 +185,7 @@ void setRigidbodyMoving(Scene* scene, uint32_t entityID) {
     }
 }
 
-void setRigidbodyNonMoving(Scene* scene, uint32_t entityID) {
+void setRigidbodyNonMoving(EntityGroup* scene, uint32_t entityID) {
     RigidBody* rb = getRigidbody(scene, entityID);
     if (rb != nullptr) {
         if (scene->movingRigidbodies.count(rb->entityID)) {
@@ -173,7 +194,7 @@ void setRigidbodyNonMoving(Scene* scene, uint32_t entityID) {
     }
 }
 
-void removeRigidbody(Scene* scene, uint32_t entityID) {
+void removeRigidbody(EntityGroup* scene, uint32_t entityID, JPH::BodyInterface* bodyInterface) {
     RigidBody* rb = getRigidbody(scene, entityID);
     if (rb != nullptr) {
         /*         if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
@@ -184,13 +205,15 @@ void removeRigidbody(Scene* scene, uint32_t entityID) {
             scene->movingRigidbodies.erase(rb->entityID);
         }
 
-        scene->bodyInterface->RemoveBody(rb->joltBody);
-        scene->bodyInterface->DestroyBody(rb->joltBody);
+        if (bodyInterface != nullptr) {
+            bodyInterface->RemoveBody(rb->joltBody);
+            bodyInterface->DestroyBody(rb->joltBody);
+        }
     }
 
     destroyComponent(scene->rigidbodies, scene->rigidbodyIndexMap, entityID);
 }
-void removeSpotLight(Scene* scene, uint32_t entityID) {
+void removeSpotLight(EntityGroup* scene, uint32_t entityID) {
     SpotLight* spotLight = getSpotLight(scene, entityID);
     if (spotLight != nullptr && spotLight->enableShadows) {
         deleteSpotLightShadowMap(spotLight);
@@ -198,11 +221,11 @@ void removeSpotLight(Scene* scene, uint32_t entityID) {
 
     destroyComponent(scene->spotLights, scene->spotLightIndexMap, entityID);
 }
-void removePointLight(Scene* scene, uint32_t entityID) {
+void removePointLight(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID);
 }
 
-void destroyEntity(Scene* scene, uint32_t entityID) {
+void destroyEntity(EntityGroup* scene, uint32_t entityID) {
     if (!scene->entityIndexMap.count(entityID)) {
         return;
     }
@@ -246,12 +269,13 @@ void destroyEntity(Scene* scene, uint32_t entityID) {
     removeMeshRenderer(scene, entityID);
     removeAnimator(scene, entityID);
     removeRigidbody(scene, entityID);
+    removePlayer(scene, entityID);
     removeSpotLight(scene, entityID);
     removePointLight(scene, entityID);
     destroyComponent(scene->entities, scene->entityIndexMap, entityID);
 }
 
-void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
+void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID) {
     size_t entityIndex = scene->entityIndexMap[entityID];
     Entity* entity = &scene->entities[entityIndex];
 
@@ -271,7 +295,7 @@ void mapAnimationChannels(Scene* scene, Animator* animator, uint32_t entityID) {
     }
 }
 
-Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
+Animator* addAnimator(EntityGroup* scene, uint32_t entityID, Model* model) {
     Animator animator;
     animator.entityID = entityID;
     size_t index = scene->animators.size();
@@ -293,7 +317,7 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, Model* model) {
     return animatorPtr;
 }
 
-Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> animations) {
+Animator* addAnimator(EntityGroup* scene, uint32_t entityID, std::vector<Animation*> animations) {
     Animator animator;
     animator.entityID = entityID;
     animator.animations = animations;
@@ -312,7 +336,7 @@ Animator* addAnimator(Scene* scene, uint32_t entityID, std::vector<Animation*> a
     return animatorPtr;
 }
 
-uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic) {
+uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic) {
     uint32_t childEntity = getNewEntity(scene, node->name)->entityID;
     Entity* entity = getEntity(scene, childEntity);
 
@@ -340,8 +364,8 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
             JPH::EActivation shouldActivate = isDynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
             JPH::EMotionType motionType = isDynamic ? JPH::EMotionType::Dynamic : JPH::EMotionType::Static;
             JPH::BodyCreationSettings floor_settings(floor_shape, getPosition(scene, childEntity), getRotation(scene, childEntity), motionType, layer);
-            JPH::Body* floor = scene->bodyInterface->CreateBody(floor_settings);
-            scene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
+            JPH::Body* floor = physicsScene->bodyInterface->CreateBody(floor_settings);
+            physicsScene->bodyInterface->AddBody(floor->GetID(), shouldActivate);
 
             RigidBody* rb = addRigidbody(scene, childEntity);
             rb->lastPosition = getPosition(scene, childEntity);
@@ -351,7 +375,7 @@ uint32_t createEntityFromModel(Scene* scene, ModelNode* node, uint32_t parentEnt
     }
 
     for (int i = 0; i < node->children.size(); i++) {
-        createEntityFromModel(scene, node->children[i], childEntity, addColliders, rootEntity, false, isDynamic);
+        createEntityFromModel(scene, physicsScene, node->children[i], childEntity, addColliders, rootEntity, false, isDynamic);
     }
 
     return childEntity;

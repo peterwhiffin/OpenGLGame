@@ -32,7 +32,7 @@ static void updateSceneEditor(Scene* scene, Resources* resources, RenderState* r
         updatePhysics(scene);
         updatePlayer(scene, resources, renderer);
         updatePhysicsBodyPositions(scene);
-        updateAnimators(scene);
+        updateAnimators(&scene->entities, scene->deltaTime);
         updateCamera(scene);
     } else {
         updateEditor(scene, resources, renderer, editor);
@@ -104,7 +104,7 @@ int main() {
         updatePhysics(scene);
         updatePlayer(scene, resources, renderer);
         updatePhysicsBodyPositions(scene);
-        updateAnimators(scene);
+        updateAnimators(&scene->entities, scene->deltaTime);
         updateCamera(scene);
         updateBufferData(renderer, scene);
         renderScene(renderer, scene);

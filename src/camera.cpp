@@ -3,6 +3,7 @@
 #include "transform.h"
 
 void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer) {
+    EntityGroup* entities = &scene->entities;
     InputActions* input = scene->input;
     if (input->altFire) {
         if (editor->mouseInViewport && !editor->cameraActive) {
@@ -18,8 +19,8 @@ void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer
         return;
     }
 
-    Camera* cam = &scene->cameras[0];
-    Transform* transform = getTransform(scene, cam->entityID);
+    Camera* cam = &entities->cameras[0];
+    Transform* transform = getTransform(entities, cam->entityID);
 
     float xOffset = input->lookX * editor->cameraController.sensitivity;
     float yOffset = input->lookY * editor->cameraController.sensitivity;
@@ -42,26 +43,27 @@ void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer
 
     vec3 cameraTargetRotation = vec3(JPH::DegreesToRadians(editor->cameraController.pitch), JPH::DegreesToRadians(editor->cameraController.yaw), 0.0f);
 
-    setRotation(scene, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
+    setRotation(entities, transform->entityID, quat::sEulerAngles(cameraTargetRotation));
 
     vec3 moveDir = vec3(0.0f, 0.0f, 0.0f);
-    vec3 forwardDir = transformForward(scene, transform->entityID);
-    vec3 rightDir = transformRight(scene, transform->entityID);
+    vec3 forwardDir = transformForward(entities, transform->entityID);
+    vec3 rightDir = transformRight(entities, transform->entityID);
     moveDir += input->movement.y * forwardDir + input->movement.x * rightDir;
     vec3 finalMove = moveDir * editor->cameraController.moveSpeed * scene->deltaTime;
-    vec3 currentPos = getPosition(scene, transform->entityID);
-    setPosition(scene, transform->entityID, currentPos + finalMove);
+    vec3 currentPos = getPosition(entities, transform->entityID);
+    setPosition(entities, transform->entityID, currentPos + finalMove);
 }
 
 void updateCamera(Scene* scene) {
-    Camera* camera = &scene->cameras[0];
+    EntityGroup* entities = &scene->entities;
+    Camera* camera = &entities->cameras[0];
 
     uint32_t cameraID = camera->entityID;
-    uint32_t cameraTargetID = scene->player.cameraController.cameraTargetEntityID;
+    uint32_t cameraTargetID = entities->players[0].cameraController.cameraTargetEntityID;
 
-    vec3 targetPosition = getPosition(scene, cameraTargetID);
-    quat targetRotation = getRotation(scene, cameraTargetID);
+    vec3 targetPosition = getPosition(entities, cameraTargetID);
+    quat targetRotation = getRotation(entities, cameraTargetID);
 
-    setPosition(scene, cameraID, targetPosition);
-    setRotation(scene, cameraID, targetRotation);
+    setPosition(entities, cameraID, targetPosition);
+    setRotation(entities, cameraID, targetRotation);
 }

@@ -2,7 +2,7 @@
 #include "utils/mathutils.h"
 
 struct Scene;
-
+struct EntityGroup;
 struct KeyFramePosition {
     vec3 position;
     float time;
@@ -44,5 +44,5 @@ struct Animator {
     std::unordered_map<AnimationChannel*, uint32_t> channelMap;
 };
 
-void updateAnimators(Scene* scene);
+void updateAnimators(EntityGroup* scene, float deltaTime);
 void playAnimation(Animator* animator, std::string name);

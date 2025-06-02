@@ -2,7 +2,7 @@
 #include "scene.h"
 #include "ecs.h"
 
-void updateTransformMatrices(Scene* scene, Transform* transform) {
+void updateTransformMatrices(EntityGroup* scene, Transform* transform) {
     mat4 worldTransform;
     uint32_t parentID;
     Transform* childTransform;
@@ -29,15 +29,15 @@ vec3 QuaternionByVector3(quat rotation, vec3 point) {
     return rotation.Normalized() * point.Normalized();  // who knows
 }
 
-vec3 transformRight(Scene* scene, uint32_t entityID) {
+vec3 transformRight(EntityGroup* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(1.0f, 0.0f, 0.0f));
 }
 
-vec3 transformUp(Scene* scene, uint32_t entityID) {
+vec3 transformUp(EntityGroup* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(0.0f, 1.0f, 0.0f));
 }
 
-vec3 transformForward(Scene* scene, uint32_t entityID) {
+vec3 transformForward(EntityGroup* scene, uint32_t entityID) {
     return QuaternionByVector3(getRotation(scene, entityID), vec3(0.0f, 0.0f, 1.0f));
 }
 
@@ -57,37 +57,37 @@ vec3 scaleFromMatrix(mat4& matrix) {
     return scale;
 }
 
-vec3 getPosition(Scene* scene, uint32_t entityID) {
+vec3 getPosition(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return transform->worldTransform.GetTranslation();
 }
 
-quat getRotation(Scene* scene, uint32_t entityID) {
+quat getRotation(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return quatFromMatrix(transform->worldTransform);
 }
 
-vec3 getScale(Scene* scene, uint32_t entityID) {
+vec3 getScale(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return scaleFromMatrix(transform->worldTransform);
 }
 
-vec3 getLocalPosition(Scene* scene, uint32_t entityID) {
+vec3 getLocalPosition(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return transform->localPosition;
 }
 
-quat getLocalRotation(Scene* scene, uint32_t entityID) {
+quat getLocalRotation(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return transform->localRotation;
 }
 
-vec3 getLocalScale(Scene* scene, uint32_t entityID) {
+vec3 getLocalScale(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     return transform->localScale;
 }
 
-void setPosition(Scene* scene, uint32_t entityID, vec3 position) {
+void setPosition(EntityGroup* scene, uint32_t entityID, vec3 position) {
     Transform* transform = getTransform(scene, entityID);
     uint32_t parentEntityID = transform->parentEntityID;
 
@@ -101,7 +101,7 @@ void setPosition(Scene* scene, uint32_t entityID, vec3 position) {
     updateTransformMatrices(scene, transform);
 }
 
-void setRotation(Scene* scene, uint32_t entityID, quat rotation) {
+void setRotation(EntityGroup* scene, uint32_t entityID, quat rotation) {
     Transform* transform = getTransform(scene, entityID);
     uint32_t parentEntityID = transform->parentEntityID;
 
@@ -116,7 +116,7 @@ void setRotation(Scene* scene, uint32_t entityID, quat rotation) {
     updateTransformMatrices(scene, transform);
 }
 
-void setScale(Scene* scene, uint32_t entityID, vec3 scale) {
+void setScale(EntityGroup* scene, uint32_t entityID, vec3 scale) {
     Transform* transform = getTransform(scene, entityID);
     uint32_t parentEntityID = transform->parentEntityID;
 
@@ -129,25 +129,25 @@ void setScale(Scene* scene, uint32_t entityID, vec3 scale) {
     updateTransformMatrices(scene, transform);
 }
 
-void setLocalPosition(Scene* scene, uint32_t entityID, vec3 localPosition) {
+void setLocalPosition(EntityGroup* scene, uint32_t entityID, vec3 localPosition) {
     Transform* transform = getTransform(scene, entityID);
     transform->localPosition = localPosition;
     updateTransformMatrices(scene, transform);
 }
 
-void setLocalRotation(Scene* scene, uint32_t entityID, quat localRotation) {
+void setLocalRotation(EntityGroup* scene, uint32_t entityID, quat localRotation) {
     Transform* transform = getTransform(scene, entityID);
     transform->localRotation = localRotation;
     updateTransformMatrices(scene, transform);
 }
 
-void setLocalScale(Scene* scene, uint32_t entityID, vec3 localScale) {
+void setLocalScale(EntityGroup* scene, uint32_t entityID, vec3 localScale) {
     Transform* transform = getTransform(scene, entityID);
     transform->localScale = localScale;
     updateTransformMatrices(scene, transform);
 }
 
-void removeParent(Scene* scene, uint32_t entityID) {
+void removeParent(EntityGroup* scene, uint32_t entityID) {
     Transform* transform = getTransform(scene, entityID);
     uint32_t parentEntityID = transform->parentEntityID;
 
@@ -166,7 +166,7 @@ void removeParent(Scene* scene, uint32_t entityID) {
     updateTransformMatrices(scene, transform);
 }
 
-void setParent(Scene* scene, uint32_t childEntityID, uint32_t parentEntityID) {
+void setParent(EntityGroup* scene, uint32_t childEntityID, uint32_t parentEntityID) {
     removeParent(scene, childEntityID);
     Transform* child = getTransform(scene, childEntityID);
 

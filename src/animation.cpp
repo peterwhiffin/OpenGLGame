@@ -3,7 +3,7 @@
 #include "transform.h"
 #include "utils/mathutils.h"
 
-void updateAnimators(Scene* scene) {
+void updateAnimators(EntityGroup* scene, float deltaTime) {
     Animator* animator;
     uint32_t nextPositionKey;
     uint32_t nextRotationKey;
@@ -27,7 +27,7 @@ void updateAnimators(Scene* scene) {
 
     for (int i = 0; i < scene->animators.size(); i++) {
         animator = &scene->animators[i];
-        animator->playbackTime += scene->deltaTime;
+        animator->playbackTime += deltaTime;
         playbackTime = animator->playbackTime;
 
         for (AnimationChannel* channel : animator->currentAnimation->channels) {

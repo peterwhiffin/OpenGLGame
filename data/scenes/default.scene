@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 12.076931, 5.685015, -10.067233
-localRotation: -0.080347, 0.132687, -0.010792, -0.987837
+localPosition: 8.037240, 5.170691, -6.150122
+localRotation: -0.076625, -0.731362, 0.083329, -0.672529
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -16081,6 +16081,13 @@ color: 1.000000, 0.283721, 0.283721
 shadows: true
 shadowWidth: 1024
 shadowHeight: 1024
+}
+
+Camera {
+entityID: 524
+fov: 68.000000
+nearPlane: 0.010000
+farPlane: 800.000000
 }
 
 Camera {

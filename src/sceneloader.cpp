@@ -185,7 +185,7 @@ void logComponentBlocks(std::vector<ComponentBlock>* components) {
     }
 }
 
-void createEntity(Scene* scene, ComponentBlock block) {
+void createEntity(EntityGroup* scene, ComponentBlock block) {
     std::string name = "Entity";
     uint32_t id = INVALID_ID;
     bool isActive = true;
@@ -207,7 +207,7 @@ void createEntity(Scene* scene, ComponentBlock block) {
     entity->isActive = isActive;
 }
 
-void createTransform(Scene* scene, ComponentBlock block) {
+void createTransform(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     uint32_t parentEntityID = INVALID_ID;
     std::vector<uint32_t> childEntityIds;
@@ -270,7 +270,7 @@ void createTransform(Scene* scene, ComponentBlock block) {
     transform->localScale = localScale;
 }
 
-void createMeshRenderer(Scene* scene, Resources* resources, ComponentBlock block) {
+void createMeshRenderer(EntityGroup* scene, Resources* resources, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     uint32_t rootEntity = INVALID_ID;
     Mesh* mesh = nullptr;
@@ -417,7 +417,7 @@ void createMaterial(Resources* resources, RenderState* renderer, ComponentBlock 
     material->normalStrength = normalStrength;
 }
 
-void createRigidbody(Scene* scene, ComponentBlock block) {
+void createRigidbody(EntityGroup* scene, PhysicsScene* physicsScene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::string memberString = "";
     JPH::ObjectLayer objectLayer = Layers::NON_MOVING;
@@ -510,15 +510,15 @@ void createRigidbody(Scene* scene, ComponentBlock block) {
     }
 
     bodySettings.mAllowDynamicOrKinematic = true;
-    JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
-    scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
+    JPH::Body* body = physicsScene->bodyInterface->CreateBody(bodySettings);
+    physicsScene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
 
     RigidBody* rb = addRigidbody(scene, entityID);
     rb->rotationLocked = rotationLocked;
     rb->joltBody = body->GetID();
 }
 
-void createAnimator(Scene* scene, Resources* resources, ComponentBlock block) {
+void createAnimator(EntityGroup* scene, Resources* resources, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::vector<Animation*> animations;
     std::string memberString;
@@ -553,7 +553,7 @@ void createAnimator(Scene* scene, Resources* resources, ComponentBlock block) {
     Animator* animator = addAnimator(scene, entityID, animations);
 }
 
-void createCamera(Scene* scene, ComponentBlock block) {
+void createCamera(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     float fov = 68.0f;
     float nearPlane = 0.1f;
@@ -582,7 +582,7 @@ void createCamera(Scene* scene, ComponentBlock block) {
     camera->farPlane = farPlane;
 }
 
-void createPointLights(Scene* scene, ComponentBlock block) {
+void createPointLights(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     bool isActive = false;
     float brightness = 1.0f;
@@ -617,7 +617,7 @@ void createPointLights(Scene* scene, ComponentBlock block) {
     light->color = color;
 }
 
-void createSpotLights(Scene* scene, ComponentBlock block) {
+void createSpotLights(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     bool isActive = false;
     float brightness = 1.0f;
@@ -686,7 +686,7 @@ void createSpotLights(Scene* scene, ComponentBlock block) {
     }
 }
 
-void createPlayer(Scene* scene, ComponentBlock block) {
+void createPlayer(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     uint32_t armsID = INVALID_ID;
     float jumpHeight = 10.0f;
@@ -735,15 +735,16 @@ void createPlayer(Scene* scene, ComponentBlock block) {
 
     // Player* player = new Player();
     // player->cameraController = new CameraController();
-    scene->player.entityID = entityID;
-    scene->player.armsID = armsID;
-    scene->player.jumpHeight = jumpHeight;
-    scene->player.moveSpeed = moveSpeed;
-    scene->player.groundCheckDistance = groundCheckDistance;
-    scene->player.cameraController.entityID = cameraController_EntityID;
-    scene->player.cameraController.cameraTargetEntityID = cameraController_CameraTargetEntityID;
-    scene->player.cameraController.cameraEntityID = cameraController_CameraEntityID;
-    scene->player.cameraController.sensitivity = sensitivity;
+    Player* player = addPlayer(scene, entityID);
+    player->entityID = entityID;
+    player->armsID = armsID;
+    player->jumpHeight = jumpHeight;
+    player->moveSpeed = moveSpeed;
+    player->groundCheckDistance = groundCheckDistance;
+    player->cameraController.entityID = cameraController_EntityID;
+    player->cameraController.cameraTargetEntityID = cameraController_CameraTargetEntityID;
+    player->cameraController.cameraEntityID = cameraController_CameraEntityID;
+    player->cameraController.sensitivity = sensitivity;
     // scene->player = player;
 }
 
@@ -802,7 +803,7 @@ void createImportSettings(Resources* resources, std::vector<ComponentBlock>* com
     }
 }
 
-void createComponents(Scene* scene, Resources* resources, std::vector<ComponentBlock>* components) {
+void createComponents(EntityGroup* scene, Resources* resources, PhysicsScene* physicsScene, std::vector<ComponentBlock>* components) {
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock block = components->at(i);
 
@@ -813,7 +814,7 @@ void createComponents(Scene* scene, Resources* resources, std::vector<ComponentB
         } else if (block.type == "MeshRenderer") {
             createMeshRenderer(scene, resources, block);
         } else if (block.type == "Rigidbody") {
-            createRigidbody(scene, block);
+            createRigidbody(scene, physicsScene, block);
         } else if (block.type == "Animator") {
             createAnimator(scene, resources, block);
         } else if (block.type == "Camera") {
@@ -904,24 +905,27 @@ void loadTempScene(Resources* resources, Scene* scene) {
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
     // logComponentBlocks(&components);
-    createComponents(scene, resources, &components);
+    createComponents(&scene->entities, resources, &scene->physicsScene, &components);
 
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        updateTransformMatrices(scene, &scene->transforms[i]);
+    EntityGroup* entities = &scene->entities;
+    JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
+
+    for (int i = 0; i < entities->transforms.size(); i++) {
+        updateTransformMatrices(entities, &entities->transforms[i]);
     }
 
-    for (int i = 0; i < scene->rigidbodies.size(); i++) {
-        RigidBody* rb = &scene->rigidbodies[i];
-        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
-        rb->lastPosition = getPosition(scene, rb->entityID);
-        rb->lastRotation = getRotation(scene, rb->entityID);
+    for (int i = 0; i < entities->rigidbodies.size(); i++) {
+        RigidBody* rb = &entities->rigidbodies[i];
+        bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(entities, rb->entityID);
+        rb->lastRotation = getRotation(entities, rb->entityID);
 
-        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            scene->movingRigidbodies.insert(rb->entityID);
+        if (bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            entities->movingRigidbodies.insert(rb->entityID);
         }
     }
 
-    for (MeshRenderer& renderer : scene->meshRenderers) {
+    for (MeshRenderer& renderer : entities->meshRenderers) {
         mapBones(scene, &renderer);
     }
 
@@ -929,7 +933,8 @@ void loadTempScene(Resources* resources, Scene* scene) {
         scene.player.cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
     } */
 
-    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
+    Player* player = &entities->players[0];
+    player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
 }
 
 void loadScene(Resources* resources, Scene* scene) {
@@ -940,25 +945,27 @@ void loadScene(Resources* resources, Scene* scene) {
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
+    EntityGroup* entities = &scene->entities;
+    PhysicsScene* physicsScene = &scene->physicsScene;
     // logComponentBlocks(&components);
-    createComponents(scene, resources, &components);
+    createComponents(entities, resources, physicsScene, &components);
 
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        updateTransformMatrices(scene, &scene->transforms[i]);
+    for (int i = 0; i < entities->transforms.size(); i++) {
+        updateTransformMatrices(entities, &entities->transforms[i]);
     }
 
-    for (int i = 0; i < scene->rigidbodies.size(); i++) {
-        RigidBody* rb = &scene->rigidbodies[i];
-        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
-        rb->lastPosition = getPosition(scene, rb->entityID);
-        rb->lastRotation = getRotation(scene, rb->entityID);
+    for (int i = 0; i < entities->rigidbodies.size(); i++) {
+        RigidBody* rb = &entities->rigidbodies[i];
+        physicsScene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(entities, rb->entityID);
+        rb->lastRotation = getRotation(entities, rb->entityID);
 
-        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            scene->movingRigidbodies.insert(rb->entityID);
+        if (physicsScene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            entities->movingRigidbodies.insert(rb->entityID);
         }
     }
 
-    for (MeshRenderer& renderer : scene->meshRenderers) {
+    for (MeshRenderer& renderer : entities->meshRenderers) {
         mapBones(scene, &renderer);
     }
 
@@ -966,7 +973,10 @@ void loadScene(Resources* resources, Scene* scene) {
             scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
         } */
 
-    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
+    Player* player = &entities->players[0];
+    player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
+
+    // scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
     writeTempScene(scene, resources);
 }
 
@@ -983,37 +993,42 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
+    EntityGroup* entities = &scene->entities;
+    PhysicsScene* physicsScene = &scene->physicsScene;
     // logComponentBlocks(&components);
-    createComponents(scene, resources, &components);
+    createComponents(entities, resources, physicsScene, &components);
 
-    for (int i = 0; i < scene->transforms.size(); i++) {
-        updateTransformMatrices(scene, &scene->transforms[i]);
+    for (int i = 0; i < entities->transforms.size(); i++) {
+        updateTransformMatrices(entities, &entities->transforms[i]);
     }
 
-    for (int i = 0; i < scene->rigidbodies.size(); i++) {
-        RigidBody* rb = &scene->rigidbodies[i];
-        scene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(scene, rb->entityID), getRotation(scene, rb->entityID), JPH::EActivation::DontActivate);
-        rb->lastPosition = getPosition(scene, rb->entityID);
-        rb->lastRotation = getRotation(scene, rb->entityID);
+    for (int i = 0; i < entities->rigidbodies.size(); i++) {
+        RigidBody* rb = &entities->rigidbodies[i];
+        physicsScene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
+        rb->lastPosition = getPosition(entities, rb->entityID);
+        rb->lastRotation = getRotation(entities, rb->entityID);
 
-        if (scene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            scene->movingRigidbodies.insert(rb->entityID);
+        if (physicsScene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
+            entities->movingRigidbodies.insert(rb->entityID);
         }
     }
 
-    for (MeshRenderer& renderer : scene->meshRenderers) {
+    for (MeshRenderer& renderer : entities->meshRenderers) {
         mapBones(scene, &renderer);
     }
 
-    /* if (scene->player != nullptr) {
-        scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-    } */
+    /*     if (scene->player != nullptr) {
+            scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
+        } */
 
-    scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
+    Player* player = &entities->players[0];
+    player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
+
+    // scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
     writeTempScene(scene, resources);
 }
 
-void writeEntities(Scene* scene, std::ofstream& stream) {
+void writeEntities(EntityGroup* scene, std::ofstream& stream) {
     for (Entity& entity : scene->entities) {
         std::string id = std::to_string(entity.entityID);
         std::string name = entity.name;
@@ -1028,7 +1043,7 @@ void writeEntities(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeTransforms(Scene* scene, std::ofstream& stream) {
+void writeTransforms(EntityGroup* scene, std::ofstream& stream) {
     for (Transform& transform : scene->transforms) {
         std::string entityID = std::to_string(transform.entityID);
         std::string parentEntityID = transform.parentEntityID == INVALID_ID ? std::to_string(-1) : std::to_string(transform.parentEntityID);
@@ -1128,7 +1143,7 @@ void writeMaterials(Resources* resources) {
     }
 }
 
-void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
+void writeMeshRenderers(EntityGroup* scene, std::ofstream& stream) {
     for (MeshRenderer& renderer : scene->meshRenderers) {
         std::string entityID = std::to_string(renderer.entityID);
         std::string rootEntity = std::to_string(renderer.rootEntity);
@@ -1151,10 +1166,11 @@ void writeMeshRenderers(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeRigidbodies(Scene* scene, std::ofstream& stream) {
+void writeRigidbodies(EntityGroup* scene, PhysicsScene* physicsScene, std::ofstream& stream) {
     JPH::EShapeSubType shapeType;
     JPH::ObjectLayer objectLayer;
     JPH::EMotionType motionType;
+    JPH::BodyInterface* bodyInterface = physicsScene->bodyInterface;
 
     std::string entityID;
     std::string objectLayerString;
@@ -1170,12 +1186,12 @@ void writeRigidbodies(Scene* scene, std::ofstream& stream) {
         const JPH::SphereShape* sphere;
         const JPH::CapsuleShape* capsule;
         const JPH::CylinderShape* cylinder;
-        const JPH::Shape* shape = scene->bodyInterface->GetShape(rb.joltBody).GetPtr();
+        const JPH::Shape* shape = bodyInterface->GetShape(rb.joltBody).GetPtr();
 
         entityID = std::to_string(rb.entityID);
-        objectLayer = scene->bodyInterface->GetObjectLayer(rb.joltBody);
+        objectLayer = bodyInterface->GetObjectLayer(rb.joltBody);
         shapeType = shape->GetSubType();
-        motionType = scene->bodyInterface->GetMotionType(rb.joltBody);
+        motionType = bodyInterface->GetMotionType(rb.joltBody);
         rotationLocked = rb.rotationLocked ? "true" : "false";
         mass = std::to_string(shape->GetMassProperties().mMass);
 
@@ -1251,7 +1267,7 @@ void writeRigidbodies(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeAnimators(Scene* scene, std::ofstream& stream) {
+void writeAnimators(EntityGroup* scene, std::ofstream& stream) {
     for (Animator& animator : scene->animators) {
         std::string entityID = std::to_string(animator.entityID);
         std::string animations = "";
@@ -1272,7 +1288,7 @@ void writeAnimators(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writePointLights(Scene* scene, std::ofstream& stream) {
+void writePointLights(EntityGroup* scene, std::ofstream& stream) {
     for (PointLight& light : scene->pointLights) {
         std::string entityID = std::to_string(light.entityID);
         std::string isActive = light.isActive ? "true" : "false";
@@ -1289,7 +1305,7 @@ void writePointLights(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writeSpotLights(Scene* scene, std::ofstream& stream) {
+void writeSpotLights(EntityGroup* scene, std::ofstream& stream) {
     for (SpotLight& light : scene->spotLights) {
         std::string entityID = std::to_string(light.entityID);
         std::string isActive = light.isActive ? "true" : "false";
@@ -1316,16 +1332,17 @@ void writeSpotLights(Scene* scene, std::ofstream& stream) {
     }
 }
 
-void writePlayer(Scene* scene, std::ofstream& stream) {
-    std::string entityID = std::to_string(scene->player.entityID);
-    std::string armsID = std::to_string(scene->player.armsID);
-    std::string jumpHeight = std::to_string(scene->player.jumpHeight);
-    std::string moveSpeed = std::to_string(scene->player.moveSpeed);
-    std::string groundCheckDistance = std::to_string(scene->player.groundCheckDistance);
-    std::string cameraController_EntityID = std::to_string(scene->player.cameraController.entityID);
-    std::string cameraController_cameraTargetEntityID = std::to_string(scene->player.cameraController.cameraTargetEntityID);
-    std::string cameraController_cameraEntityID = std::to_string(scene->player.cameraController.cameraEntityID);
-    std::string cameraController_Sensitivity = std::to_string(scene->player.cameraController.sensitivity);
+void writePlayer(EntityGroup* scene, std::ofstream& stream) {
+    Player* player = &scene->players[0];
+    std::string entityID = std::to_string(player->entityID);
+    std::string armsID = std::to_string(player->armsID);
+    std::string jumpHeight = std::to_string(player->jumpHeight);
+    std::string moveSpeed = std::to_string(player->moveSpeed);
+    std::string groundCheckDistance = std::to_string(player->groundCheckDistance);
+    std::string cameraController_EntityID = std::to_string(player->cameraController.entityID);
+    std::string cameraController_cameraTargetEntityID = std::to_string(player->cameraController.cameraTargetEntityID);
+    std::string cameraController_cameraEntityID = std::to_string(player->cameraController.cameraEntityID);
+    std::string cameraController_Sensitivity = std::to_string(player->cameraController.sensitivity);
 
     stream << "Player {" << std::endl;
     stream << "entityID: " << entityID << std::endl;
@@ -1341,7 +1358,7 @@ void writePlayer(Scene* scene, std::ofstream& stream) {
            << std::endl;
 }
 
-void writeCameras(Scene* scene, std::ofstream& stream) {
+void writeCameras(EntityGroup* scene, std::ofstream& stream) {
     Camera* camera;
     for (int i = 0; i < scene->cameras.size(); i++) {
         camera = &scene->cameras[i];
@@ -1361,30 +1378,32 @@ void writeCameras(Scene* scene, std::ofstream& stream) {
 }
 
 void saveScene(Scene* scene, Resources* resources) {
+    EntityGroup* entities = &scene->entities;
     writeTempScene(scene, resources);
     std::ofstream stream(scene->scenePath);
-    writeEntities(scene, stream);
-    writeTransforms(scene, stream);
-    writeMeshRenderers(scene, stream);
-    writeRigidbodies(scene, stream);
-    writeAnimators(scene, stream);
-    writePointLights(scene, stream);
-    writeSpotLights(scene, stream);
-    writeCameras(scene, stream);
-    writePlayer(scene, stream);
+    writeEntities(entities, stream);
+    writeTransforms(entities, stream);
+    writeMeshRenderers(entities, stream);
+    writeRigidbodies(entities, &scene->physicsScene, stream);
+    writeAnimators(entities, stream);
+    writePointLights(entities, stream);
+    writeSpotLights(entities, stream);
+    writeCameras(entities, stream);
+    writePlayer(entities, stream);
     writeMaterials(resources);
 }
 
 void writeTempScene(Scene* scene, Resources* resources) {
+    EntityGroup* entities = &scene->entities;
     std::ofstream stream("..\\data\\scenes\\temp.tempscene");
-    writeEntities(scene, stream);
-    writeTransforms(scene, stream);
-    writeMeshRenderers(scene, stream);
-    writeRigidbodies(scene, stream);
-    writeAnimators(scene, stream);
-    writePointLights(scene, stream);
-    writeSpotLights(scene, stream);
-    writeCameras(scene, stream);
-    writePlayer(scene, stream);
+    writeEntities(entities, stream);
+    writeTransforms(entities, stream);
+    writeMeshRenderers(entities, stream);
+    writeRigidbodies(entities, &scene->physicsScene, stream);
+    writeAnimators(entities, stream);
+    writePointLights(entities, stream);
+    writeSpotLights(entities, stream);
+    writeCameras(entities, stream);
+    writePlayer(entities, stream);
     // writeMaterials(resources);
 }

@@ -84,37 +84,40 @@ void initPhysics(Scene* scene) {
     JPH_IF_ENABLE_ASSERTS(AssertFailed = AssertFailedImpl;)
     Factory::sInstance = new Factory();
     RegisterTypes();
-    scene->physicsSystem = new JPH::PhysicsSystem();
-    scene->tempAllocator = new TempAllocatorImpl(10 * 1024 * 1024);
-    scene->jobSystem = new JobSystemThreadPool(cMaxPhysicsJobs, cMaxPhysicsBarriers, thread::hardware_concurrency() - 1);
-    scene->broad_phase_layer_interface = new MyBroadPhaseLayerInterface();
-    scene->object_vs_broadphase_layer_filter = new MyObjectVsBroadPhaseLayerFilter();
-    scene->object_vs_object_layer_filter = new MyObjectLayerPairFilter();
-    scene->physicsSystem->Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *scene->broad_phase_layer_interface, *scene->object_vs_broadphase_layer_filter, *scene->object_vs_object_layer_filter);
-    scene->physicsSystem->SetGravity(vec3(0.0f, -18.0f, 0.0f));
-    scene->bodyInterface = &scene->physicsSystem->GetBodyInterface();
+    PhysicsScene* physicsScene = &scene->physicsScene;
+    physicsScene->physicsSystem = new JPH::PhysicsSystem();
+    physicsScene->tempAllocator = new TempAllocatorImpl(10 * 1024 * 1024);
+    physicsScene->jobSystem = new JobSystemThreadPool(cMaxPhysicsJobs, cMaxPhysicsBarriers, thread::hardware_concurrency() - 1);
+    physicsScene->broad_phase_layer_interface = new MyBroadPhaseLayerInterface();
+    physicsScene->object_vs_broadphase_layer_filter = new MyObjectVsBroadPhaseLayerFilter();
+    physicsScene->object_vs_object_layer_filter = new MyObjectLayerPairFilter();
+    physicsScene->physicsSystem->Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *physicsScene->broad_phase_layer_interface, *physicsScene->object_vs_broadphase_layer_filter, *physicsScene->object_vs_object_layer_filter);
+    physicsScene->physicsSystem->SetGravity(vec3(0.0f, -18.0f, 0.0f));
+    physicsScene->bodyInterface = &physicsScene->physicsSystem->GetBodyInterface();
 }
 
 void updatePhysicsBodyPositions(Scene* scene) {
+    EntityGroup* entities = &scene->entities;
+    JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
     const float t = scene->physicsAccum / cDeltaTime;
-    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
-    for (uint32_t entityID : scene->movingRigidbodies) {
-        RigidBody* rigidbody = getRigidbody(scene, entityID);
+    for (uint32_t entityID : entities->movingRigidbodies) {
+        RigidBody* rigidbody = getRigidbody(entities, entityID);
 
         const vec3 newPos = lerp(rigidbody->lastPosition, bodyInterface->GetPosition(rigidbody->joltBody), t);
-        setPosition(scene, rigidbody->entityID, newPos);
+        setPosition(entities, rigidbody->entityID, newPos);
 
         if (!rigidbody->rotationLocked) {
             const quat newRot = rigidbody->lastRotation.SLERP(bodyInterface->GetRotation(rigidbody->joltBody), t);
-            setRotation(scene, rigidbody->entityID, newRot);
+            setRotation(entities, rigidbody->entityID, newRot);
         }
     }
 }
 
 static void setPreviousTransforms(Scene* scene) {
-    const JPH::BodyInterface* bodyInterface = scene->bodyInterface;
-    for (uint32_t entityID : scene->movingRigidbodies) {
-        RigidBody* rigidbody = getRigidbody(scene, entityID);
+    const JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
+    EntityGroup* entities = &scene->entities;
+    for (uint32_t entityID : entities->movingRigidbodies) {
+        RigidBody* rigidbody = getRigidbody(entities, entityID);
 
         rigidbody->lastPosition = bodyInterface->GetPosition(rigidbody->joltBody);
         rigidbody->lastRotation = bodyInterface->GetRotation(rigidbody->joltBody);
@@ -122,13 +125,14 @@ static void setPreviousTransforms(Scene* scene) {
 }
 
 void updatePhysics(Scene* scene) {
+    PhysicsScene* physicsScene = &scene->physicsScene;
     scene->physicsAccum += scene->deltaTime;
     if (scene->physicsAccum < cDeltaTime) {
         return;
     }
 
     setPreviousTransforms(scene);
-    scene->physicsSystem->Update(cDeltaTime, cCollisionSteps, scene->tempAllocator, scene->jobSystem);
+    physicsScene->physicsSystem->Update(cDeltaTime, cCollisionSteps, physicsScene->tempAllocator, physicsScene->jobSystem);
     scene->physicsAccum -= cDeltaTime;
 }
 

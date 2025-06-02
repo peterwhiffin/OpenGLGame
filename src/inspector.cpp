@@ -130,13 +130,14 @@ Material* buildMaterialInspector(Resources* resources, Material* material, bool 
 }
 
 void buildTransformInspector(Scene* scene, Transform* transform) {
+    EntityGroup* entities = &scene->entities;
     uint32_t entityID = transform->entityID;
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::BeginTable("Transform Table", 2, ImGuiTableFlags_SizingFixedSame)) {
-            Transform* transform = getTransform(scene, entityID);
+            Transform* transform = getTransform(entities, entityID);
             vec3 position = transform->localPosition;
             vec3 worldPosition = transform->worldTransform.GetTranslation();
-            vec3 rotation = getLocalRotation(scene, entityID).GetEulerAngles();
+            vec3 rotation = getLocalRotation(entities, entityID).GetEulerAngles();
             vec3 degrees = vec3(JPH::RadiansToDegrees(rotation.GetX()), JPH::RadiansToDegrees(rotation.GetY()), JPH::RadiansToDegrees(rotation.GetZ()));
             vec3 scale = transform->localScale;
             ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
@@ -152,20 +153,20 @@ void buildTransformInspector(Scene* scene, Transform* transform) {
             newPos.SetY(position.GetY());
             newPos.SetZ(position.GetZ());
             vec3 radians = vec3(JPH::DegreesToRadians(degrees.GetX()), JPH::DegreesToRadians(degrees.GetY()), JPH::DegreesToRadians(degrees.GetZ()));
-            RigidBody* rb = getRigidbody(scene, entityID);
+            RigidBody* rb = getRigidbody(entities, entityID);
             if (rb != nullptr) {
                 if (posChanged || rotChanged) {
-                    scene->bodyInterface->SetPositionAndRotation(rb->joltBody, newPos, quat::sEulerAngles(radians), JPH::EActivation::Activate);
-                    setLocalPosition(scene, entityID, position);
-                    setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
+                    scene->physicsScene.bodyInterface->SetPositionAndRotation(rb->joltBody, newPos, quat::sEulerAngles(radians), JPH::EActivation::Activate);
+                    setLocalPosition(entities, entityID, position);
+                    setLocalRotation(entities, entityID, quat::sEulerAngles(radians));
                 }
                 if (scaleChanged) {
-                    setLocalScale(scene, entityID, scale);
+                    setLocalScale(entities, entityID, scale);
                 }
             } else {
-                setLocalPosition(scene, entityID, position);
-                setLocalRotation(scene, entityID, quat::sEulerAngles(radians));
-                setLocalScale(scene, entityID, scale);
+                setLocalPosition(entities, entityID, position);
+                setLocalRotation(entities, entityID, quat::sEulerAngles(radians));
+                setLocalScale(entities, entityID, scale);
             }
 
             ImGui::EndTable();
@@ -182,7 +183,7 @@ void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer
     }
     if (ImGui::BeginPopup("MeshRendererContextMenu")) {
         if (ImGui::MenuItem("Remove")) {
-            removeMeshRenderer(scene, renderer->entityID);
+            removeMeshRenderer(&scene->entities, renderer->entityID);
         }
 
         ImGui::EndPopup();
@@ -229,7 +230,7 @@ void buildAnimatorInspector(Scene* scene, Animator* animator) {
     }
     if (ImGui::BeginPopup("AnimatorContextMenu")) {
         if (ImGui::MenuItem("Remove")) {
-            removeAnimator(scene, animator->entityID);
+            removeAnimator(&scene->entities, animator->entityID);
         }
 
         ImGui::EndPopup();
@@ -249,7 +250,9 @@ void buildAnimatorInspector(Scene* scene, Animator* animator) {
 }
 
 void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* editor, RigidBody* rigidbody) {
-    const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
+    EntityGroup* entities = &scene->entities;
+    JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
+    const JPH::Shape* shape = bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
     const JPH::BoxShape* box;
     const JPH::SphereShape* sphere;
     const JPH::CapsuleShape* capsule;
@@ -272,7 +275,7 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
     }
     if (ImGui::BeginPopup("RigidbodyContextMenu")) {
         if (ImGui::MenuItem("Remove")) {
-            removeRigidbody(scene, rigidbody->entityID);
+            removeRigidbody(entities, rigidbody->entityID);
         }
 
         ImGui::EndPopup();
@@ -289,27 +292,27 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
                     box = static_cast<const JPH::BoxShape*>(shape);
                     vec3 halfExtents = box->GetHalfExtent();
                     localBox = JPH::AABox(-halfExtents, halfExtents);
-                    renderer->debugRenderer->DrawBox(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+                    renderer->debugRenderer->DrawBox(bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Sphere:
                     shapeComboPreview = "Sphere";
                     sphere = static_cast<const JPH::SphereShape*>(shape);
                     radius = sphere->GetRadius();
-                    renderer->debugRenderer->DrawSphere(scene->bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+                    renderer->debugRenderer->DrawSphere(bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Capsule:
                     shapeComboPreview = "Capsule";
                     capsule = static_cast<const JPH::CapsuleShape*>(shape);
                     halfHeight = capsule->GetHalfHeightOfCylinder();
                     radius = capsule->GetRadius();
-                    renderer->debugRenderer->DrawCapsule(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+                    renderer->debugRenderer->DrawCapsule(bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
                 case JPH::EShapeSubType::Cylinder:
                     shapeComboPreview = "Cylinder";
                     cylinder = static_cast<const JPH::CylinderShape*>(shape);
                     halfHeight = cylinder->GetHalfHeight();
                     radius = cylinder->GetRadius();
-                    renderer->debugRenderer->DrawCylinder(scene->bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
+                    renderer->debugRenderer->DrawCylinder(bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
             }
 
@@ -328,25 +331,25 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
                                 JPH::BoxShapeSettings boxShapeSettings(newExtent);
                                 JPH::ShapeSettings::ShapeResult boxResult = boxShapeSettings.Create();
                                 JPH::ShapeRefC boxShape = boxResult.Get();
-                                scene->bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
+                                bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
                                 shapeType = JPH::EShapeSubType::Box;
                             } else if (shape == "Sphere") {
                                 JPH::SphereShapeSettings sphereShapeSettings(0.5f);
                                 JPH::ShapeSettings::ShapeResult sphereResult = sphereShapeSettings.Create();
                                 JPH::ShapeRefC sphereShape = sphereResult.Get();
-                                scene->bodyInterface->SetShape(rigidbody->joltBody, sphereShape, false, JPH::EActivation::DontActivate);
+                                bodyInterface->SetShape(rigidbody->joltBody, sphereShape, false, JPH::EActivation::DontActivate);
                                 shapeType = JPH::EShapeSubType::Sphere;
                             } else if (shape == "Capsule") {
                                 JPH::CapsuleShapeSettings capsuleShapeSettings(0.5f, 0.5f);
                                 JPH::ShapeSettings::ShapeResult capsuleResult = capsuleShapeSettings.Create();
                                 JPH::ShapeRefC capsuleShape = capsuleResult.Get();
-                                scene->bodyInterface->SetShape(rigidbody->joltBody, capsuleShape, false, JPH::EActivation::DontActivate);
+                                bodyInterface->SetShape(rigidbody->joltBody, capsuleShape, false, JPH::EActivation::DontActivate);
                                 shapeType = JPH::EShapeSubType::Capsule;
                             } else if (shape == "Cylinder") {
                                 JPH::CylinderShapeSettings cylinderShapeSettings(0.5f, 0.5f);
                                 JPH::ShapeSettings::ShapeResult cylinderResult = cylinderShapeSettings.Create();
                                 JPH::ShapeRefC cylinderShape = cylinderResult.Get();
-                                scene->bodyInterface->SetShape(rigidbody->joltBody, cylinderShape, false, JPH::EActivation::DontActivate);
+                                bodyInterface->SetShape(rigidbody->joltBody, cylinderShape, false, JPH::EActivation::DontActivate);
                                 shapeType = JPH::EShapeSubType::Cylinder;
                             }
                         }
@@ -357,8 +360,8 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
 
             // const JPH::Shape* shape = scene->bodyInterface->GetShape(rigidbody->joltBody).GetPtr();
             // JPH::EShapeSubType shapeType = shape->GetSubType();
-            JPH::ObjectLayer objectLayer = scene->bodyInterface->GetObjectLayer(rigidbody->joltBody);
-            JPH::EMotionType motionType = scene->bodyInterface->GetMotionType(rigidbody->joltBody);
+            JPH::ObjectLayer objectLayer = bodyInterface->GetObjectLayer(rigidbody->joltBody);
+            JPH::EMotionType motionType = bodyInterface->GetMotionType(rigidbody->joltBody);
             std::string motionTypeString = motionType == JPH::EMotionType::Dynamic ? "Dynamic" : "Static";
             const JPH::BoxShape* box = static_cast<const JPH::BoxShape*>(shape);
             vec3 halfExtents = box->GetHalfExtent();
@@ -369,28 +372,28 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
                     JPH::BoxShapeSettings boxShapeSettings(newExtent);
                     JPH::ShapeSettings::ShapeResult boxResult = boxShapeSettings.Create();
                     JPH::ShapeRefC boxShape = boxResult.Get();
-                    scene->bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
+                    bodyInterface->SetShape(rigidbody->joltBody, boxShape, false, JPH::EActivation::DontActivate);
                 }
             } else if (shapeType == JPH::EShapeSubType::Sphere) {
                 if (buildFloatRow("Radius: ", &radius, 0.01f, 0.1f)) {
                     JPH::SphereShapeSettings sphereShapeSettings(radius);
                     JPH::ShapeSettings::ShapeResult sphereResult = sphereShapeSettings.Create();
                     JPH::ShapeRefC sphereShape = sphereResult.Get();
-                    scene->bodyInterface->SetShape(rigidbody->joltBody, sphereShape, false, JPH::EActivation::DontActivate);
+                    bodyInterface->SetShape(rigidbody->joltBody, sphereShape, false, JPH::EActivation::DontActivate);
                 }
             } else if (shapeType == JPH::EShapeSubType::Capsule) {
                 if (buildFloatRow("Half Height: ", &halfHeight, 0.01f, 0.1f) || buildFloatRow("Radius: ", &radius, 0.01f, 0.1f)) {
                     JPH::CapsuleShapeSettings capsuleShapeSettings(halfHeight, radius);
                     JPH::ShapeSettings::ShapeResult capsuleResult = capsuleShapeSettings.Create();
                     JPH::ShapeRefC capsuleShape = capsuleResult.Get();
-                    scene->bodyInterface->SetShape(rigidbody->joltBody, capsuleShape, false, JPH::EActivation::DontActivate);
+                    bodyInterface->SetShape(rigidbody->joltBody, capsuleShape, false, JPH::EActivation::DontActivate);
                 }
             } else if (shapeType == JPH::EShapeSubType::Cylinder) {
                 if (buildFloatRow("Half Height: ", &halfHeight, 0.01f, 0.1f) || buildFloatRow("Radius: ", &radius, 0.01f, 0.1f)) {
                     JPH::CylinderShapeSettings cylinderShapeSettings(halfHeight, radius);
                     JPH::ShapeSettings::ShapeResult cylinderResult = cylinderShapeSettings.Create();
                     JPH::ShapeRefC cylinderShape = cylinderResult.Get();
-                    scene->bodyInterface->SetShape(rigidbody->joltBody, cylinderShape, false, JPH::EActivation::DontActivate);
+                    bodyInterface->SetShape(rigidbody->joltBody, cylinderShape, false, JPH::EActivation::DontActivate);
                 }
             }
 
@@ -416,29 +419,29 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
 
                 if (motionTypeString != "Dynamic") {
                     if (ImGui::Selectable("Dynamic", isSelected)) {
-                        scene->bodyInterface->DeactivateBody(rigidbody->joltBody);
-                        scene->bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Dynamic, JPH::EActivation::Activate);
-                        scene->bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::MOVING);
-                        setRigidbodyMoving(scene, rigidbody->entityID);
-                        scene->bodyInterface->ActivateBody(rigidbody->joltBody);
+                        bodyInterface->DeactivateBody(rigidbody->joltBody);
+                        bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Dynamic, JPH::EActivation::Activate);
+                        bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::MOVING);
+                        setRigidbodyMoving(entities, rigidbody->entityID);
+                        bodyInterface->ActivateBody(rigidbody->joltBody);
                     }
                 }
 
                 if (motionTypeString != "Kinematic") {
                     if (ImGui::Selectable("Kinematic", isSelected)) {
-                        scene->bodyInterface->DeactivateBody(rigidbody->joltBody);
-                        scene->bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Kinematic, JPH::EActivation::Activate);
-                        scene->bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::MOVING);
-                        setRigidbodyMoving(scene, rigidbody->entityID);
-                        scene->bodyInterface->ActivateBody(rigidbody->joltBody);
+                        bodyInterface->DeactivateBody(rigidbody->joltBody);
+                        bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Kinematic, JPH::EActivation::Activate);
+                        bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::MOVING);
+                        setRigidbodyMoving(entities, rigidbody->entityID);
+                        bodyInterface->ActivateBody(rigidbody->joltBody);
                     }
                 }
 
                 if (motionTypeString != "Static") {
                     if (ImGui::Selectable("Static", isSelected)) {
-                        scene->bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Static, JPH::EActivation::Activate);
-                        scene->bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::NON_MOVING);
-                        setRigidbodyNonMoving(scene, rigidbody->entityID);
+                        bodyInterface->SetMotionType(rigidbody->joltBody, JPH::EMotionType::Static, JPH::EActivation::Activate);
+                        bodyInterface->SetObjectLayer(rigidbody->joltBody, Layers::NON_MOVING);
+                        setRigidbodyNonMoving(entities, rigidbody->entityID);
                     }
                 }
 
@@ -459,7 +462,7 @@ void buildPointLightInspector(Scene* scene, PointLight* light) {
 
     if (ImGui::BeginPopup("PointLightContextMenu")) {
         if (ImGui::MenuItem("Remove")) {
-            removePointLight(scene, light->entityID);
+            removePointLight(&scene->entities, light->entityID);
         }
 
         ImGui::EndPopup();
@@ -485,7 +488,7 @@ void buildSpotLightInspector(Scene* scene, SpotLight* spotLight) {
 
     if (ImGui::BeginPopup("SpotLightContextMenu")) {
         if (ImGui::MenuItem("Remove")) {
-            removeSpotLight(scene, spotLight->entityID);
+            removeSpotLight(&scene->entities, spotLight->entityID);
         }
 
         ImGui::EndPopup();
@@ -573,40 +576,42 @@ void buildTextureInspector(Resources* resources, EditorState* editor) {
 
 void buildAddComponentCombo(Scene* scene, EditorState* editor) {
     if (ImGui::BeginCombo("##Add Component", "Add Component")) {
+        EntityGroup* entities = &scene->entities;
         const bool isSelected = false;
         uint32_t entityID = editor->nodeClicked;
-        if (getMeshRenderer(scene, entityID) == nullptr) {
+        if (getMeshRenderer(entities, entityID) == nullptr) {
             if (ImGui::Selectable("Mesh Renderer", isSelected)) {
-                MeshRenderer* renderer = addMeshRenderer(scene, entityID);
+                MeshRenderer* renderer = addMeshRenderer(entities, entityID);
                 renderer->mesh = nullptr;
-                uint32_t parentID = getTransform(scene, entityID)->parentEntityID;
+                uint32_t parentID = getTransform(entities, entityID)->parentEntityID;
                 uint32_t childID = entityID;
                 while (parentID != INVALID_ID) {
                     childID = parentID;
-                    parentID = getTransform(scene, childID)->parentEntityID;
+                    parentID = getTransform(entities, childID)->parentEntityID;
                 }
 
                 renderer->rootEntity = childID;
             }
         }
 
-        if (getRigidbody(scene, entityID) == nullptr) {
+        if (getRigidbody(entities, entityID) == nullptr) {
             if (ImGui::Selectable("Rigidbody: Box", isSelected)) {
-                RigidBody* rb = addRigidbody(scene, entityID);
+                RigidBody* rb = addRigidbody(entities, entityID);
+                JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
                 JPH::BoxShapeSettings boxSettings(vec3(0.5f, 0.5f, 0.5f));
                 JPH::ShapeSettings::ShapeResult shapeResult = boxSettings.Create();
                 JPH::ShapeRefC shape = shapeResult.Get();
                 JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
                 bodySettings.mAllowDynamicOrKinematic = true;
-                JPH::Body* body = scene->bodyInterface->CreateBody(bodySettings);
-                scene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
+                JPH::Body* body = bodyInterface->CreateBody(bodySettings);
+                bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
                 rb->joltBody = body->GetID();
             }
         }
 
-        if (getSpotLight(scene, entityID) == nullptr) {
+        if (getSpotLight(entities, entityID) == nullptr) {
             if (ImGui::Selectable("Spot Light", isSelected)) {
-                SpotLight* light = addSpotLight(scene, entityID);
+                SpotLight* light = addSpotLight(entities, entityID);
                 light->brightness = 10.0f;
                 light->color = vec3(1.0f, 1.0f, 1.0f);
                 light->cutoff = 1.0f;
@@ -619,13 +624,14 @@ void buildAddComponentCombo(Scene* scene, EditorState* editor) {
 }
 
 void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
+    EntityGroup* entities = &scene->entities;
     uint32_t entityID = editor->nodeClicked;
-    Transform* transform = getTransform(scene, entityID);
-    MeshRenderer* meshRenderer = getMeshRenderer(scene, entityID);
-    Animator* animator = getAnimator(scene, entityID);
-    RigidBody* rigidbody = getRigidbody(scene, entityID);
-    SpotLight* spotLight = getSpotLight(scene, entityID);
-    PointLight* pointLight = getPointLight(scene, entityID);
+    Transform* transform = getTransform(entities, entityID);
+    MeshRenderer* meshRenderer = getMeshRenderer(entities, entityID);
+    Animator* animator = getAnimator(entities, entityID);
+    RigidBody* rigidbody = getRigidbody(entities, entityID);
+    SpotLight* spotLight = getSpotLight(entities, entityID);
+    PointLight* pointLight = getPointLight(entities, entityID);
 
     buildTransformInspector(scene, transform);
 
