@@ -1,6 +1,7 @@
 #include "ecs.h"
 #include "scene.h"
 #include "loader.h"
+#include "sceneloader.h"
 
 uint32_t getEntityID(EntityGroup* scene) {
     uint32_t newID = scene->nextEntityID++;
@@ -311,7 +312,7 @@ Animator* addAnimator(EntityGroup* scene, uint32_t entityID, Model* model) {
         animatorPtr->animationMap[animation->name] = animation;
     }
 
-    mapAnimationChannels(scene, animatorPtr, entityID);
+    // mapAnimationChannels(scene, animatorPtr, entityID);
 
     animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
@@ -331,7 +332,7 @@ Animator* addAnimator(EntityGroup* scene, uint32_t entityID, std::vector<Animati
     scene->animatorIndexMap[entityID] = index;
     Animator* animatorPtr = &scene->animators[index];
 
-    mapAnimationChannels(scene, animatorPtr, entityID);
+    // mapAnimationChannels(scene, animatorPtr, entityID);
     animatorPtr->currentAnimation = animatorPtr->animations[0];
     return animatorPtr;
 }
@@ -379,4 +380,120 @@ uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, M
     }
 
     return childEntity;
+}
+
+void copyEntity(Scene* scene, EntityCopier* copier) {
+    copyEntityInternal(scene, copier, INVALID_ID);
+    copier->meshRenderersTemp.clear();
+    copier->animatorsTemp.clear();
+    copier->rigidbodiesTemp.clear();
+    copier->pointLightsTemp.clear();
+    copier->spotLightsTemp.clear();
+    copier->camerasTemp.clear();
+    copier->playersTemp.clear();
+    copier->relativeIDMap.clear();
+}
+
+static void copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t parentID) {
+    uint32_t templateID = copier->templateID;
+    Entity* templateEntity = getEntity(copier->fromGroup, copier->templateID);
+    std::string name = templateEntity->name;
+    bool isActive = templateEntity->isActive;
+    uint32_t newEntity = getNewEntity(copier->toGroup, name)->entityID;
+    copier->relativeIDMap[templateID] = newEntity;
+    Transform* templateTransform = getTransform(copier->fromGroup, copier->templateID);
+    Transform* newTransform = getTransform(copier->toGroup, newEntity);
+    // newTransform->childEntityIds = templateTransform->childEntityIds;
+    newTransform->localPosition = templateTransform->localPosition;
+    newTransform->localRotation = templateTransform->localRotation;
+    newTransform->localScale = templateTransform->localScale;
+    newTransform->worldTransform = templateTransform->worldTransform;
+    setParent(copier->toGroup, newEntity, parentID);
+
+    for (int i = 0; i < templateTransform->childEntityIds.size(); i++) {
+        copier->templateID = templateTransform->childEntityIds[i];
+        copyEntityInternal(scene, copier, newEntity);
+    }
+
+    MeshRenderer* meshRenderer = getMeshRenderer(copier->fromGroup, templateID);
+    Animator* animator = getAnimator(copier->fromGroup, templateID);
+    RigidBody* rb = getRigidbody(copier->fromGroup, templateID);
+    PointLight* pointLight = getPointLight(copier->fromGroup, templateID);
+    SpotLight* spotLight = getSpotLight(copier->fromGroup, templateID);
+    Camera* camera = getCamera(copier->fromGroup, templateID);
+    Player* player = getPlayer(copier->fromGroup, templateID);
+
+    if (meshRenderer != nullptr) {
+        MeshRenderer* newMeshRenderer = addMeshRenderer(copier->toGroup, newEntity);
+        newMeshRenderer->boneMatrices = meshRenderer->boneMatrices;
+        newMeshRenderer->boneMatricesSet = meshRenderer->boneMatricesSet;
+        newMeshRenderer->materials = meshRenderer->materials;
+        newMeshRenderer->mesh = meshRenderer->mesh;
+        newMeshRenderer->subMeshes = meshRenderer->subMeshes;
+        newMeshRenderer->vao = meshRenderer->vao;
+        mapBones(scene, newMeshRenderer);  // this might not work
+    }
+
+    if (animator != nullptr) {
+        Animator* newAnimator = addAnimator(copier->toGroup, newEntity, animator->animations);
+        mapAnimationChannels(copier->toGroup, newAnimator, newAnimator->entityID);
+    }
+
+    if (rb != nullptr) {
+        RigidBody* newRB = addRigidbody(copier->toGroup, newEntity);
+        newRB->shape = rb->shape;
+        newRB->mass = rb->mass;
+        newRB->halfExtents = rb->halfExtents;
+        newRB->halfHeight = rb->halfHeight;
+        newRB->layer = rb->layer;
+        newRB->motionType = rb->motionType;
+        newRB->radius = rb->radius;
+        newRB->rotationLocked = rb->rotationLocked;
+        initializeRigidbody(newRB, &scene->physicsScene, copier->toGroup);
+    }
+
+    if (pointLight != nullptr) {
+        PointLight* newLight = addPointLight(copier->toGroup, newEntity);
+        newLight->brightness = pointLight->brightness;
+        newLight->color = pointLight->color;
+        newLight->isActive = pointLight->isActive;
+    }
+
+    if (spotLight != nullptr) {
+        SpotLight* newLight = addSpotLight(copier->toGroup, newEntity);
+        newLight->blockerSearchUV = spotLight->blockerSearchUV;
+        newLight->lightRadiusUV = spotLight->lightRadiusUV;
+        newLight->brightness = spotLight->brightness;
+        newLight->color = spotLight->color;
+        newLight->cutoff = spotLight->cutoff;
+        newLight->outerCutoff = spotLight->outerCutoff;
+        newLight->enableShadows = spotLight->enableShadows;
+        newLight->isActive = spotLight->isActive;
+        newLight->range = spotLight->range;
+        newLight->shadowWidth = spotLight->shadowWidth;
+        newLight->shadowHeight = spotLight->shadowHeight;
+        if (newLight->enableShadows) {
+            createSpotLightShadowMap(newLight);
+        }
+    }
+
+    if (camera != nullptr) {
+        Camera* newCam = addCamera(copier->toGroup, newEntity);
+        newCam->fov = camera->fov;
+        newCam->fovRadians = JPH::DegreesToRadians(newCam->fov);
+        newCam->nearPlane = camera->nearPlane;
+        newCam->farPlane = camera->farPlane;
+    }
+
+    if (player != nullptr) {
+        Player* newPlayer = addPlayer(copier->toGroup, newEntity);
+        CameraController* newCamController = &newPlayer->cameraController;
+        newPlayer->armsID = copier->relativeIDMap[player->armsID];
+        newPlayer->groundCheckDistance = player->groundCheckDistance;
+        newPlayer->jumpHeight = player->jumpHeight;
+        newPlayer->moveSpeed = player->moveSpeed;
+        newCamController->cameraTargetEntityID = copier->relativeIDMap[player->cameraController.cameraTargetEntityID];
+        newCamController->moveSpeed = player->cameraController.moveSpeed;
+        newCamController->sensitivity = player->cameraController.sensitivity;
+    }
 }

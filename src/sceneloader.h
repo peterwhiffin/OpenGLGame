@@ -20,7 +20,7 @@ enum TokenType {
     BlockClose,
     EndOfFile
 };
-
+// 16023
 struct Token {
     TokenType type;
     std::string text;
@@ -42,3 +42,4 @@ void writeMaterial(Resources* resources, std::filesystem::path path);
 void writeTextureSettings(TextureSettings settings);
 void writeTempScene(Scene* scene, Resources* resources);
 void loadTempScene(Resources* resources, Scene* scene);
+void loadPrefabs(Resources* resources, std::string path);

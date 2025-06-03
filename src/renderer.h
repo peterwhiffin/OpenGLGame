@@ -4,6 +4,8 @@
 #include "utils/mathutils.h"
 #include "physics.h"
 
+struct EntityGroup;
+
 struct DebugVertex {
     vec3 pos;
     vec4 color;
@@ -146,7 +148,6 @@ struct GlobalUBO {
 };
 
 struct RenderState {
-    bool updateTransforms = false;
     GLFWwindow* window;
     WindowData windowData;
     GLuint litFBO, litRBO, ssaoFBO;
@@ -181,22 +182,20 @@ struct RenderState {
 
     vec3 fogColor = vec3(1.0f, 1.0f, 1.0f);
 
-    bool horizontalBlur = true;
-
     std::vector<vec3> ssaoKernel;
     std::vector<vec3> ssaoNoise;
 };
 
 void deleteSpotLightShadowMap(SpotLight* light);
-void createContext(Scene* scene, RenderState* renderer);
+void createContext(RenderState* renderer);
 void initRenderer(RenderState* renderer, Scene* scene);
 void mapBones(Scene* scene, MeshRenderer* renderer);
 void deleteBuffers(RenderState* scene, Resources* resources);
 void createSpotLightShadowMap(SpotLight* light);
-void renderScene(RenderState* renderer, Scene* scene);
+void renderScene(RenderState* renderer, EntityGroup* entities);
 void initRendererEditor(RenderState* renderer);
 void updateBufferData(RenderState* renderer, Scene* scene);
-void drawPickingScene(RenderState* renderer, Scene* scene);
+void drawPickingScene(RenderState* renderer, EntityGroup* scene);
 void renderDebug(RenderState* scene);
 
 class MyDebugRenderer : public JPH::DebugRendererSimple {

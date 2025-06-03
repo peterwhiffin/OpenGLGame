@@ -446,6 +446,7 @@ void createDefaultResources(Resources* resources, RenderState* renderer) {
 void findResources(Resources* resources, RenderState* renderer) {
     std::vector<std::filesystem::directory_entry> resourcePaths;
     std::unordered_set<std::string> metaPaths;
+    std::vector<std::string> prefabPaths;
 
     for (const std::filesystem::directory_entry& dir : std::filesystem::recursive_directory_iterator(resourcePath)) {
         if (dir.is_regular_file()) {
@@ -458,6 +459,8 @@ void findResources(Resources* resources, RenderState* renderer) {
                 resourcePaths.push_back(dir);
             } else if (extString == ".meta") {
                 metaPaths.insert(pathString);
+            } else if (extString == ".prefab") {
+                prefabPaths.push_back(pathString);
             }
         }
     }
@@ -502,6 +505,10 @@ void findResources(Resources* resources, RenderState* renderer) {
     for (auto& pair : resources->modelImportMap) {
         std::string fileName = pair.first.substr(pair.first.find_last_of('\\') + 1);
         resources->modelMap[fileName] = loadModel(resources, renderer, pair.first);
+    }
+
+    for (std::string& path : prefabPaths) {
+        loadPrefabs(resources, path);
     }
 }
 

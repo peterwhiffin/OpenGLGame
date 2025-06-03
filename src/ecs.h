@@ -50,6 +50,22 @@ struct EntityGroup {
     std::unordered_map<uint32_t, size_t> playerIndexMap;
 };
 
+struct EntityCopier {
+    uint32_t templateID;
+    EntityGroup* fromGroup;
+    EntityGroup* toGroup;
+
+    std::unordered_map<uint32_t, uint32_t> relativeIDMap;
+
+    std::vector<uint32_t> meshRenderersTemp;
+    std::vector<uint32_t> animatorsTemp;
+    std::vector<uint32_t> rigidbodiesTemp;
+    std::vector<uint32_t> pointLightsTemp;
+    std::vector<uint32_t> spotLightsTemp;
+    std::vector<uint32_t> camerasTemp;
+    std::vector<uint32_t> playersTemp;
+};
+
 uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 uint32_t getEntityID(EntityGroup* scene);
 Entity* getNewEntity(EntityGroup* scene, std::string name, uint32_t id = -1, bool createTransform = true);
@@ -84,6 +100,7 @@ void destroyEntity(EntityGroup* scene, uint32_t entityID);
 
 void setRigidbodyMoving(EntityGroup* scene, uint32_t getEntityID);
 void setRigidbodyNonMoving(EntityGroup* scene, uint32_t getEntityID);
+void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID);
 
 template <typename Component>
 bool destroyComponent(std::vector<Component>& components, std::unordered_map<uint32_t, size_t>& indexMap, uint32_t entityID) {

@@ -417,13 +417,14 @@ void createMaterial(Resources* resources, RenderState* renderer, ComponentBlock 
     material->normalStrength = normalStrength;
 }
 
-void createRigidbody(EntityGroup* scene, PhysicsScene* physicsScene, ComponentBlock block) {
+void createRigidbody(EntityGroup* scene, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::string memberString = "";
     JPH::ObjectLayer objectLayer = Layers::NON_MOVING;
     JPH::EMotionType motionType = JPH::EMotionType::Static;
     JPH::ShapeSettings::ShapeResult shapeResult;
     JPH::ShapeRefC shape;
+    JPH::EShapeSubType shapeType = JPH::EShapeSubType::Box;
     vec3 halfExtents = vec3(1.0f, 1.0f, 1.0f);
     float halfHeight;
     float radius;
@@ -486,26 +487,55 @@ void createRigidbody(EntityGroup* scene, PhysicsScene* physicsScene, ComponentBl
         memberString = block.memberValueMap["shape"];
 
         if (memberString == "box") {
-            JPH::BoxShapeSettings boxSettings(halfExtents);
-            shapeResult = boxSettings.Create();
-            shape = shapeResult.Get();
+            shapeType = JPH::EShapeSubType::Box;
         } else if (memberString == "sphere") {
-            JPH::SphereShapeSettings sphereSettings(radius);
-            shapeResult = sphereSettings.Create();
-            shape = shapeResult.Get();
+            shapeType = JPH::EShapeSubType::Sphere;
         } else if (memberString == "capsule") {
-            JPH::CapsuleShapeSettings capsuleSettings(halfHeight, radius);
-            shapeResult = capsuleSettings.Create();
-            shape = shapeResult.Get();
+            shapeType = JPH::EShapeSubType::Capsule;
         } else if (memberString == "cylinder") {
-            JPH::CylinderShapeSettings cylinderSettings(halfHeight, radius);
-            shapeResult = cylinderSettings.Create();
-            shape = shapeResult.Get();
+            shapeType = JPH::EShapeSubType::Cylinder;
         }
     }
 
+    RigidBody* rb = addRigidbody(scene, entityID);
+    rb->rotationLocked = rotationLocked;
+    rb->shape = shapeType;
+    rb->mass = mass;
+    rb->radius = radius;
+    rb->halfHeight = halfHeight;
+    rb->halfExtents = halfExtents;
+    rb->motionType = motionType;
+    rb->layer = objectLayer;
+}
+
+void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup* entities) {
+    JPH::ObjectLayer objectLayer = rb->layer;
+    JPH::EMotionType motionType = rb->motionType;
+    JPH::EShapeSubType shapeType = rb->shape;
+
+    JPH::ShapeSettings::ShapeResult shapeResult;
+    JPH::ShapeRefC shape;
+
+    if (shapeType == JPH::EShapeSubType::Box) {
+        JPH::BoxShapeSettings boxSettings(rb->halfExtents);
+        shapeResult = boxSettings.Create();
+        shape = shapeResult.Get();
+    } else if (shapeType == JPH::EShapeSubType::Sphere) {
+        JPH::SphereShapeSettings sphereSettings(rb->radius);
+        shapeResult = sphereSettings.Create();
+        shape = shapeResult.Get();
+    } else if (shapeType == JPH::EShapeSubType::Capsule) {
+        JPH::CapsuleShapeSettings capsuleSettings(rb->halfHeight, rb->radius);
+        shapeResult = capsuleSettings.Create();
+        shape = shapeResult.Get();
+    } else if (shapeType == JPH::EShapeSubType::Cylinder) {
+        JPH::CylinderShapeSettings cylinderSettings(rb->halfHeight, rb->radius);
+        shapeResult = cylinderSettings.Create();
+        shape = shapeResult.Get();
+    }
+
     JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, objectLayer);
-    if (rotationLocked) {
+    if (rb->rotationLocked) {
         bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
     }
 
@@ -513,8 +543,6 @@ void createRigidbody(EntityGroup* scene, PhysicsScene* physicsScene, ComponentBl
     JPH::Body* body = physicsScene->bodyInterface->CreateBody(bodySettings);
     physicsScene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
 
-    RigidBody* rb = addRigidbody(scene, entityID);
-    rb->rotationLocked = rotationLocked;
     rb->joltBody = body->GetID();
 }
 
@@ -803,7 +831,7 @@ void createImportSettings(Resources* resources, std::vector<ComponentBlock>* com
     }
 }
 
-void createComponents(EntityGroup* scene, Resources* resources, PhysicsScene* physicsScene, std::vector<ComponentBlock>* components) {
+void createComponents(EntityGroup* scene, Resources* resources, std::vector<ComponentBlock>* components) {
     for (int i = 0; i < components->size(); i++) {
         ComponentBlock block = components->at(i);
 
@@ -814,7 +842,7 @@ void createComponents(EntityGroup* scene, Resources* resources, PhysicsScene* ph
         } else if (block.type == "MeshRenderer") {
             createMeshRenderer(scene, resources, block);
         } else if (block.type == "Rigidbody") {
-            createRigidbody(scene, physicsScene, block);
+            createRigidbody(scene, block);
         } else if (block.type == "Animator") {
             createAnimator(scene, resources, block);
         } else if (block.type == "Camera") {
@@ -896,17 +924,7 @@ void loadResourceSettings(Resources* resources, std::unordered_set<std::string>&
     }
 }
 
-void loadTempScene(Resources* resources, Scene* scene) {
-    std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
-    scene->name = fileName.substr(0, fileName.find('.'));
-    std::ifstream stream("..\\data\\scenes\\temp.tempscene");
-    std::vector<Token> tokens;
-    std::vector<ComponentBlock> components;
-    getTokens(&stream, &tokens);
-    createComponentBlocks(&tokens, &components);
-    // logComponentBlocks(&components);
-    createComponents(&scene->entities, resources, &scene->physicsScene, &components);
-
+void initializeScene(Scene* scene) {
     EntityGroup* entities = &scene->entities;
     JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
 
@@ -916,6 +934,7 @@ void loadTempScene(Resources* resources, Scene* scene) {
 
     for (int i = 0; i < entities->rigidbodies.size(); i++) {
         RigidBody* rb = &entities->rigidbodies[i];
+        initializeRigidbody(rb, &scene->physicsScene, &scene->entities);
         bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
         rb->lastPosition = getPosition(entities, rb->entityID);
         rb->lastRotation = getRotation(entities, rb->entityID);
@@ -929,12 +948,35 @@ void loadTempScene(Resources* resources, Scene* scene) {
         mapBones(scene, &renderer);
     }
 
-    /* if (scene->player != nullptr) {
-        scene.player.cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-    } */
+    for (Animator& animator : entities->animators) {
+        mapAnimationChannels(entities, &animator, animator.entityID);
+    }
 
     Player* player = &entities->players[0];
     player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
+}
+
+void loadPrefabs(Resources* resources, std::string path) {
+    std::ifstream stream(path);
+    std::vector<Token> tokens;
+    std::vector<ComponentBlock> components;
+
+    getTokens(&stream, &tokens);
+    createComponentBlocks(&tokens, &components);
+    createComponents(&resources->prefabGroup, resources, &components);
+}
+
+void loadTempScene(Resources* resources, Scene* scene) {
+    std::string fileName = scene->scenePath.substr(scene->scenePath.find_last_of('/') + 1);
+    scene->name = fileName.substr(0, fileName.find('.'));
+    std::ifstream stream("..\\data\\scenes\\temp.tempscene");
+    std::vector<Token> tokens;
+    std::vector<ComponentBlock> components;
+    getTokens(&stream, &tokens);
+    createComponentBlocks(&tokens, &components);
+    // logComponentBlocks(&components);
+    createComponents(&scene->entities, resources, &components);
+    initializeScene(scene);
 }
 
 void loadScene(Resources* resources, Scene* scene) {
@@ -946,37 +988,8 @@ void loadScene(Resources* resources, Scene* scene) {
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
     EntityGroup* entities = &scene->entities;
-    PhysicsScene* physicsScene = &scene->physicsScene;
-    // logComponentBlocks(&components);
-    createComponents(entities, resources, physicsScene, &components);
-
-    for (int i = 0; i < entities->transforms.size(); i++) {
-        updateTransformMatrices(entities, &entities->transforms[i]);
-    }
-
-    for (int i = 0; i < entities->rigidbodies.size(); i++) {
-        RigidBody* rb = &entities->rigidbodies[i];
-        physicsScene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
-        rb->lastPosition = getPosition(entities, rb->entityID);
-        rb->lastRotation = getRotation(entities, rb->entityID);
-
-        if (physicsScene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            entities->movingRigidbodies.insert(rb->entityID);
-        }
-    }
-
-    for (MeshRenderer& renderer : entities->meshRenderers) {
-        mapBones(scene, &renderer);
-    }
-
-    /*     if (scene->player != nullptr) {
-            scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-        } */
-
-    Player* player = &entities->players[0];
-    player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
-
-    // scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
+    createComponents(entities, resources, &components);
+    initializeScene(scene);
     writeTempScene(scene, resources);
 }
 
@@ -994,37 +1007,8 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
     EntityGroup* entities = &scene->entities;
-    PhysicsScene* physicsScene = &scene->physicsScene;
-    // logComponentBlocks(&components);
-    createComponents(entities, resources, physicsScene, &components);
-
-    for (int i = 0; i < entities->transforms.size(); i++) {
-        updateTransformMatrices(entities, &entities->transforms[i]);
-    }
-
-    for (int i = 0; i < entities->rigidbodies.size(); i++) {
-        RigidBody* rb = &entities->rigidbodies[i];
-        physicsScene->bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
-        rb->lastPosition = getPosition(entities, rb->entityID);
-        rb->lastRotation = getRotation(entities, rb->entityID);
-
-        if (physicsScene->bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            entities->movingRigidbodies.insert(rb->entityID);
-        }
-    }
-
-    for (MeshRenderer& renderer : entities->meshRenderers) {
-        mapBones(scene, &renderer);
-    }
-
-    /*     if (scene->player != nullptr) {
-            scene->player->cameraController->camera = getCamera(scene, scene->player->cameraController->cameraEntityID);
-        } */
-
-    Player* player = &entities->players[0];
-    player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
-
-    // scene->player.cameraController.camera = getCamera(scene, scene->player.cameraController.cameraEntityID);
+    createComponents(entities, resources, &components);
+    initializeScene(scene);
     writeTempScene(scene, resources);
 }
 
@@ -1406,4 +1390,8 @@ void writeTempScene(Scene* scene, Resources* resources) {
     writeCameras(entities, stream);
     writePlayer(entities, stream);
     // writeMaterials(resources);
+}
+
+void writeNewPrefab(Scene* scene, uint32_t entity) {
+    EntityGroup* entities = &scene->entities;
 }

@@ -31,15 +31,6 @@ struct PhysicsScene {
     JPH::ObjectLayerPairFilter* object_vs_object_layer_filter;
 };
 
-struct RigidBody {
-    uint32_t entityID;
-    JPH::Color color;
-    JPH::BodyID joltBody;
-    vec3 lastPosition = vec3(0.0f, 0.0f, 0.0f);
-    quat lastRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
-    bool rotationLocked = false;
-};
-
 namespace Layers {
 static constexpr JPH::ObjectLayer NON_MOVING = 0;
 static constexpr JPH::ObjectLayer MOVING = 1;
@@ -58,6 +49,22 @@ const JPH::uint cMaxBodyPairs = 65536;
 const JPH::uint cMaxContactConstraints = 10240;
 const JPH::uint cCollisionSteps = 1;
 constexpr double cDeltaTime = 1.0 / 60.0;
+
+struct RigidBody {
+    uint32_t entityID;
+    JPH::Color color;
+    JPH::BodyID joltBody;
+    float mass = 1.0f;
+    float radius = 0.5f;
+    float halfHeight = 0.5f;
+    vec3 halfExtents = vec3(0.5f, 0.5f, 0.5f);
+    JPH::EShapeSubType shape = JPH::EShapeSubType::Box;
+    JPH::EMotionType motionType = JPH::EMotionType::Static;
+    JPH::ObjectLayer layer = Layers::NON_MOVING;
+    vec3 lastPosition = vec3(0.0f, 0.0f, 0.0f);
+    quat lastRotation = quat(0.0f, 0.0f, 0.0f, 1.0f);
+    bool rotationLocked = false;
+};
 
 void initPhysics(Scene* scene);
 void updatePhysics(Scene* scene);

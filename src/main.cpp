@@ -3,6 +3,7 @@
 
 #include "loader.h"
 #include "sceneloader.h"
+#include "ecs.h"
 #include "scene.h"
 #include "renderer.h"
 #include "shader.h"
@@ -48,7 +49,7 @@ int main() {
 
     EditorState* editor = new EditorState();
 
-    createContext(scene, renderer);
+    createContext(renderer);
     loadEditorShaders(renderer);
     loadShaders(renderer);
     loadResources(resources, renderer);
@@ -68,8 +69,8 @@ int main() {
         updateAndDrawEditor(scene, renderer, resources, editor);
         updateSceneEditor(scene, resources, renderer, editor);
         updateBufferData(renderer, scene);
-        drawPickingScene(renderer, scene);
-        renderScene(renderer, scene);
+        drawPickingScene(renderer, &scene->entities);
+        renderScene(renderer, &scene->entities);
         renderDebug(renderer);
         glfwSwapBuffers(renderer->window);
     }
@@ -91,7 +92,7 @@ int main() {
     loadShaders(renderer);
     loadResources(resources, renderer);
     initPhysics(scene);
-    loadScene(scene, resources);
+    loadFirstFoundScene(scene, resources);
     initRenderer(renderer, scene);
 
     scene->currentFrame = static_cast<float>(glfwGetTime());
@@ -111,7 +112,7 @@ int main() {
         glfwSwapBuffers(renderer->window);
     }
 
-    exitProgram(renderer, resources, 0);
+    exitProgram(renderer, resources);
     return 0;
 }
 #endif
