@@ -1,0 +1,56 @@
+Entity {
+id: 570
+name: TrashcanBase
+isActive: true
+}
+
+Transform {
+entityID: 570
+parentEntityID: -1
+childEntityIds: 571
+localPosition: -1.408466, 0.980002, -0.719617
+localRotation: -0.000001, 0.253164, -0.000002, 0.967423
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 570
+rootEntity: 570
+mesh: TrashcanBase
+materials: Trashcan
+}
+
+Rigidbody {
+entityID: 570
+shape: box
+motionType: static
+rotationLocked: false
+layer: NON_MOVING
+mass: 1.000000
+halfExtents: 0.500000, 0.500000, 0.500000
+halfHeight: 0.500000
+radius: 0.500000
+}
+
+Entity {
+id: 571
+name: TrashcanLid
+isActive: true
+}
+
+Transform {
+entityID: 571
+parentEntityID: 570
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 571
+rootEntity: 570
+mesh: TrashcanLid
+materials: Trashcan
+}
+

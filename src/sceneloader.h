@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <filesystem>
-
+#include "physics.h"
+#include "ecs.h"
 // #include "forward.h"
 
 constexpr char* scenePath = "../data/scenes/";
@@ -40,6 +41,8 @@ void loadMaterials(Resources* resources, RenderState* renderer);
 void loadResourceSettings(Resources* resources, std::unordered_set<std::string>& metaPaths);
 void writeMaterial(Resources* resources, std::filesystem::path path);
 void writeTextureSettings(TextureSettings settings);
-void writeTempScene(Scene* scene, Resources* resources);
+void writeTempScene(Scene* scene);
 void loadTempScene(Resources* resources, Scene* scene);
-void loadPrefabs(Resources* resources, std::string path);
+void loadPrefab(Resources* resources, std::filesystem::path path);
+void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup* entities);
+std::string writeNewPrefab(Scene* scene, uint32_t entityID);

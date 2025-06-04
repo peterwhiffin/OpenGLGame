@@ -1,0 +1,27 @@
+Entity {
+id: 525
+name: NewEntity
+isActive: false
+}
+
+Transform {
+entityID: 525
+parentEntityID: -1
+childEntityIds: None
+localPosition: -4.000000, 1.370000, 9.080000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+SpotLight {
+entityID: 525
+isActive: true
+brightness: 28.500000
+cutoff: 1.000000
+outerCutoff: 34.950001
+color: 1.000000, 1.000000, 1.000000
+shadows: true
+shadowWidth: 1024
+shadowHeight: 1024
+}
+

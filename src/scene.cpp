@@ -3,7 +3,7 @@
 void clearScene(Scene* scene) {
     EntityGroup* entities = &scene->entities;
     while (entities->entities.size() > 0) {
-        destroyEntity(entities, entities->entities[entities->entities.size() - 1].entityID);
+        destroyEntity(entities, entities->entities[entities->entities.size() - 1].entityID, scene->physicsScene.bodyInterface);
     }
 
     /*     for (Camera* cam : scene->cameras) {

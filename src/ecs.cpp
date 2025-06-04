@@ -226,17 +226,17 @@ void removePointLight(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->pointLights, scene->pointLightIndexMap, entityID);
 }
 
-void destroyEntity(EntityGroup* scene, uint32_t entityID) {
-    if (!scene->entityIndexMap.count(entityID)) {
+void destroyEntity(EntityGroup* entityGroup, uint32_t entityID, JPH::BodyInterface* bodyInterface) {
+    if (!entityGroup->entityIndexMap.count(entityID)) {
         return;
     }
 
-    size_t indexToRemove = scene->entityIndexMap[entityID];
-    size_t lastIndex = scene->entityIndexMap.size() - 1;
+    size_t indexToRemove = entityGroup->entityIndexMap[entityID];
+    size_t lastIndex = entityGroup->entityIndexMap.size() - 1;
 
-    Transform* transform = getTransform(scene, entityID);
+    Transform* transform = getTransform(entityGroup, entityID);
     if (transform->parentEntityID != INVALID_ID) {
-        Transform* parent = getTransform(scene, transform->parentEntityID);
+        Transform* parent = getTransform(entityGroup, transform->parentEntityID);
 
         for (int i = 0; i < parent->childEntityIds.size(); i++) {
             if (parent->childEntityIds[i] == entityID) {
@@ -263,17 +263,17 @@ void destroyEntity(EntityGroup* scene, uint32_t entityID) {
     }
 
     for (uint32_t id : temp) {
-        destroyEntity(scene, id);
+        destroyEntity(entityGroup, id, bodyInterface);
     }
 
-    removeTransform(scene, entityID);
-    removeMeshRenderer(scene, entityID);
-    removeAnimator(scene, entityID);
-    removeRigidbody(scene, entityID);
-    removePlayer(scene, entityID);
-    removeSpotLight(scene, entityID);
-    removePointLight(scene, entityID);
-    destroyComponent(scene->entities, scene->entityIndexMap, entityID);
+    removeTransform(entityGroup, entityID);
+    removeMeshRenderer(entityGroup, entityID);
+    removeAnimator(entityGroup, entityID);
+    removeRigidbody(entityGroup, entityID, bodyInterface);
+    removePlayer(entityGroup, entityID);
+    removeSpotLight(entityGroup, entityID);
+    removePointLight(entityGroup, entityID);
+    destroyComponent(entityGroup->entities, entityGroup->entityIndexMap, entityID);
 }
 
 void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID) {
@@ -382,19 +382,7 @@ uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, M
     return childEntity;
 }
 
-void copyEntity(Scene* scene, EntityCopier* copier) {
-    copyEntityInternal(scene, copier, INVALID_ID);
-    copier->meshRenderersTemp.clear();
-    copier->animatorsTemp.clear();
-    copier->rigidbodiesTemp.clear();
-    copier->pointLightsTemp.clear();
-    copier->spotLightsTemp.clear();
-    copier->camerasTemp.clear();
-    copier->playersTemp.clear();
-    copier->relativeIDMap.clear();
-}
-
-static void copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t parentID) {
+static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t parentID) {
     uint32_t templateID = copier->templateID;
     Entity* templateEntity = getEntity(copier->fromGroup, copier->templateID);
     std::string name = templateEntity->name;
@@ -496,4 +484,19 @@ static void copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t pare
         newCamController->moveSpeed = player->cameraController.moveSpeed;
         newCamController->sensitivity = player->cameraController.sensitivity;
     }
+
+    return newEntity;
+}
+
+uint32_t copyEntity(Scene* scene, EntityCopier* copier) {
+    uint32_t newID = copyEntityInternal(scene, copier, INVALID_ID);
+    copier->meshRenderersTemp.clear();
+    copier->animatorsTemp.clear();
+    copier->rigidbodiesTemp.clear();
+    copier->pointLightsTemp.clear();
+    copier->spotLightsTemp.clear();
+    copier->camerasTemp.clear();
+    copier->playersTemp.clear();
+    copier->relativeIDMap.clear();
+    return newID;
 }

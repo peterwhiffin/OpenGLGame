@@ -64,6 +64,16 @@ static void createEntityTree(Scene* scene, EditorState* editor, uint32_t entityI
 
     std::string title = entity->name;
     bool node_open = ImGui::TreeNodeEx(title.c_str(), node_flags);
+    bool dropped = ImGui::BeginDragDropSource(ImGuiDragDropFlags_None);
+    if (dropped) {
+        // Set payload to carry the index of our item (could be anything)
+        ImGui::SetDragDropPayload("entity", &entityID, sizeof(entityID));
+
+        // Display preview (could be anything, e.g. when dragging an image we could decide to display
+        // the filename and a small preview of the image, etc.)
+        ImGui::EndDragDropSource();
+    }
+
     if (ImGui::IsItemClicked()) {
         editor->nodeClicked = entity->entityID;
         scene->pickedEntity = entity->entityID;
@@ -112,8 +122,9 @@ static void createProjectTree(Scene* scene, EditorState* editor, ImGuiTreeNodeFl
             bool dropped = ImGui::BeginDragDropSource(ImGuiDragDropFlags_None);
             if (dropped) {
                 // Set payload to carry the index of our item (could be anything)
-                ImGui::SetDragDropPayload("prefab", &fileString, sizeof(fileString));
+                ImGui::SetDragDropPayload("projectFile", fileString.data(), fileString.size());
 
+                editor->fileDragged = fileString;
                 // Display preview (could be anything, e.g. when dragging an image we could decide to display
                 // the filename and a small preview of the image, etc.)
                 ImGui::EndDragDropSource();
@@ -258,7 +269,7 @@ static void buildSceneView(Scene* scene, RenderState* renderer, EditorState* edi
     if (!editor->playing) {
         if (ImGui::Button("Play", ImVec2(40, 20))) {
             editor->playing = true;
-            writeTempScene(scene, resources);
+            writeTempScene(scene);
         }
     } else if (editor->playing) {
         if (ImGui::Button("Stop", ImVec2(40, 20))) {
@@ -292,14 +303,29 @@ static void buildSceneView(Scene* scene, RenderState* renderer, EditorState* edi
     bool droppedPrefab = ImGui::BeginDragDropTarget();
 
     if (droppedPrefab) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("prefab")) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("projectFile")) {
             // IM_ASSERT(payload->DataSize == sizeof(int));
             EntityGroup* entities = &scene->entities;
-            std::string payload_n = *(const std::string*)payload->Data;
-            Model* prefab = resources->modelMap[payload_n];
-            uint32_t id = createEntityFromModel(&scene->entities, &scene->physicsScene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
-            vec3 pos = getPosition(entities, entities->cameras[0].entityID) + (editor->worldPos * 2.0f);
-            setPosition(entities, id, pos);
+            // const std::string* payload_n = (const std::string*)payload->Data;
+            uint32_t id = INVALID_ID;
+            std::string fileDragged = editor->fileDragged;
+            std::string extension = fileDragged.substr(fileDragged.find_last_of('.'));
+
+            if (extension == ".prefab") {
+                uint32_t prefabID = resources->prefabMap[fileDragged];
+                scene->copier.fromGroup = &resources->prefabGroup;
+                scene->copier.toGroup = &scene->entities;
+                scene->copier.templateID = prefabID;
+                id = copyEntity(scene, &scene->copier);
+                vec3 pos = getPosition(entities, entities->cameras[0].entityID) + (editor->worldPos * 2.0f);
+                setPosition(entities, id, pos);
+
+            } else if (extension == ".gltf") {
+                Model* prefab = resources->modelMap[fileDragged];
+                id = createEntityFromModel(&scene->entities, &scene->physicsScene, prefab->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+                vec3 pos = getPosition(entities, entities->cameras[0].entityID) + (editor->worldPos * 2.0f);
+                setPosition(entities, id, pos);
+            }
         }
 
         ImGui::EndDragDropTarget();
@@ -346,7 +372,7 @@ static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
                 ImGuiID key = selection._Storage.Data[i].key;
                 if (selection._Storage.GetInt(key, 0) != 0) {
                     uint32_t entityID = static_cast<uint32_t>(key);
-                    destroyEntity(entities, entityID);
+                    destroyEntity(entities, entityID, scene->physicsScene.bodyInterface);
                 }
             }
         }
@@ -359,6 +385,17 @@ static void buildSceneHierarchy(Scene* scene, EditorState* editor) {
 
 static void buildProjectFiles(Scene* scene, Resources* resources, EditorState* editor) {
     ImGui::Begin("Project");
+    bool droppedPrefab = ImGui::BeginDragDropTarget();
+
+    if (droppedPrefab) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("entity")) {
+            uint32_t payload_n = *(const uint32_t*)payload->Data;
+            std::string path = writeNewPrefab(scene, payload_n);
+            loadPrefab(resources, path);
+        }
+
+        ImGui::EndDragDropTarget();
+    }
 
     createProjectTree(scene, editor, 0, "..\\resources\\");
 

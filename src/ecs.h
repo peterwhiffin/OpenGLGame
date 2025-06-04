@@ -96,11 +96,11 @@ void removeRigidbody(EntityGroup* scene, uint32_t entityID, JPH::BodyInterface* 
 void removePlayer(EntityGroup* scene, uint32_t entityID);
 void removeSpotLight(EntityGroup* scene, uint32_t entityID);
 void removePointLight(EntityGroup* scene, uint32_t entityID);
-void destroyEntity(EntityGroup* scene, uint32_t entityID);
-
+void destroyEntity(EntityGroup* entityGroup, uint32_t entityID, JPH::BodyInterface* bodyInterface = nullptr);
 void setRigidbodyMoving(EntityGroup* scene, uint32_t getEntityID);
 void setRigidbodyNonMoving(EntityGroup* scene, uint32_t getEntityID);
 void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID);
+uint32_t copyEntity(Scene* scene, EntityCopier* copier);
 
 template <typename Component>
 bool destroyComponent(std::vector<Component>& components, std::unordered_map<uint32_t, size_t>& indexMap, uint32_t entityID) {

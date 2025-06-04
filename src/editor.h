@@ -58,6 +58,7 @@ struct EditorState {
 
     uint32_t nodeClicked = INVALID_ID;
     std::string fileClicked = "";
+    std::string fileDragged = "";
 
     std::unordered_set<uint32_t> selectedEntities;
 };

@@ -88,7 +88,7 @@ int main() {
     InputActions* inputActions = new InputActions();
     scene->input = inputActions;
 
-    createContext(scene, renderer);
+    createContext(renderer);
     loadShaders(renderer);
     loadResources(resources, renderer);
     initPhysics(scene);
@@ -108,7 +108,7 @@ int main() {
         updateAnimators(&scene->entities, scene->deltaTime);
         updateCamera(scene);
         updateBufferData(renderer, scene);
-        renderScene(renderer, scene);
+        renderScene(renderer, &scene->entities);
         glfwSwapBuffers(renderer->window);
     }
 

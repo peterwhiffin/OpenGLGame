@@ -29,9 +29,7 @@ struct Scene {
 
     float gravity = -18.81f;
 
-#ifdef PETES_EDITOR
     uint32_t pickedEntity = INVALID_ID;
-#endif
 
     uint32_t nextEntityID = 1;
     vec3 wrenchOffset = vec3(0.0f, -0.42f, 0.37f);
@@ -44,6 +42,7 @@ struct Scene {
 
     PhysicsScene physicsScene;
     EntityGroup entities;
+    EntityCopier copier;
 };
 
 void clearScene(Scene* scene);

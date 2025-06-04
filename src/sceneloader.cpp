@@ -956,14 +956,106 @@ void initializeScene(Scene* scene) {
     player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
 }
 
-void loadPrefabs(Resources* resources, std::string path) {
+uint32_t transposeIDs(EntityGroup* entities, std::vector<ComponentBlock>* components) {
+    std::unordered_map<uint32_t, uint32_t> idMap;
+    uint32_t rootID = INVALID_ID;
+
+    for (int i = 0; i < components->size(); i++) {
+        ComponentBlock* component = &components->at(i);
+        if (component->type == "Entity") {
+            if (component->memberValueMap.count("id")) {
+                uint32_t oldID = std::stoi(component->memberValueMap["id"]);
+                uint32_t newID = getEntityID(entities);
+                idMap[oldID] = newID;
+                component->memberValueMap["id"] = std::to_string(newID);
+            }
+
+        } else if (component->memberValueMap.count("entityID")) {
+            /* uint32_t oldID = std::stoi(component->memberValueMap["entityID"]);
+            uint32_t newID = getEntityID(entities);
+            idMap[oldID] = newID;
+            component->memberValueMap["entityID"] = std::to_string(newID); */
+        }
+    }
+
+    for (int i = 0; i < components->size(); i++) {
+        ComponentBlock* component = &components->at(i);
+        if (component->type != "Entity") {
+            if (component->memberValueMap.count("entityID")) {
+                uint32_t oldID = std::stoi(component->memberValueMap["entityID"]);
+                uint32_t newID = INVALID_ID;
+                std::string entityIDString = "-1";
+                if (idMap.count(oldID)) {
+                    newID = idMap[oldID];
+                    entityIDString = std::to_string(newID);
+                }
+
+                component->memberValueMap["entityID"] = entityIDString;
+            }
+        }
+
+        if (component->type == "Transform") {
+            if (component->memberValueMap.count("parentEntityID")) {
+                uint32_t oldID = std::stoi(component->memberValueMap["parentEntityID"]);
+                uint32_t newID = INVALID_ID;
+                std::string idString = "-1";
+
+                if (idMap.count(oldID)) {
+                    newID = idMap[oldID];
+                    idString = std::to_string(newID);
+                }
+
+                if (newID == INVALID_ID) {
+                    rootID = std::stoi(component->memberValueMap["entityID"]);
+                }
+                component->memberValueMap["parentEntityID"] = idString;
+            }
+
+            if (component->memberValueMap.count("childEntityIds")) {
+                std::vector<uint32_t> childEntityIds;
+                std::vector<uint32_t> newChildEntityIds;
+                std::string memberString = component->memberValueMap["childEntityIds"];
+                if (memberString != "None") {
+                    parseList(memberString, &childEntityIds);
+
+                    for (int j = 0; j < childEntityIds.size(); j++) {
+                        uint32_t oldID = childEntityIds[j];
+                        uint32_t newID = INVALID_ID;
+                        if (idMap.count(oldID)) {
+                            newID = idMap[oldID];
+                        }
+
+                        newChildEntityIds.push_back(newID);
+                    }
+
+                    std::string childEntityIDString = "";
+
+                    if (newChildEntityIds.size() > 0) {
+                        childEntityIDString += std::to_string(newChildEntityIds[0]);
+
+                        for (size_t k = 1; k < newChildEntityIds.size(); k++) {
+                            childEntityIDString += ", " + std::to_string(newChildEntityIds[k]);
+                        }
+                    }
+                    component->memberValueMap["childEntityIds"] = childEntityIDString;
+                }
+            }
+        }
+    }
+
+    return rootID;
+}
+
+void loadPrefab(Resources* resources, std::filesystem::path path) {
     std::ifstream stream(path);
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
 
     getTokens(&stream, &tokens);
     createComponentBlocks(&tokens, &components);
+    uint32_t rootID = transposeIDs(&resources->prefabGroup, &components);
     createComponents(&resources->prefabGroup, resources, &components);
+    resources->prefabMap[path.filename().string()] = rootID;
 }
 
 void loadTempScene(Resources* resources, Scene* scene) {
@@ -990,7 +1082,7 @@ void loadScene(Resources* resources, Scene* scene) {
     EntityGroup* entities = &scene->entities;
     createComponents(entities, resources, &components);
     initializeScene(scene);
-    writeTempScene(scene, resources);
+    writeTempScene(scene);
 }
 
 void loadFirstFoundScene(Scene* scene, Resources* resources) {
@@ -1009,54 +1101,58 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
     EntityGroup* entities = &scene->entities;
     createComponents(entities, resources, &components);
     initializeScene(scene);
-    writeTempScene(scene, resources);
+    writeTempScene(scene);
 }
 
-void writeEntities(EntityGroup* scene, std::ofstream& stream) {
-    for (Entity& entity : scene->entities) {
-        std::string id = std::to_string(entity.entityID);
-        std::string name = entity.name;
-        std::string isActive = entity.isActive ? "true" : "false";
-
-        stream << "Entity {" << std::endl;
-        stream << "id: " << id << std::endl;
-        stream << "name: " << name << std::endl;
-        stream << "isActive: " << isActive << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+void writeEntities(Entity* entity, std::ofstream* stream) {
+    if (entity == nullptr) {
+        return;
     }
+
+    std::string id = std::to_string(entity->entityID);
+    std::string name = entity->name;
+    std::string isActive = entity->isActive ? "true" : "false";
+
+    *stream << "Entity {" << std::endl;
+    *stream << "id: " << id << std::endl;
+    *stream << "name: " << name << std::endl;
+    *stream << "isActive: " << isActive << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writeTransforms(EntityGroup* scene, std::ofstream& stream) {
-    for (Transform& transform : scene->transforms) {
-        std::string entityID = std::to_string(transform.entityID);
-        std::string parentEntityID = transform.parentEntityID == INVALID_ID ? std::to_string(-1) : std::to_string(transform.parentEntityID);
-        std::string childEntityIds = "";
+void writeTransforms(Transform* transform, std::ofstream* stream) {
+    if (transform == nullptr) {
+        return;
+    }
 
-        if (transform.childEntityIds.size() > 0) {
-            childEntityIds += std::to_string(transform.childEntityIds[0]);
+    std::string entityID = std::to_string(transform->entityID);
+    std::string parentEntityID = transform->parentEntityID == INVALID_ID ? std::to_string(-1) : std::to_string(transform->parentEntityID);
+    std::string childEntityIds = "";
 
-            for (size_t i = 1; i < transform.childEntityIds.size(); i++) {
-                childEntityIds += ", " + std::to_string(transform.childEntityIds[i]);
-            }
-        } else {
-            childEntityIds = "None";
+    if (transform->childEntityIds.size() > 0) {
+        childEntityIds += std::to_string(transform->childEntityIds[0]);
+
+        for (size_t i = 1; i < transform->childEntityIds.size(); i++) {
+            childEntityIds += ", " + std::to_string(transform->childEntityIds[i]);
         }
-
-        std::string localPosition = std::to_string(transform.localPosition.GetX()) + ", " + std::to_string(transform.localPosition.GetY()) + ", " + std::to_string(transform.localPosition.GetZ());
-        std::string localRotation = std::to_string(transform.localRotation.GetX()) + ", " + std::to_string(transform.localRotation.GetY()) + ", " + std::to_string(transform.localRotation.GetZ()) + ", " + std::to_string(transform.localRotation.GetW());
-        std::string localScale = std::to_string(transform.localScale.GetX()) + ", " + std::to_string(transform.localScale.GetY()) + ", " + std::to_string(transform.localScale.GetZ());
-
-        stream << "Transform {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "parentEntityID: " << parentEntityID << std::endl;
-        stream << "childEntityIds: " << childEntityIds << std::endl;
-        stream << "localPosition: " << localPosition << std::endl;
-        stream << "localRotation: " << localRotation << std::endl;
-        stream << "localScale: " << localScale << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+    } else {
+        childEntityIds = "None";
     }
+
+    std::string localPosition = std::to_string(transform->localPosition.GetX()) + ", " + std::to_string(transform->localPosition.GetY()) + ", " + std::to_string(transform->localPosition.GetZ());
+    std::string localRotation = std::to_string(transform->localRotation.GetX()) + ", " + std::to_string(transform->localRotation.GetY()) + ", " + std::to_string(transform->localRotation.GetZ()) + ", " + std::to_string(transform->localRotation.GetW());
+    std::string localScale = std::to_string(transform->localScale.GetX()) + ", " + std::to_string(transform->localScale.GetY()) + ", " + std::to_string(transform->localScale.GetZ());
+
+    *stream << "Transform {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "parentEntityID: " << parentEntityID << std::endl;
+    *stream << "childEntityIds: " << childEntityIds << std::endl;
+    *stream << "localPosition: " << localPosition << std::endl;
+    *stream << "localRotation: " << localRotation << std::endl;
+    *stream << "localScale: " << localScale << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
 void writeTextureSettings(TextureSettings settings) {
@@ -1127,197 +1223,179 @@ void writeMaterials(Resources* resources) {
     }
 }
 
-void writeMeshRenderers(EntityGroup* scene, std::ofstream& stream) {
-    for (MeshRenderer& renderer : scene->meshRenderers) {
-        std::string entityID = std::to_string(renderer.entityID);
-        std::string rootEntity = std::to_string(renderer.rootEntity);
-        std::string mesh = renderer.mesh->name;
-        std::string materials = "";
-
-        materials += renderer.mesh->subMeshes[0].material->name;
-
-        for (int i = 1; i < renderer.mesh->subMeshes.size(); i++) {
-            materials += ", " + renderer.mesh->subMeshes[i].material->name;
-        }
-
-        stream << "MeshRenderer {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "rootEntity: " << rootEntity << std::endl;
-        stream << "mesh: " << mesh << std::endl;
-        stream << "materials: " << materials << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+void writeMeshRenderers(MeshRenderer* renderer, std::ofstream* stream) {
+    if (renderer == nullptr) {
+        return;
     }
+
+    std::string entityID = std::to_string(renderer->entityID);
+    std::string rootEntity = std::to_string(renderer->rootEntity);
+    std::string mesh = renderer->mesh->name;
+    std::string materials = "";
+
+    materials += renderer->mesh->subMeshes[0].material->name;
+
+    for (int i = 1; i < renderer->mesh->subMeshes.size(); i++) {
+        materials += ", " + renderer->mesh->subMeshes[i].material->name;
+    }
+
+    *stream << "MeshRenderer {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "rootEntity: " << rootEntity << std::endl;
+    *stream << "mesh: " << mesh << std::endl;
+    *stream << "materials: " << materials << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writeRigidbodies(EntityGroup* scene, PhysicsScene* physicsScene, std::ofstream& stream) {
-    JPH::EShapeSubType shapeType;
-    JPH::ObjectLayer objectLayer;
-    JPH::EMotionType motionType;
-    JPH::BodyInterface* bodyInterface = physicsScene->bodyInterface;
+void writeRigidbodies(RigidBody* rb, std::ofstream* stream) {
+    if (rb == nullptr) {
+        return;
+    }
 
     std::string entityID;
+    std::string shapeString;
     std::string objectLayerString;
     std::string motionTypeString;
     std::string rotationLocked;
     std::string halfExtentString;
-    std::string halfHeight;
-    std::string radius;
-    std::string mass;
+    std::string halfHeightString;
+    std::string radiusString;
+    std::string massString;
 
-    for (RigidBody& rb : scene->rigidbodies) {
-        const JPH::BoxShape* box;
-        const JPH::SphereShape* sphere;
-        const JPH::CapsuleShape* capsule;
-        const JPH::CylinderShape* cylinder;
-        const JPH::Shape* shape = bodyInterface->GetShape(rb.joltBody).GetPtr();
+    entityID = std::to_string(rb->entityID);
+    rotationLocked = rb->rotationLocked ? "true" : "false";
+    massString = std::to_string(rb->mass);
+    radiusString = std::to_string(rb->radius);
+    halfExtentString = std::to_string(rb->halfExtents.GetX()) + ", " + std::to_string(rb->halfExtents.GetY()) + ", " + std::to_string(rb->halfExtents.GetZ());
+    halfHeightString = std::to_string(rb->halfHeight);
 
-        entityID = std::to_string(rb.entityID);
-        objectLayer = bodyInterface->GetObjectLayer(rb.joltBody);
-        shapeType = shape->GetSubType();
-        motionType = bodyInterface->GetMotionType(rb.joltBody);
-        rotationLocked = rb.rotationLocked ? "true" : "false";
-        mass = std::to_string(shape->GetMassProperties().mMass);
-
-        stream << "Rigidbody {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-
-        switch (objectLayer) {
-            case Layers::MOVING:
-                stream << "layer: MOVING" << std::endl;
-                break;
-            case Layers::NON_MOVING:
-                stream << "layer: NON_MOVING" << std::endl;
-                break;
-        }
-
-        stream << "mass: " << mass << std::endl;
-        stream << "rotationLocked: " << rotationLocked << std::endl;
-
-        switch (motionType) {
-            case JPH::EMotionType::Static:
-                motionTypeString = "static";
-                break;
-            case JPH::EMotionType::Kinematic:
-                motionTypeString = "kinematic";
-                break;
-            case JPH::EMotionType::Dynamic:
-                motionTypeString = "dynamic";
-                break;
-        }
-
-        stream << "motionType: " << motionTypeString << std::endl;
-
-        switch (shapeType) {
-            case JPH::EShapeSubType::Box:
-                box = static_cast<const JPH::BoxShape*>(shape);
-                vec3 extents = box->GetHalfExtent();
-                halfExtentString = std::to_string(extents.GetX()) + ", " + std::to_string(extents.GetY()) + ", " + std::to_string(extents.GetZ());
-                stream << "shape: box" << std::endl;
-                stream << "halfExtents: " << halfExtentString << std::endl;
-                break;
-            case JPH::EShapeSubType::Sphere:
-                sphere = static_cast<const JPH::SphereShape*>(shape);
-                radius = std::to_string(sphere->GetRadius());
-                stream << "shape: sphere" << std::endl;
-                stream << "radius: " << radius << std::endl;
-                break;
-            case JPH::EShapeSubType::Capsule:
-                capsule = static_cast<const JPH::CapsuleShape*>(shape);
-                halfHeight = std::to_string(capsule->GetHalfHeightOfCylinder());
-                radius = std::to_string(capsule->GetRadius());
-                stream << "shape: capsule" << std::endl;
-                stream << "halfHeight: " << halfHeight << std::endl;
-                stream << "radius: " << radius << std::endl;
-                break;
-            case JPH::EShapeSubType::Cylinder:
-                cylinder = static_cast<const JPH::CylinderShape*>(shape);
-                halfHeight = std::to_string(cylinder->GetHalfHeight());
-                radius = std::to_string(cylinder->GetRadius());
-                stream << "shape: cylinder" << std::endl;
-                stream << "halfHeight: " << halfHeight << std::endl;
-                stream << "radius: " << radius << std::endl;
-                break;
-            case JPH::EShapeSubType::Mesh:
-                break;
-            case JPH::EShapeSubType::HeightField:
-                break;
-            case JPH::EShapeSubType::ConvexHull:
-                break;
-        }
-
-        stream << "}" << std::endl
-               << std::endl;
+    switch (rb->layer) {
+        case Layers::MOVING:
+            objectLayerString = "MOVING";
+            break;
+        case Layers::NON_MOVING:
+            objectLayerString = "NON_MOVING";
+            break;
     }
+
+    switch (rb->motionType) {
+        case JPH::EMotionType::Static:
+            motionTypeString = "static";
+            break;
+        case JPH::EMotionType::Kinematic:
+            motionTypeString = "kinematic";
+            break;
+        case JPH::EMotionType::Dynamic:
+            motionTypeString = "dynamic";
+            break;
+    }
+
+    switch (rb->shape) {
+        case JPH::EShapeSubType::Box:
+            shapeString = "box";
+            break;
+        case JPH::EShapeSubType::Sphere:
+            shapeString = "sphere";
+            break;
+        case JPH::EShapeSubType::Capsule:
+            shapeString = "capsule";
+            break;
+        case JPH::EShapeSubType::Cylinder:
+            shapeString = "cylinder";
+            break;
+    }
+
+    *stream << "Rigidbody {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "shape: " << shapeString << std::endl;
+    *stream << "motionType: " << motionTypeString << std::endl;
+    *stream << "rotationLocked: " << rotationLocked << std::endl;
+    *stream << "layer: " << objectLayerString << std::endl;
+    *stream << "mass: " << massString << std::endl;
+    *stream << "halfExtents: " << halfExtentString << std::endl;
+    *stream << "halfHeight: " << halfHeightString << std::endl;
+    *stream << "radius: " << radiusString << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writeAnimators(EntityGroup* scene, std::ofstream& stream) {
-    for (Animator& animator : scene->animators) {
-        std::string entityID = std::to_string(animator.entityID);
-        std::string animations = "";
+void writeAnimators(Animator* animator, std::ofstream* stream) {
+    if (animator == nullptr) {
+        return;
+    }
 
-        if (animator.animations.size() > 0) {
-            animations += animator.animations.at(0)->name;
+    std::string entityID = std::to_string(animator->entityID);
+    std::string animations = "";
 
-            for (size_t i = 1; i < animator.animations.size(); i++) {
-                animations += ", " + animator.animations.at(i)->name;
-            }
+    if (animator->animations.size() > 0) {
+        animations += animator->animations.at(0)->name;
+
+        for (size_t i = 1; i < animator->animations.size(); i++) {
+            animations += ", " + animator->animations.at(i)->name;
         }
-
-        stream << "Animator {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "animations: " << animations << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
     }
+
+    *stream << "Animator {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "animations: " << animations << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writePointLights(EntityGroup* scene, std::ofstream& stream) {
-    for (PointLight& light : scene->pointLights) {
-        std::string entityID = std::to_string(light.entityID);
-        std::string isActive = light.isActive ? "true" : "false";
-        std::string brightness = std::to_string(light.brightness);
-        std::string color = std::to_string(light.color.GetX()) + ", " + std::to_string(light.color.GetY()) + ", " + std::to_string(light.color.GetZ());
-
-        stream << "PointLight {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "isActive: " << isActive << std::endl;
-        stream << "brightness: " << brightness << std::endl;
-        stream << "color: " << color << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+void writePointLights(PointLight* light, std::ofstream* stream) {
+    if (light == nullptr) {
+        return;
     }
+
+    std::string entityID = std::to_string(light->entityID);
+    std::string isActive = light->isActive ? "true" : "false";
+    std::string brightness = std::to_string(light->brightness);
+    std::string color = std::to_string(light->color.GetX()) + ", " + std::to_string(light->color.GetY()) + ", " + std::to_string(light->color.GetZ());
+
+    *stream << "PointLight {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "isActive: " << isActive << std::endl;
+    *stream << "brightness: " << brightness << std::endl;
+    *stream << "color: " << color << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writeSpotLights(EntityGroup* scene, std::ofstream& stream) {
-    for (SpotLight& light : scene->spotLights) {
-        std::string entityID = std::to_string(light.entityID);
-        std::string isActive = light.isActive ? "true" : "false";
-        std::string brightness = std::to_string(light.brightness);
-        std::string cutoff = std::to_string(light.cutoff);
-        std::string outerCutoff = std::to_string(light.outerCutoff);
-        std::string color = std::to_string(light.color.GetX()) + ", " + std::to_string(light.color.GetY()) + ", " + std::to_string(light.color.GetZ());
-        std::string shadows = light.enableShadows ? "true" : "false";
-        std::string shadowWidth = std::to_string(light.shadowWidth);
-        std::string shadowHeight = std::to_string(light.shadowHeight);
-
-        stream << "SpotLight {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "isActive: " << isActive << std::endl;
-        stream << "brightness: " << brightness << std::endl;
-        stream << "cutoff: " << cutoff << std::endl;
-        stream << "outerCutoff: " << outerCutoff << std::endl;
-        stream << "color: " << color << std::endl;
-        stream << "shadows: " << shadows << std::endl;
-        stream << "shadowWidth: " << shadowWidth << std::endl;
-        stream << "shadowHeight: " << shadowHeight << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+void writeSpotLights(SpotLight* light, std::ofstream* stream) {
+    if (light == nullptr) {
+        return;
     }
+
+    std::string entityID = std::to_string(light->entityID);
+    std::string isActive = light->isActive ? "true" : "false";
+    std::string brightness = std::to_string(light->brightness);
+    std::string cutoff = std::to_string(light->cutoff);
+    std::string outerCutoff = std::to_string(light->outerCutoff);
+    std::string color = std::to_string(light->color.GetX()) + ", " + std::to_string(light->color.GetY()) + ", " + std::to_string(light->color.GetZ());
+    std::string shadows = light->enableShadows ? "true" : "false";
+    std::string shadowWidth = std::to_string(light->shadowWidth);
+    std::string shadowHeight = std::to_string(light->shadowHeight);
+
+    *stream << "SpotLight {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "isActive: " << isActive << std::endl;
+    *stream << "brightness: " << brightness << std::endl;
+    *stream << "cutoff: " << cutoff << std::endl;
+    *stream << "outerCutoff: " << outerCutoff << std::endl;
+    *stream << "color: " << color << std::endl;
+    *stream << "shadows: " << shadows << std::endl;
+    *stream << "shadowWidth: " << shadowWidth << std::endl;
+    *stream << "shadowHeight: " << shadowHeight << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writePlayer(EntityGroup* scene, std::ofstream& stream) {
-    Player* player = &scene->players[0];
+void writePlayer(Player* player, std::ofstream* stream) {
+    if (player == nullptr) {
+        return;
+    }
+
     std::string entityID = std::to_string(player->entityID);
     std::string armsID = std::to_string(player->armsID);
     std::string jumpHeight = std::to_string(player->jumpHeight);
@@ -1328,70 +1406,139 @@ void writePlayer(EntityGroup* scene, std::ofstream& stream) {
     std::string cameraController_cameraEntityID = std::to_string(player->cameraController.cameraEntityID);
     std::string cameraController_Sensitivity = std::to_string(player->cameraController.sensitivity);
 
-    stream << "Player {" << std::endl;
-    stream << "entityID: " << entityID << std::endl;
-    stream << "armsID: " << armsID << std::endl;
-    stream << "jumpHeight: " << jumpHeight << std::endl;
-    stream << "moveSpeed: " << moveSpeed << std::endl;
-    stream << "groundCheckDistance: " << groundCheckDistance << std::endl;
-    stream << "cameraControllerEntityID: " << cameraController_EntityID << std::endl;
-    stream << "cameraControllerCameraTargetEntityID: " << cameraController_cameraTargetEntityID << std::endl;
-    stream << "cameraControllerCameraEntityID: " << cameraController_cameraEntityID << std::endl;
-    stream << "cameraControllerSensitivity: " << cameraController_Sensitivity << std::endl;
-    stream << "}" << std::endl
-           << std::endl;
+    *stream << "Player {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "armsID: " << armsID << std::endl;
+    *stream << "jumpHeight: " << jumpHeight << std::endl;
+    *stream << "moveSpeed: " << moveSpeed << std::endl;
+    *stream << "groundCheckDistance: " << groundCheckDistance << std::endl;
+    *stream << "cameraControllerEntityID: " << cameraController_EntityID << std::endl;
+    *stream << "cameraControllerCameraTargetEntityID: " << cameraController_cameraTargetEntityID << std::endl;
+    *stream << "cameraControllerCameraEntityID: " << cameraController_cameraEntityID << std::endl;
+    *stream << "cameraControllerSensitivity: " << cameraController_Sensitivity << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
 }
 
-void writeCameras(EntityGroup* scene, std::ofstream& stream) {
-    Camera* camera;
-    for (int i = 0; i < scene->cameras.size(); i++) {
-        camera = &scene->cameras[i];
-        std::string entityID = std::to_string(camera->entityID);
-        std::string fov = std::to_string(camera->fov);
-        std::string nearPlane = std::to_string(camera->nearPlane);
-        std::string farPlane = std::to_string(camera->farPlane);
+void writeCameras(Camera* camera, std::ofstream* stream) {
+    if (camera == nullptr) {
+        return;
+    }
 
-        stream << "Camera {" << std::endl;
-        stream << "entityID: " << entityID << std::endl;
-        stream << "fov: " << fov << std::endl;
-        stream << "nearPlane: " << nearPlane << std::endl;
-        stream << "farPlane: " << farPlane << std::endl;
-        stream << "}" << std::endl
-               << std::endl;
+    std::string entityID = std::to_string(camera->entityID);
+    std::string fov = std::to_string(camera->fov);
+    std::string nearPlane = std::to_string(camera->nearPlane);
+    std::string farPlane = std::to_string(camera->farPlane);
+
+    *stream << "Camera {" << std::endl;
+    *stream << "entityID: " << entityID << std::endl;
+    *stream << "fov: " << fov << std::endl;
+    *stream << "nearPlane: " << nearPlane << std::endl;
+    *stream << "farPlane: " << farPlane << std::endl;
+    *stream << "}" << std::endl
+            << std::endl;
+}
+
+void writeEntityGroup(EntityGroup* entities, std::ofstream* stream) {
+    for (int i = 0; i < entities->entities.size(); i++) {
+        writeEntities(&entities->entities[i], stream);
+    }
+    for (int i = 0; i < entities->transforms.size(); i++) {
+        writeTransforms(&entities->transforms[i], stream);
+    }
+    for (int i = 0; i < entities->meshRenderers.size(); i++) {
+        writeMeshRenderers(&entities->meshRenderers[i], stream);
+    }
+    for (int i = 0; i < entities->animators.size(); i++) {
+        writeAnimators(&entities->animators[i], stream);
+    }
+    for (int i = 0; i < entities->rigidbodies.size(); i++) {
+        writeRigidbodies(&entities->rigidbodies[i], stream);
+    }
+    for (int i = 0; i < entities->pointLights.size(); i++) {
+        writePointLights(&entities->pointLights[i], stream);
+    }
+    for (int i = 0; i < entities->spotLights.size(); i++) {
+        writeSpotLights(&entities->spotLights[i], stream);
+    }
+    for (int i = 0; i < entities->cameras.size(); i++) {
+        writeCameras(&entities->cameras[i], stream);
+    }
+    for (int i = 0; i < entities->players.size(); i++) {
+        writePlayer(&entities->players[i], stream);
     }
 }
 
 void saveScene(Scene* scene, Resources* resources) {
     EntityGroup* entities = &scene->entities;
-    writeTempScene(scene, resources);
+    writeTempScene(scene);
     std::ofstream stream(scene->scenePath);
-    writeEntities(entities, stream);
-    writeTransforms(entities, stream);
-    writeMeshRenderers(entities, stream);
-    writeRigidbodies(entities, &scene->physicsScene, stream);
-    writeAnimators(entities, stream);
-    writePointLights(entities, stream);
-    writeSpotLights(entities, stream);
-    writeCameras(entities, stream);
-    writePlayer(entities, stream);
+    writeEntityGroup(entities, &stream);
     writeMaterials(resources);
 }
 
-void writeTempScene(Scene* scene, Resources* resources) {
+void writeTempScene(Scene* scene) {
     EntityGroup* entities = &scene->entities;
     std::ofstream stream("..\\data\\scenes\\temp.tempscene");
-    writeEntities(entities, stream);
-    writeTransforms(entities, stream);
-    writeMeshRenderers(entities, stream);
-    writeRigidbodies(entities, &scene->physicsScene, stream);
-    writeAnimators(entities, stream);
-    writePointLights(entities, stream);
-    writeSpotLights(entities, stream);
-    writeCameras(entities, stream);
-    writePlayer(entities, stream);
-    // writeMaterials(resources);
+    writeEntityGroup(entities, &stream);
 }
 
-void writeNewPrefab(Scene* scene, uint32_t entity) {
+static bool checkFilenameUnique(std::string path, std::string filename) {
+    for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator(path)) {
+        if (dir.is_regular_file()) {
+            std::string fileString = dir.path().filename().string();
+            if (fileString == filename) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+void writeEntityHierarchy(EntityGroup* entities, uint32_t entityID, std::ofstream* stream) {
+    Entity* entity = getEntity(entities, entityID);
+    Transform* transform = getTransform(entities, entityID);
+    MeshRenderer* meshRenderer = getMeshRenderer(entities, entityID);
+    Animator* animator = getAnimator(entities, entityID);
+    RigidBody* rb = getRigidbody(entities, entityID);
+    PointLight* pointLight = getPointLight(entities, entityID);
+    SpotLight* spotLight = getSpotLight(entities, entityID);
+    Camera* camera = getCamera(entities, entityID);
+    Player* player = getPlayer(entities, entityID);
+
+    writeEntities(entity, stream);
+    writeTransforms(transform, stream);
+    writeMeshRenderers(meshRenderer, stream);
+    writeAnimators(animator, stream);
+    writeRigidbodies(rb, stream);
+    writePointLights(pointLight, stream);
+    writeSpotLights(spotLight, stream);
+    writeCameras(camera, stream);
+    writePlayer(player, stream);
+
+    for (int i = 0; i < transform->childEntityIds.size(); i++) {
+        writeEntityHierarchy(entities, transform->childEntityIds[i], stream);
+    }
+}
+
+std::string writeNewPrefab(Scene* scene, uint32_t entityID) {
     EntityGroup* entities = &scene->entities;
+    Entity* entity = getEntity(entities, entityID);
+    std::string fileName = entity->name + ".prefab";
+    std::string name = entity->name;
+    std::string suffix = "";
+    std::string ext = ".prefab";
+    int counter = 0;
+
+    while (!checkFilenameUnique("..\\resources\\", fileName)) {
+        counter++;
+        suffix = std::to_string(counter);
+        fileName = name + suffix + ext;
+    }
+
+    std::string path = "..\\resources\\" + fileName;
+    std::ofstream stream(path);
+    writeEntityHierarchy(entities, entityID, &stream);
+    return path;
 }

@@ -1,0 +1,717 @@
+Entity {
+id: 522
+name: Player
+isActive: false
+}
+
+Transform {
+entityID: 522
+parentEntityID: -1
+childEntityIds: 523
+localPosition: 12.334334, 1.300000, 0.074437
+localRotation: 0.000000, -0.671075, 0.000000, 0.741390
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Rigidbody {
+entityID: 522
+shape: box
+motionType: dynamic
+rotationLocked: true
+layer: MOVING
+mass: 450.000000
+halfExtents: 0.250000, 0.900000, 0.250000
+halfHeight: 0.000000
+radius: -57354.542969
+}
+
+Player {
+entityID: 522
+armsID: 480
+jumpHeight: 10.000000
+moveSpeed: 10.000000
+groundCheckDistance: 0.200000
+cameraControllerEntityID: 522
+cameraControllerCameraTargetEntityID: 523
+cameraControllerCameraEntityID: 524
+cameraControllerSensitivity: 0.300000
+}
+
+Entity {
+id: 523
+name: CameraTarget
+isActive: false
+}
+
+Transform {
+entityID: 523
+parentEntityID: 522
+childEntityIds: 521
+localPosition: 0.000000, 0.700000, 0.000000
+localRotation: 0.077589, 0.000000, 0.000000, 0.996985
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 521
+name: WrenchParent
+isActive: true
+}
+
+Transform {
+entityID: 521
+parentEntityID: 523
+childEntityIds: 480
+localPosition: 0.000000, -0.420000, 0.370000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 480
+name: WrenchArms
+isActive: true
+}
+
+Transform {
+entityID: 480
+parentEntityID: 521
+childEntityIds: 481, 482, 500
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Animator {
+entityID: 480
+animations: FlipOff, WrenchIdle, WrenchMove
+}
+
+Entity {
+id: 481
+name: armmesh
+isActive: true
+}
+
+Transform {
+entityID: 481
+parentEntityID: 480
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 481
+rootEntity: 480
+mesh: armmesh
+materials: Mat
+}
+
+Entity {
+id: 482
+name: L_arm
+isActive: true
+}
+
+Transform {
+entityID: 482
+parentEntityID: 480
+childEntityIds: 483
+localPosition: 0.370588, 0.371471, -0.718286
+localRotation: -0.124429, -0.293109, -0.945846, 0.063085
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 483
+name: L_elbow
+isActive: true
+}
+
+Transform {
+entityID: 483
+parentEntityID: 482
+childEntityIds: 484
+localPosition: -0.000000, 0.492474, -0.000000
+localRotation: 0.596246, 0.153185, -0.099375, 0.781761
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 484
+name: L_wrist
+isActive: true
+}
+
+Transform {
+entityID: 484
+parentEntityID: 483
+childEntityIds: 485, 488, 491, 494, 497
+localPosition: 0.000000, 0.524044, 0.000000
+localRotation: 0.028024, 0.119711, 0.086681, 0.988620
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 485
+name: L_thumb
+isActive: true
+}
+
+Transform {
+entityID: 485
+parentEntityID: 484
+childEntityIds: 486
+localPosition: 0.035527, 0.052257, 0.025884
+localRotation: 0.306189, 0.227983, -0.257371, 0.887712
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 486
+name: L_thumb_2
+isActive: true
+}
+
+Transform {
+entityID: 486
+parentEntityID: 485
+childEntityIds: 487
+localPosition: -0.000000, 0.107024, -0.000000
+localRotation: -0.155999, 0.076925, -0.092879, 0.980368
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 487
+name: L_thumb_3
+isActive: true
+}
+
+Transform {
+entityID: 487
+parentEntityID: 486
+childEntityIds: None
+localPosition: -0.000000, 0.048880, 0.000000
+localRotation: -0.026568, 0.007733, 0.004450, 0.999607
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 488
+name: L_point
+isActive: true
+}
+
+Transform {
+entityID: 488
+parentEntityID: 484
+childEntityIds: 489
+localPosition: 0.036649, 0.223260, 0.053866
+localRotation: -0.092842, -0.392521, -0.086449, 0.910953
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 489
+name: L_point_2
+isActive: true
+}
+
+Transform {
+entityID: 489
+parentEntityID: 488
+childEntityIds: 490
+localPosition: -0.000000, 0.057069, -0.000000
+localRotation: -0.202934, 0.002548, -0.012294, 0.979112
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 490
+name: L_point_3
+isActive: true
+}
+
+Transform {
+entityID: 490
+parentEntityID: 489
+childEntityIds: None
+localPosition: -0.000000, 0.048671, 0.000000
+localRotation: -0.083388, -0.000780, 0.009326, 0.996473
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 491
+name: L_middle
+isActive: true
+}
+
+Transform {
+entityID: 491
+parentEntityID: 484
+childEntityIds: 492
+localPosition: -0.005289, 0.222849, 0.017762
+localRotation: -0.212179, -0.448623, -0.099102, 0.862494
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 492
+name: L_middle_2
+isActive: true
+}
+
+Transform {
+entityID: 492
+parentEntityID: 491
+childEntityIds: 493
+localPosition: -0.000000, 0.054666, 0.000000
+localRotation: -0.381367, -0.010676, 0.025870, 0.924000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 493
+name: L_middle_3
+isActive: true
+}
+
+Transform {
+entityID: 493
+parentEntityID: 492
+childEntityIds: None
+localPosition: 0.000000, 0.049470, -0.000000
+localRotation: -0.169396, -0.004513, 0.026236, 0.985188
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 494
+name: L_ring
+isActive: true
+}
+
+Transform {
+entityID: 494
+parentEntityID: 484
+childEntityIds: 495
+localPosition: -0.024745, 0.215326, -0.030904
+localRotation: -0.321021, -0.525862, -0.067512, 0.784765
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 495
+name: L_ring_2
+isActive: true
+}
+
+Transform {
+entityID: 495
+parentEntityID: 494
+childEntityIds: 496
+localPosition: 0.000000, 0.043627, 0.000000
+localRotation: -0.430746, 0.001826, -0.003828, 0.902463
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 496
+name: L_ring_3
+isActive: true
+}
+
+Transform {
+entityID: 496
+parentEntityID: 495
+childEntityIds: None
+localPosition: 0.000000, 0.040439, -0.000000
+localRotation: -0.338839, 0.002325, -0.006450, 0.940819
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 497
+name: L_pink
+isActive: true
+}
+
+Transform {
+entityID: 497
+parentEntityID: 484
+childEntityIds: 498
+localPosition: -0.042142, 0.181437, -0.066609
+localRotation: -0.380850, -0.540986, -0.075290, 0.746069
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 498
+name: L_pink_2
+isActive: true
+}
+
+Transform {
+entityID: 498
+parentEntityID: 497
+childEntityIds: 499
+localPosition: 0.000000, 0.045948, -0.000000
+localRotation: -0.446048, -0.021167, 0.042411, 0.893753
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 499
+name: L_pink_3
+isActive: true
+}
+
+Transform {
+entityID: 499
+parentEntityID: 498
+childEntityIds: None
+localPosition: 0.000000, 0.034896, 0.000000
+localRotation: -0.278528, -0.004104, 0.014154, 0.960315
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 500
+name: R_arm
+isActive: true
+}
+
+Transform {
+entityID: 500
+parentEntityID: 480
+childEntityIds: 501
+localPosition: -0.235946, 0.219172, -0.858149
+localRotation: -0.008642, 0.447557, 0.841314, 0.302999
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 501
+name: R_elbow
+isActive: true
+}
+
+Transform {
+entityID: 501
+parentEntityID: 500
+childEntityIds: 502
+localPosition: -0.000000, 0.492474, -0.000000
+localRotation: 0.473690, -0.185596, 0.081533, 0.857044
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 502
+name: R_wrist
+isActive: true
+}
+
+Transform {
+entityID: 502
+parentEntityID: 501
+childEntityIds: 503, 506, 509, 512, 515, 518
+localPosition: -0.000000, 0.524044, 0.000000
+localRotation: -0.055434, 0.482170, -0.154993, 0.860474
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 503
+name: R_thumb
+isActive: true
+}
+
+Transform {
+entityID: 503
+parentEntityID: 502
+childEntityIds: 504
+localPosition: -0.032357, 0.052257, 0.029751
+localRotation: 0.221587, -0.366729, 0.314237, 0.847150
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 504
+name: R_thumb_2
+isActive: true
+}
+
+Transform {
+entityID: 504
+parentEntityID: 503
+childEntityIds: 505
+localPosition: -0.000000, 0.107024, 0.000000
+localRotation: -0.192952, -0.147470, 0.051898, 0.968674
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 505
+name: R_thumb_3
+isActive: true
+}
+
+Transform {
+entityID: 505
+parentEntityID: 504
+childEntityIds: None
+localPosition: -0.000000, 0.048880, 0.000000
+localRotation: -0.188558, 0.015058, -0.036319, 0.981275
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 506
+name: R_point
+isActive: true
+}
+
+Transform {
+entityID: 506
+parentEntityID: 502
+childEntityIds: 507
+localPosition: -0.030295, 0.223260, 0.057680
+localRotation: -0.179636, 0.433562, 0.102651, 0.877051
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 507
+name: R_point_2
+isActive: true
+}
+
+Transform {
+entityID: 507
+parentEntityID: 506
+childEntityIds: 508
+localPosition: 0.000000, 0.057069, -0.000000
+localRotation: -0.569353, -0.008385, 0.131327, 0.811493
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 508
+name: R_point_3
+isActive: true
+}
+
+Transform {
+entityID: 508
+parentEntityID: 507
+childEntityIds: None
+localPosition: 0.000000, 0.048671, -0.000000
+localRotation: -0.392324, 0.007249, 0.113938, 0.912715
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 509
+name: R_middle
+isActive: true
+}
+
+Transform {
+entityID: 509
+parentEntityID: 502
+childEntityIds: 510
+localPosition: 0.007272, 0.222849, 0.017047
+localRotation: -0.183921, 0.491984, 0.021001, 0.850696
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 510
+name: R_middle_2
+isActive: true
+}
+
+Transform {
+entityID: 510
+parentEntityID: 509
+childEntityIds: 511
+localPosition: 0.000000, 0.054666, -0.000000
+localRotation: -0.560324, 0.069383, 0.090596, 0.820375
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 511
+name: R_middle_3
+isActive: true
+}
+
+Transform {
+entityID: 511
+parentEntityID: 510
+childEntityIds: None
+localPosition: -0.000000, 0.049470, -0.000000
+localRotation: -0.277803, 0.007399, -0.025573, 0.960269
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 512
+name: R_ring
+isActive: true
+}
+
+Transform {
+entityID: 512
+parentEntityID: 502
+childEntityIds: 513
+localPosition: 0.021075, 0.215326, -0.033514
+localRotation: -0.325857, 0.599053, 0.108152, 0.723364
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 513
+name: R_ring_2
+isActive: true
+}
+
+Transform {
+entityID: 513
+parentEntityID: 512
+childEntityIds: 514
+localPosition: 0.000000, 0.043627, 0.000000
+localRotation: -0.375531, -0.000331, 0.001763, 0.926808
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 514
+name: R_ring_3
+isActive: true
+}
+
+Transform {
+entityID: 514
+parentEntityID: 513
+childEntityIds: None
+localPosition: 0.000000, 0.040439, 0.000000
+localRotation: -0.276328, -0.001895, 0.006588, 0.961039
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 515
+name: R_pink
+isActive: true
+}
+
+Transform {
+entityID: 515
+parentEntityID: 502
+childEntityIds: 516
+localPosition: 0.020688, 0.200023, -0.084666
+localRotation: -0.348230, 0.604723, 0.151779, 0.700006
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 516
+name: R_pink_2
+isActive: true
+}
+
+Transform {
+entityID: 516
+parentEntityID: 515
+childEntityIds: 517
+localPosition: -0.000000, 0.045948, -0.000000
+localRotation: -0.292494, 0.042576, 0.003204, 0.955314
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 517
+name: R_pink_3
+isActive: true
+}
+
+Transform {
+entityID: 517
+parentEntityID: 516
+childEntityIds: None
+localPosition: 0.000000, 0.034896, 0.000000
+localRotation: -0.345979, 0.005100, -0.013826, 0.938127
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 518
+name: Wrench.002
+isActive: true
+}
+
+Transform {
+entityID: 518
+parentEntityID: 502
+childEntityIds: 519, 520
+localPosition: -0.365418, -0.101055, -0.177653
+localRotation: 0.099262, -0.783179, -0.613784, -0.006921
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 518
+rootEntity: 480
+mesh: Wrench.002
+materials: wrenchMaterial.mat
+}
+
+Entity {
+id: 519
+name: WrenchMouth.002
+isActive: true
+}
+
+Transform {
+entityID: 519
+parentEntityID: 518
+childEntityIds: None
+localPosition: -0.316311, 0.553098, 0.167177
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 519
+rootEntity: 480
+mesh: WrenchMouth.002
+materials: wrenchMaterial.mat
+}
+
+Entity {
+id: 520
+name: WrenchWheel.002
+isActive: true
+}
+
+Transform {
+entityID: 520
+parentEntityID: 518
+childEntityIds: None
+localPosition: -0.330562, 0.445385, 0.140555
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 520
+rootEntity: 480
+mesh: WrenchWheel.002
+materials: wrenchMaterial.mat
+}
+
