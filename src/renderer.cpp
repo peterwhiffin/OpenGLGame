@@ -835,39 +835,6 @@ void renderScene(RenderState* renderer, EntityGroup* entities) {
     drawFullScreenQuad(renderer);
 }
 
-void findBones(Scene* scene, MeshRenderer* renderer, Transform* parent) {
-    EntityGroup* entities = &scene->entities;
-    for (int i = 0; i < parent->childEntityIds.size(); i++) {
-        Entity* child = getEntity(entities, parent->childEntityIds[i]);
-        if (renderer->mesh->boneNameMap.count(child->name)) {
-            renderer->transformBoneMap[child->entityID] = renderer->mesh->boneNameMap[child->name];
-        }
-
-        findBones(scene, renderer, getTransform(entities, child->entityID));
-    }
-}
-
-void mapBones(Scene* scene, MeshRenderer* renderer) {
-    if (renderer->mesh->boneNameMap.size() == 0) {
-        return;
-    }
-
-    EntityGroup* entities = &scene->entities;
-    renderer->boneMatrices.reserve(100);
-
-    for (int i = 0; i < 100; i++) {
-        renderer->boneMatrices.push_back(mat4::sIdentity());
-    }
-
-    Transform* parent = getTransform(entities, renderer->entityID);
-
-    if (parent->parentEntityID != INVALID_ID) {
-        parent = getTransform(entities, parent->parentEntityID);
-    }
-
-    findBones(scene, renderer, parent);
-}
-
 void createCameraUBO(RenderState* renderer) {
     glGenBuffers(1, &renderer->matricesUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, renderer->matricesUBO);

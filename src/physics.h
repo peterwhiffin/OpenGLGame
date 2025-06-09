@@ -57,6 +57,7 @@ struct RigidBody {
     float mass = 1.0f;
     float radius = 0.5f;
     float halfHeight = 0.5f;
+    vec3 center = vec3(0.0f, 0.0f, 0.0f);
     vec3 halfExtents = vec3(0.5f, 0.5f, 0.5f);
     JPH::EShapeSubType shape = JPH::EShapeSubType::Box;
     JPH::EMotionType motionType = JPH::EMotionType::Static;

@@ -1,46 +1,47 @@
 Entity {
-id: 748
+id: 526
 name: TrashcanBase
 isActive: true
 }
 
 Transform {
-entityID: 748
+entityID: 526
 parentEntityID: -1
-childEntityIds: 749
-localPosition: 10.697891, 0.980970, -0.116018
-localRotation: -0.000178, -0.090156, 0.001188, 0.995927
+childEntityIds: 527
+localPosition: -1.294783, 0.853430, 0.684335
+localRotation: -0.416315, 0.630806, -0.571598, 0.319439
 localScale: 1.000000, 1.000000, 1.000000
 }
 
 MeshRenderer {
-entityID: 748
-rootEntity: 748
+entityID: 526
+rootEntity: 526
 mesh: TrashcanBase
 materials: Trashcan
 }
 
 Rigidbody {
-entityID: 748
-shape: box
-motionType: static
+entityID: 526
+shape: cylinder
+motionType: dynamic
 rotationLocked: false
-layer: NON_MOVING
+layer: MOVING
 mass: 1.000000
-halfExtents: 0.500000, 0.500000, 0.500000
-halfHeight: 0.500000
-radius: 0.500000
+center: 0.000000, -0.060000, 0.000000
+halfExtents: 0.610000, 0.404732, 0.050000
+halfHeight: 0.610000
+radius: 0.404732
 }
 
 Entity {
-id: 749
+id: 527
 name: TrashcanLid
 isActive: true
 }
 
 Transform {
-entityID: 749
-parentEntityID: 748
+entityID: 527
+parentEntityID: 526
 childEntityIds: None
 localPosition: 0.000000, 0.000000, 0.000000
 localRotation: 0.000000, 0.000000, 0.000000, 1.000000
@@ -48,8 +49,8 @@ localScale: 1.000000, 1.000000, 1.000000
 }
 
 MeshRenderer {
-entityID: 749
-rootEntity: 748
+entityID: 527
+rootEntity: 526
 mesh: TrashcanLid
 materials: Trashcan
 }

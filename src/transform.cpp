@@ -8,6 +8,7 @@ void updateTransformMatrices(EntityGroup* scene, Transform* transform) {
     Transform* childTransform;
 
     mat4 translation = mat4::sTranslation(transform->localPosition);
+    transform->localRotation = transform->localRotation.Normalized();
     mat4 rotation = mat4::sRotation(transform->localRotation);
     mat4 scale = mat4::sScale(transform->localScale);
     worldTransform = translation * rotation * scale;

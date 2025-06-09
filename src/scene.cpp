@@ -6,6 +6,7 @@ void clearScene(Scene* scene) {
         destroyEntity(entities, entities->entities[entities->entities.size() - 1].entityID, scene->physicsScene.bodyInterface);
     }
 
+    entities->nextEntityID = 1;
     /*     for (Camera* cam : scene->cameras) {
             // delete cam;
             free(cam);

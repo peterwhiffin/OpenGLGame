@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
+#include <al.h>
 
 #include "loader.h"
 #include "sceneloader.h"
@@ -44,10 +45,9 @@ int main() {
     Scene* scene = new Scene();
     Resources* resources = new Resources();
     RenderState* renderer = new RenderState();
+    EditorState* editor = new EditorState();
     InputActions* inputActions = new InputActions();
     scene->input = inputActions;
-
-    EditorState* editor = new EditorState();
 
     createContext(renderer);
     loadEditorShaders(renderer);
@@ -58,6 +58,14 @@ int main() {
     initRendererEditor(renderer);
     initEditor(editor, renderer->window);
     loadFirstFoundScene(scene, resources);
+
+    Model* dancingModel = resources->modelMap["asiandancer.gltf"];
+    uint32_t dancingEntityID = createEntityFromModel(&scene->entities, &scene->physicsScene, dancingModel->rootNode, INVALID_ID, false, INVALID_ID, true, false);
+    Entity* parentEntity = getNewEntity(&scene->entities, "dancingGangster");
+    setParent(&scene->entities, dancingEntityID, parentEntity->entityID);
+    Animator* anim = addAnimator(&scene->entities, parentEntity->entityID);
+    anim->animations.push_back(dancingModel->animations[0]);
+    initializeAnimator(&scene->entities, anim);
 
     scene->currentFrame = static_cast<float>(glfwGetTime());
     scene->lastFrame = scene->currentFrame;

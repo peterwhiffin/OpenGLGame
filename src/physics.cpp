@@ -102,8 +102,10 @@ void updatePhysicsBodyPositions(Scene* scene) {
     const float t = scene->physicsAccum / cDeltaTime;
     for (uint32_t entityID : entities->movingRigidbodies) {
         RigidBody* rigidbody = getRigidbody(entities, entityID);
+        vec3 center = rigidbody->center;
 
-        const vec3 newPos = lerp(rigidbody->lastPosition, bodyInterface->GetPosition(rigidbody->joltBody), t);
+        vec3 offset = (transformRight(entities, entityID) * center.GetX()) + (transformUp(entities, entityID) * center.GetY()) + (transformForward(entities, entityID) * center.GetZ());
+        const vec3 newPos = lerp(rigidbody->lastPosition, bodyInterface->GetPosition(rigidbody->joltBody) - offset, t);
         setPosition(entities, rigidbody->entityID, newPos);
 
         if (!rigidbody->rotationLocked) {
@@ -118,8 +120,9 @@ static void setPreviousTransforms(Scene* scene) {
     EntityGroup* entities = &scene->entities;
     for (uint32_t entityID : entities->movingRigidbodies) {
         RigidBody* rigidbody = getRigidbody(entities, entityID);
-
-        rigidbody->lastPosition = bodyInterface->GetPosition(rigidbody->joltBody);
+        vec3 center = rigidbody->center;
+        vec3 offset = (transformRight(entities, entityID) * center.GetX()) + (transformUp(entities, entityID) * center.GetY()) + (transformForward(entities, entityID) * center.GetZ());
+        rigidbody->lastPosition = bodyInterface->GetPosition(rigidbody->joltBody) - offset;
         rigidbody->lastRotation = bodyInterface->GetRotation(rigidbody->joltBody);
     }
 }

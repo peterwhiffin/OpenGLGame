@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include "forward.h"
 #include "physics.h"
+#include "meshrenderer.h"
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 struct Player;
@@ -57,6 +58,7 @@ struct EntityCopier {
 
     std::unordered_map<uint32_t, uint32_t> relativeIDMap;
 
+    std::vector<uint32_t> transformsTemp;
     std::vector<uint32_t> meshRenderersTemp;
     std::vector<uint32_t> animatorsTemp;
     std::vector<uint32_t> rigidbodiesTemp;
@@ -74,8 +76,7 @@ Transform* addTransform(EntityGroup* scene, uint32_t entityID);
 MeshRenderer* addMeshRenderer(EntityGroup* scene, uint32_t entityID);
 RigidBody* addRigidbody(EntityGroup* scene, uint32_t entityID);
 Player* addPlayer(EntityGroup* scene, uint32_t entityID);
-Animator* addAnimator(EntityGroup* scene, uint32_t entityID, Model* model);
-Animator* addAnimator(EntityGroup* scene, uint32_t entityID, std::vector<Animation*> animations);
+Animator* addAnimator(EntityGroup* scene, uint32_t entityID);
 Camera* addCamera(EntityGroup* scene, uint32_t entityID);
 PointLight* addPointLight(EntityGroup* scene, uint32_t entityID);
 SpotLight* addSpotLight(EntityGroup* scene, uint32_t entityID);
@@ -99,7 +100,6 @@ void removePointLight(EntityGroup* scene, uint32_t entityID);
 void destroyEntity(EntityGroup* entityGroup, uint32_t entityID, JPH::BodyInterface* bodyInterface = nullptr);
 void setRigidbodyMoving(EntityGroup* scene, uint32_t getEntityID);
 void setRigidbodyNonMoving(EntityGroup* scene, uint32_t getEntityID);
-void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID);
 uint32_t copyEntity(Scene* scene, EntityCopier* copier);
 
 template <typename Component>

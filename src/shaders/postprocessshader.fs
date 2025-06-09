@@ -16,6 +16,7 @@ void main(){
     
     vec4 bloomColor = texture(bloomTex, texCoord);
 
+    // bloomColor = vec4(0.0, 0.0, 0.0, 1.0);
     forwardColor += bloomColor.rgb * bloomAmount; 
     vec3 mapped = vec3(1.0) - exp(-forwardColor * exposure);
     mapped = pow(mapped , vec3(1.0 / 2.2));

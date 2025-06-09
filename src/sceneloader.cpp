@@ -4,6 +4,7 @@
 #include "sceneloader.h"
 #include "scene.h"
 #include "loader.h"
+#include "meshrenderer.h"
 
 void parseList(std::string memberString, std::vector<uint32_t>* out) {
     size_t currentPos = 0;
@@ -79,14 +80,14 @@ void getNextToken(std::ifstream* stream, std::vector<Token>* tokens) {
             tokens->push_back(token);
             break;
         default:
-            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-' && c != '_' && c != '\\') {
+            if (!std::isalnum(c) && c != ',' && c != '.' && c != '-' && c != '_' && c != '\\' && c != '|') {
                 std::cerr << "ERROR::UNKNOWN_TOKEN--->  " << c << std::endl;
                 return;
             }
 
             text += c;
 
-            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-' || stream->peek() == '_' || stream->peek() == '\\') {
+            while (std::isalnum(stream->peek()) || stream->peek() == ',' || stream->peek() == '.' || stream->peek() == '-' || stream->peek() == '_' || stream->peek() == '\\' || stream->peek() == '|') {
                 c = static_cast<char>(stream->get());
                 text += c;
                 if (c == ',') {
@@ -115,7 +116,7 @@ void getTokens(std::ifstream* stream, std::vector<Token>* tokens) {
     tokens->push_back(token);
 }
 
-int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
+int parseBlock(int currentIndex, std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
     Token token = tokens->at(currentIndex++);
     ComponentBlock block;
     std::string blockKey;
@@ -165,11 +166,11 @@ int buildComponentBlock(int currentIndex, std::vector<Token>* tokens, std::vecto
     return currentIndex;
 }
 
-void createComponentBlocks(std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
+void parseTokens(std::vector<Token>* tokens, std::vector<ComponentBlock>* components) {
     int currentIndex = 0;
 
     while (tokens->at(currentIndex).type != TokenType::EndOfFile) {
-        currentIndex = buildComponentBlock(currentIndex, tokens, components);
+        currentIndex = parseBlock(currentIndex, tokens, components);
     }
 }
 
@@ -425,6 +426,7 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
     JPH::ShapeSettings::ShapeResult shapeResult;
     JPH::ShapeRefC shape;
     JPH::EShapeSubType shapeType = JPH::EShapeSubType::Box;
+    vec3 center = vec3(0.0f, 0.0f, 0.0f);
     vec3 halfExtents = vec3(1.0f, 1.0f, 1.0f);
     float halfHeight;
     float radius;
@@ -476,6 +478,14 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
         }
     }
 
+    if (block.memberValueMap.count("center")) {
+        memberString = block.memberValueMap["center"];
+        parseList(memberString, floatComps);
+        center.SetX(floatComps[0]);
+        center.SetY(floatComps[1]);
+        center.SetZ(floatComps[2]);
+    }
+
     if (block.memberValueMap.count("halfExtents")) {
         memberString = block.memberValueMap["halfExtents"];
         parseList(memberString, floatComps);
@@ -483,6 +493,7 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
         halfExtents.SetY(floatComps[1]);
         halfExtents.SetZ(floatComps[2]);
     }
+
     if (block.memberValueMap.count("shape")) {
         memberString = block.memberValueMap["shape"];
 
@@ -501,6 +512,7 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
     rb->rotationLocked = rotationLocked;
     rb->shape = shapeType;
     rb->mass = mass;
+    rb->center = center;
     rb->radius = radius;
     rb->halfHeight = halfHeight;
     rb->halfExtents = halfExtents;
@@ -544,6 +556,10 @@ void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup*
     physicsScene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
 
     rb->joltBody = body->GetID();
+
+    if (rb->layer == Layers::MOVING) {
+        entities->movingRigidbodies.insert(rb->entityID);
+    }
 }
 
 void createAnimator(EntityGroup* scene, Resources* resources, ComponentBlock block) {
@@ -578,7 +594,8 @@ void createAnimator(EntityGroup* scene, Resources* resources, ComponentBlock blo
         }
     }
 
-    Animator* animator = addAnimator(scene, entityID, animations);
+    Animator* animator = addAnimator(scene, entityID);
+    animator->animations = animations;
 }
 
 void createCamera(EntityGroup* scene, ComponentBlock block) {
@@ -905,7 +922,7 @@ void loadMaterials(Resources* resources, RenderState* renderer) {
                 std::vector<Token> tokens;
                 std::vector<ComponentBlock> components;
                 getTokens(&stream, &tokens);
-                createComponentBlocks(&tokens, &components);
+                parseTokens(&tokens, &components);
                 // createComponents(scene, &components);
                 createMaterial(resources, renderer, components[0], fileString);
             }
@@ -919,7 +936,7 @@ void loadResourceSettings(Resources* resources, std::unordered_set<std::string>&
         std::vector<Token> tokens;
         std::vector<ComponentBlock> components;
         getTokens(&stream, &tokens);
-        createComponentBlocks(&tokens, &components);
+        parseTokens(&tokens, &components);
         createImportSettings(resources, &components);
     }
 }
@@ -929,6 +946,14 @@ void initializeScene(Scene* scene) {
     JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
 
     for (int i = 0; i < entities->transforms.size(); i++) {
+        Transform* transform = getTransform(entities, entities->transforms[i].entityID);
+        uint32_t parentID = transform->parentEntityID;
+        if (parentID != INVALID_ID) {
+            if (!entities->entityIndexMap.count(parentID)) {
+                transform->parentEntityID = INVALID_ID;
+            }
+        }
+
         updateTransformMatrices(entities, &entities->transforms[i]);
     }
 
@@ -938,24 +963,21 @@ void initializeScene(Scene* scene) {
         bodyInterface->SetPositionAndRotation(rb->joltBody, getPosition(entities, rb->entityID), getRotation(entities, rb->entityID), JPH::EActivation::DontActivate);
         rb->lastPosition = getPosition(entities, rb->entityID);
         rb->lastRotation = getRotation(entities, rb->entityID);
-
-        if (bodyInterface->GetObjectLayer(rb->joltBody) == Layers::MOVING) {
-            entities->movingRigidbodies.insert(rb->entityID);
-        }
     }
 
     for (MeshRenderer& renderer : entities->meshRenderers) {
-        mapBones(scene, &renderer);
+        initializeMeshRenderer(&scene->entities, &renderer);
     }
 
     for (Animator& animator : entities->animators) {
-        mapAnimationChannels(entities, &animator, animator.entityID);
+        initializeAnimator(&scene->entities, &animator);
     }
 
     Player* player = &entities->players[0];
     player->cameraController.camera = getCamera(entities, player->cameraController.cameraEntityID);
 }
 
+// this is a disaster
 uint32_t transposeIDs(EntityGroup* entities, std::vector<ComponentBlock>* components) {
     std::unordered_map<uint32_t, uint32_t> idMap;
     uint32_t rootID = INVALID_ID;
@@ -969,12 +991,6 @@ uint32_t transposeIDs(EntityGroup* entities, std::vector<ComponentBlock>* compon
                 idMap[oldID] = newID;
                 component->memberValueMap["id"] = std::to_string(newID);
             }
-
-        } else if (component->memberValueMap.count("entityID")) {
-            /* uint32_t oldID = std::stoi(component->memberValueMap["entityID"]);
-            uint32_t newID = getEntityID(entities);
-            idMap[oldID] = newID;
-            component->memberValueMap["entityID"] = std::to_string(newID); */
         }
     }
 
@@ -1040,6 +1056,10 @@ uint32_t transposeIDs(EntityGroup* entities, std::vector<ComponentBlock>* compon
                     component->memberValueMap["childEntityIds"] = childEntityIDString;
                 }
             }
+        } else if (component->type == "MeshRenderer") {
+            uint32_t oldID = std::stoi(component->memberValueMap["rootEntity"]);
+            uint32_t newID = idMap[oldID];
+            component->memberValueMap["rootEntity"] = std::to_string(newID);
         }
     }
 
@@ -1052,7 +1072,7 @@ void loadPrefab(Resources* resources, std::filesystem::path path) {
     std::vector<ComponentBlock> components;
 
     getTokens(&stream, &tokens);
-    createComponentBlocks(&tokens, &components);
+    parseTokens(&tokens, &components);
     uint32_t rootID = transposeIDs(&resources->prefabGroup, &components);
     createComponents(&resources->prefabGroup, resources, &components);
     resources->prefabMap[path.filename().string()] = rootID;
@@ -1065,8 +1085,7 @@ void loadTempScene(Resources* resources, Scene* scene) {
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
-    createComponentBlocks(&tokens, &components);
-    // logComponentBlocks(&components);
+    parseTokens(&tokens, &components);
     createComponents(&scene->entities, resources, &components);
     initializeScene(scene);
 }
@@ -1078,7 +1097,7 @@ void loadScene(Resources* resources, Scene* scene) {
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
-    createComponentBlocks(&tokens, &components);
+    parseTokens(&tokens, &components);
     EntityGroup* entities = &scene->entities;
     createComponents(entities, resources, &components);
     initializeScene(scene);
@@ -1097,7 +1116,7 @@ void loadFirstFoundScene(Scene* scene, Resources* resources) {
     std::vector<Token> tokens;
     std::vector<ComponentBlock> components;
     getTokens(&stream, &tokens);
-    createComponentBlocks(&tokens, &components);
+    parseTokens(&tokens, &components);
     EntityGroup* entities = &scene->entities;
     createComponents(entities, resources, &components);
     initializeScene(scene);
@@ -1262,10 +1281,12 @@ void writeRigidbodies(RigidBody* rb, std::ofstream* stream) {
     std::string halfHeightString;
     std::string radiusString;
     std::string massString;
+    std::string centerString;
 
     entityID = std::to_string(rb->entityID);
     rotationLocked = rb->rotationLocked ? "true" : "false";
     massString = std::to_string(rb->mass);
+    centerString = std::to_string(rb->center.GetX()) + ", " + std::to_string(rb->center.GetY()) + ", " + std::to_string(rb->center.GetZ());
     radiusString = std::to_string(rb->radius);
     halfExtentString = std::to_string(rb->halfExtents.GetX()) + ", " + std::to_string(rb->halfExtents.GetY()) + ", " + std::to_string(rb->halfExtents.GetZ());
     halfHeightString = std::to_string(rb->halfHeight);
@@ -1313,6 +1334,7 @@ void writeRigidbodies(RigidBody* rb, std::ofstream* stream) {
     *stream << "rotationLocked: " << rotationLocked << std::endl;
     *stream << "layer: " << objectLayerString << std::endl;
     *stream << "mass: " << massString << std::endl;
+    *stream << "center: " << centerString << std::endl;
     *stream << "halfExtents: " << halfExtentString << std::endl;
     *stream << "halfHeight: " << halfHeightString << std::endl;
     *stream << "radius: " << radiusString << std::endl;

@@ -46,3 +46,5 @@ struct Animator {
 
 void updateAnimators(EntityGroup* scene, float deltaTime);
 void playAnimation(Animator* animator, std::string name);
+void addAnimation(EntityGroup* scene, Animator* animator, Animation* animation);
+void initializeAnimator(EntityGroup* entities, Animator* animator);

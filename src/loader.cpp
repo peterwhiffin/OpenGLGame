@@ -512,7 +512,6 @@ void findResources(Resources* resources, RenderState* renderer) {
     for (std::filesystem::path& path : prefabPaths) {
         loadPrefab(resources, path);
     }
-    std::cout << "poo" << std::endl;
 }
 
 void loadResources(Resources* resources, RenderState* renderer) {

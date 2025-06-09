@@ -27,6 +27,11 @@ void updateAnimators(EntityGroup* scene, float deltaTime) {
 
     for (int i = 0; i < scene->animators.size(); i++) {
         animator = &scene->animators[i];
+
+        if (animator->currentAnimation == nullptr) {
+            continue;
+        }
+
         animator->playbackTime += deltaTime;
         playbackTime = animator->playbackTime;
 
@@ -111,4 +116,44 @@ void playAnimation(Animator* animator, std::string name) {
     }
 
     animator->currentAnimation = currentAnim;
+}
+
+static void mapAnimationChannels(EntityGroup* scene, Animator* animator, Animation* animation, uint32_t entityID) {
+    Entity* entity = getEntity(scene, entityID);
+    Transform* transform = getTransform(scene, entityID);
+
+    for (AnimationChannel* channel : animation->channels) {
+        if (entity->name == channel->name) {
+            animator->channelMap[channel] = entity->entityID;
+        }
+    }
+
+    for (int i = 0; i < transform->childEntityIds.size(); i++) {
+        mapAnimationChannels(scene, animator, animation, transform->childEntityIds[i]);
+    }
+}
+
+void addAnimation(EntityGroup* scene, Animator* animator, Animation* animation) {
+    if (!animator->animationMap.count(animation->name)) {
+        animator->animations.push_back(animation);
+        animator->animationMap[animation->name] = animation;
+    }
+
+    mapAnimationChannels(scene, animator, animation, animator->entityID);
+}
+
+void initializeAnimator(EntityGroup* entities, Animator* animator) {
+    if (animator->animations.size() > 0) {
+        animator->currentAnimation = animator->animations[0];
+    }
+
+    for (int i = 0; i < animator->animations.size(); i++) {
+        Animation* animation = animator->animations[i];
+
+        if (!animator->animationMap.count(animation->name)) {
+            animator->animationMap[animation->name] = animation;
+        }
+
+        mapAnimationChannels(entities, animator, animation, animator->entityID);
+    }
 }

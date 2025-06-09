@@ -1,0 +1,882 @@
+Entity {
+id: 526
+name: gangster
+isActive: true
+}
+
+Transform {
+entityID: 526
+parentEntityID: -1
+childEntityIds: 586
+localPosition: 5.949000, 0.429000, -4.424000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 0.010000, 0.010000, 0.010000
+}
+
+Animator {
+entityID: 526
+animations: walk
+}
+
+Entity {
+id: 586
+name: Root
+isActive: true
+}
+
+Transform {
+entityID: 586
+parentEntityID: 526
+childEntityIds: 587, 588, 636, 639
+localPosition: 0.010241, -0.002894, -0.018136
+localRotation: 0.721094, 0.013544, -0.006297, 0.692677
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 587
+name: SK_Chr_Asian_Gangster_Male_01
+isActive: true
+}
+
+Transform {
+entityID: 587
+parentEntityID: 586
+childEntityIds: None
+localPosition: -12.284525, -3.770811, 0.648268
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+MeshRenderer {
+entityID: 587
+rootEntity: 586
+mesh: SK_Chr_Asian_Gangster_Male_01
+materials: lambert.003
+}
+
+Entity {
+id: 588
+name: Pelvis
+isActive: true
+}
+
+Transform {
+entityID: 588
+parentEntityID: 586
+childEntityIds: 589, 626, 631
+localPosition: -0.000000, -0.000001, -87.627617
+localRotation: -0.536053, -0.461137, 0.536053, 0.461137
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 589
+name: spine_01
+isActive: true
+}
+
+Transform {
+entityID: 589
+parentEntityID: 588
+childEntityIds: 590
+localPosition: 0.000002, 10.393265, -0.000000
+localRotation: 0.151045, 0.988484, -0.006811, 0.006193
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 590
+name: spine_02
+isActive: true
+}
+
+Transform {
+entityID: 590
+parentEntityID: 589
+childEntityIds: 591
+localPosition: 0.000003, 18.151178, 0.000000
+localRotation: 0.077785, 0.996775, -0.006598, 0.018607
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 591
+name: spine_03
+isActive: true
+}
+
+Transform {
+entityID: 591
+parentEntityID: 590
+childEntityIds: 592, 596, 611
+localPosition: 0.000007, 17.903776, 0.000000
+localRotation: 0.131003, 0.991185, 0.007738, 0.018185
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 592
+name: neck_01
+isActive: true
+}
+
+Transform {
+entityID: 592
+parentEntityID: 591
+childEntityIds: 593
+localPosition: -0.000002, 11.188993, -0.000000
+localRotation: 0.004816, 0.016857, 0.037751, 0.999133
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 593
+name: head
+isActive: true
+}
+
+Transform {
+entityID: 593
+parentEntityID: 592
+childEntityIds: 594, 595
+localPosition: -0.000011, 12.164459, -0.000000
+localRotation: 0.466868, -0.533320, 0.445923, 0.546586
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 594
+name: eyes
+isActive: true
+}
+
+Transform {
+entityID: 594
+parentEntityID: 593
+childEntityIds: None
+localPosition: -0.000000, 12.272220, -9.447622
+localRotation: 0.000000, 0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 595
+name: eyebrows
+isActive: true
+}
+
+Transform {
+entityID: 595
+parentEntityID: 593
+childEntityIds: None
+localPosition: -0.000001, 12.272217, -12.766943
+localRotation: 0.000000, 0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 596
+name: clavicle_l
+isActive: true
+}
+
+Transform {
+entityID: 596
+parentEntityID: 591
+childEntityIds: 597
+localPosition: -4.191456, 5.801153, 7.447155
+localRotation: 0.632463, 0.509475, 0.471532, 0.343634
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 597
+name: UpperArm_L
+isActive: true
+}
+
+Transform {
+entityID: 597
+parentEntityID: 596
+childEntityIds: 598
+localPosition: 0.000007, 13.197876, -0.000001
+localRotation: -0.324969, 0.287337, 0.435353, 0.788860
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 598
+name: lowerarm_l
+isActive: true
+}
+
+Transform {
+entityID: 598
+parentEntityID: 597
+childEntityIds: 599
+localPosition: -0.144928, 33.947414, 0.143627
+localRotation: -0.094875, 0.001442, 0.002027, 0.995486
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 599
+name: Hand_L
+isActive: true
+}
+
+Transform {
+entityID: 599
+parentEntityID: 598
+childEntityIds: 600, 603, 607
+localPosition: -0.000007, 27.114550, 0.038137
+localRotation: -0.134231, 0.048232, 0.112398, 0.983373
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 600
+name: thumb_01_l
+isActive: true
+}
+
+Transform {
+entityID: 600
+parentEntityID: 599
+childEntityIds: 601
+localPosition: -1.170690, 3.514057, -4.505543
+localRotation: -0.073916, 0.148438, 0.145285, 0.975395
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 601
+name: thumb_02_l
+isActive: true
+}
+
+Transform {
+entityID: 601
+parentEntityID: 600
+childEntityIds: 602
+localPosition: 0.000004, 6.370201, -0.000002
+localRotation: 0.098424, 0.000580, -0.010446, 0.995090
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 602
+name: thumb_03_l
+isActive: true
+}
+
+Transform {
+entityID: 602
+parentEntityID: 601
+childEntityIds: None
+localPosition: -0.000003, 5.665588, -0.000001
+localRotation: 0.152035, -0.036404, -0.229993, 0.960554
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 603
+name: indexFinger_01_l
+isActive: true
+}
+
+Transform {
+entityID: 603
+parentEntityID: 599
+childEntityIds: 604
+localPosition: 0.398708, 10.396574, -2.672652
+localRotation: 0.101610, -0.035109, 0.145314, 0.983528
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 604
+name: indexFinger_02_l
+isActive: true
+}
+
+Transform {
+entityID: 604
+parentEntityID: 603
+childEntityIds: 605
+localPosition: -0.000020, 4.093633, 0.000002
+localRotation: 0.001702, -0.001149, 0.132094, 0.991235
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 605
+name: indexFinger_03_l
+isActive: true
+}
+
+Transform {
+entityID: 605
+parentEntityID: 604
+childEntityIds: 606
+localPosition: 0.000008, 3.791189, 0.000002
+localRotation: 0.002770, -0.006865, 0.132075, 0.991212
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 606
+name: indexFinger_04_l
+isActive: true
+}
+
+Transform {
+entityID: 606
+parentEntityID: 605
+childEntityIds: None
+localPosition: 0.000003, 3.779807, 0.000001
+localRotation: 0.028040, -0.004520, -0.159067, 0.986859
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 607
+name: finger_01_l
+isActive: true
+}
+
+Transform {
+entityID: 607
+parentEntityID: 599
+childEntityIds: 608
+localPosition: -0.115961, 9.982541, 3.283338
+localRotation: 0.170169, -0.035408, 0.231501, 0.957181
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 608
+name: finger_02_l
+isActive: true
+}
+
+Transform {
+entityID: 608
+parentEntityID: 607
+childEntityIds: 609
+localPosition: -0.000005, 4.248823, 0.000002
+localRotation: -0.000082, 0.002624, 0.104217, 0.994551
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 609
+name: finger_03_l
+isActive: true
+}
+
+Transform {
+entityID: 609
+parentEntityID: 608
+childEntityIds: 610
+localPosition: 0.000004, 3.513342, 0.000002
+localRotation: 0.001804, -0.018138, 0.121526, 0.992421
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 610
+name: finger_04_l
+isActive: true
+}
+
+Transform {
+entityID: 610
+parentEntityID: 609
+childEntityIds: None
+localPosition: 0.000001, 3.003222, 0.000004
+localRotation: -0.096525, 0.016647, -0.169126, 0.980715
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 611
+name: clavicle_r
+isActive: true
+}
+
+Transform {
+entityID: 611
+parentEntityID: 591
+childEntityIds: 612
+localPosition: -4.191417, 5.801550, -7.447151
+localRotation: -0.456096, 0.314878, -0.652490, 0.516803
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 612
+name: UpperArm_R
+isActive: true
+}
+
+Transform {
+entityID: 612
+parentEntityID: 611
+childEntityIds: 613
+localPosition: 0.000633, 13.197860, 0.000003
+localRotation: -0.432131, -0.217582, -0.356525, 0.799256
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 613
+name: lowerarm_r
+isActive: true
+}
+
+Transform {
+entityID: 613
+parentEntityID: 612
+childEntityIds: 614
+localPosition: 0.144792, 33.947441, 0.143628
+localRotation: -0.213917, -0.001157, -0.001858, 0.976849
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 614
+name: Hand_R
+isActive: true
+}
+
+Transform {
+entityID: 614
+parentEntityID: 613
+childEntityIds: 615, 618, 622
+localPosition: -0.000005, 27.114479, 0.038139
+localRotation: -0.154458, -0.020960, -0.061633, 0.985852
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 615
+name: thumb_01_r
+isActive: true
+}
+
+Transform {
+entityID: 615
+parentEntityID: 614
+childEntityIds: 616
+localPosition: 1.170979, 3.514001, -4.505545
+localRotation: -0.080144, -0.179468, -0.222753, 0.954856
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 616
+name: thumb_02_r
+isActive: true
+}
+
+Transform {
+entityID: 616
+parentEntityID: 615
+childEntityIds: 617
+localPosition: -0.000766, 6.370131, 0.000042
+localRotation: 0.185145, 0.035937, 0.013111, 0.981966
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 617
+name: thumb_03_r
+isActive: true
+}
+
+Transform {
+entityID: 617
+parentEntityID: 616
+childEntityIds: None
+localPosition: -0.000010, 5.665507, -0.000024
+localRotation: 0.152035, 0.036403, 0.229996, 0.960553
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 618
+name: indexFinger_01_r
+isActive: true
+}
+
+Transform {
+entityID: 618
+parentEntityID: 614
+childEntityIds: 619
+localPosition: -0.399029, 10.396589, -2.672655
+localRotation: 0.101688, 0.043108, -0.178170, 0.977782
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 619
+name: indexFinger_02_r
+isActive: true
+}
+
+Transform {
+entityID: 619
+parentEntityID: 618
+childEntityIds: 620
+localPosition: 0.000108, 4.093575, -0.000006
+localRotation: -0.001652, 0.001135, -0.206306, 0.978486
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 620
+name: indexFinger_03_r
+isActive: true
+}
+
+Transform {
+entityID: 620
+parentEntityID: 619
+childEntityIds: 621
+localPosition: 0.000322, 3.791202, -0.000007
+localRotation: 0.000007, 0.006896, -0.091756, 0.995758
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 621
+name: indexFinger_04_r
+isActive: true
+}
+
+Transform {
+entityID: 621
+parentEntityID: 620
+childEntityIds: None
+localPosition: -0.000509, 3.779330, -0.000018
+localRotation: 0.028040, 0.004520, 0.159068, 0.986859
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 622
+name: finger_01_r
+isActive: true
+}
+
+Transform {
+entityID: 622
+parentEntityID: 614
+childEntityIds: 623
+localPosition: 0.115977, 9.982507, 3.283338
+localRotation: 0.137540, 0.034951, -0.196542, 0.970171
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 623
+name: finger_02_r
+isActive: true
+}
+
+Transform {
+entityID: 623
+parentEntityID: 622
+childEntityIds: 624
+localPosition: -0.000004, 4.248813, -0.000001
+localRotation: -0.006595, -0.002513, -0.304165, 0.952593
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 624
+name: finger_03_r
+isActive: true
+}
+
+Transform {
+entityID: 624
+parentEntityID: 623
+childEntityIds: 625
+localPosition: 0.000006, 3.513297, 0.000002
+localRotation: -0.001080, 0.017981, -0.178843, 0.983713
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 625
+name: finger_04_r
+isActive: true
+}
+
+Transform {
+entityID: 625
+parentEntityID: 624
+childEntityIds: None
+localPosition: 0.000136, 3.003129, 0.000036
+localRotation: -0.096525, -0.016647, 0.169132, 0.980714
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 626
+name: Thigh_R
+isActive: true
+}
+
+Transform {
+entityID: 626
+parentEntityID: 588
+childEntityIds: 627
+localPosition: -2.692067, -4.115763, 9.896705
+localRotation: -0.657777, 0.012028, -0.753109, -0.003297
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 627
+name: calf_r
+isActive: true
+}
+
+Transform {
+entityID: 627
+parentEntityID: 626
+childEntityIds: 628
+localPosition: 0.000001, 39.930927, -0.000002
+localRotation: -0.090434, 0.610337, -0.102190, 0.780299
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 628
+name: Foot_R
+isActive: true
+}
+
+Transform {
+entityID: 628
+parentEntityID: 627
+childEntityIds: 629
+localPosition: 0.000001, 37.712364, -0.000002
+localRotation: 0.577513, -0.812028, -0.049058, 0.068429
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 629
+name: ball_r
+isActive: true
+}
+
+Transform {
+entityID: 629
+parentEntityID: 628
+childEntityIds: 630
+localPosition: 0.000001, 11.284039, -0.000000
+localRotation: -0.000001, 0.000001, -0.310042, 0.950723
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 630
+name: toes_r
+isActive: true
+}
+
+Transform {
+entityID: 630
+parentEntityID: 629
+childEntityIds: None
+localPosition: 0.000000, 7.295752, -0.000001
+localRotation: 0.707108, 0.000000, -0.000000, 0.707106
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 631
+name: Thigh_L
+isActive: true
+}
+
+Transform {
+entityID: 631
+parentEntityID: 588
+childEntityIds: 632
+localPosition: -2.692074, -4.115779, -9.896711
+localRotation: -0.756585, -0.103190, -0.632436, 0.130214
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 632
+name: calf_l
+isActive: true
+}
+
+Transform {
+entityID: 632
+parentEntityID: 631
+childEntityIds: 633
+localPosition: -0.000002, 39.930958, -0.000002
+localRotation: -0.358894, -0.561980, 0.257216, 0.699438
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 633
+name: Foot_L
+isActive: true
+}
+
+Transform {
+entityID: 633
+parentEntityID: 632
+childEntityIds: 634
+localPosition: 0.000008, 37.712337, -0.000085
+localRotation: 0.526911, 0.845583, 0.034158, 0.078653
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 634
+name: ball_l
+isActive: true
+}
+
+Transform {
+entityID: 634
+parentEntityID: 633
+childEntityIds: 635
+localPosition: -0.000001, 11.284033, 0.000002
+localRotation: 0.000000, -0.000001, 0.329339, 0.944212
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 635
+name: toes_l
+isActive: true
+}
+
+Transform {
+entityID: 635
+parentEntityID: 634
+childEntityIds: None
+localPosition: 0.000000, 7.295745, 0.000002
+localRotation: 0.707108, -0.000000, 0.000000, 0.707106
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 636
+name: ik_foot_root
+isActive: true
+}
+
+Transform {
+entityID: 636
+parentEntityID: 586
+childEntityIds: 637, 638
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: -0.707107, 0.707107, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 637
+name: ik_foot_l
+isActive: true
+}
+
+Transform {
+entityID: 637
+parentEntityID: 636
+childEntityIds: None
+localPosition: 3.687381, -11.444309, 5.569409
+localRotation: -0.707107, 0.000000, 0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 638
+name: ik_foot_r
+isActive: true
+}
+
+Transform {
+entityID: 638
+parentEntityID: 636
+childEntityIds: None
+localPosition: 3.687377, 11.444345, 5.569412
+localRotation: -0.000000, -0.707107, -0.707107, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 639
+name: ik_hand_root
+isActive: true
+}
+
+Transform {
+entityID: 639
+parentEntityID: 586
+childEntityIds: 640
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: -0.707107, 0.000000, 0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 640
+name: ik_hand_gun
+isActive: true
+}
+
+Transform {
+entityID: 640
+parentEntityID: 639
+childEntityIds: 641, 642
+localPosition: -79.963203, 136.093994, -3.417380
+localRotation: 0.707107, 0.707107, -0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 641
+name: ik_hand_l
+isActive: true
+}
+
+Transform {
+entityID: 641
+parentEntityID: 640
+childEntityIds: None
+localPosition: 0.000140, 159.926392, 0.000000
+localRotation: 0.000000, -1.000000, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Entity {
+id: 642
+name: ik_hand_r
+isActive: true
+}
+
+Transform {
+entityID: 642
+parentEntityID: 640
+childEntityIds: None
+localPosition: -0.000003, 0.000002, -0.000000
+localRotation: -0.000000, -0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+

@@ -3,8 +3,10 @@
 #include "forward.h"
 #include "utils/mathutils.h"
 #include "physics.h"
+#include "meshrenderer.h"
 
 struct EntityGroup;
+struct MeshRenderer;
 
 struct DebugVertex {
     vec3 pos;
@@ -79,18 +81,6 @@ struct Mesh {
     std::vector<GLuint> indices;
     std::vector<SubMesh> subMeshes;
     std::unordered_map<std::string, BoneInfo> boneNameMap;
-};
-
-struct MeshRenderer {
-    uint32_t entityID;
-    uint32_t rootEntity;
-    GLint vao;
-    Mesh* mesh;
-    bool boneMatricesSet = false;
-    std::vector<Material*> materials;
-    std::vector<SubMesh> subMeshes;
-    std::vector<mat4> boneMatrices;
-    std::unordered_map<uint32_t, BoneInfo> transformBoneMap;
 };
 
 struct DirectionalLight {

@@ -2,6 +2,7 @@
 #include "scene.h"
 #include "loader.h"
 #include "sceneloader.h"
+#include "meshrenderer.h"
 
 uint32_t getEntityID(EntityGroup* scene) {
     uint32_t newID = scene->nextEntityID++;
@@ -116,6 +117,15 @@ MeshRenderer* addMeshRenderer(EntityGroup* scene, uint32_t entityID) {
     return &scene->meshRenderers[index];
 }
 
+Animator* addAnimator(EntityGroup* scene, uint32_t entityID) {
+    Animator animator;
+    animator.entityID = entityID;
+    size_t index = scene->animators.size();
+    scene->animators.push_back(animator);
+    scene->animatorIndexMap[entityID] = index;
+    return &scene->animators[index];
+}
+
 RigidBody* addRigidbody(EntityGroup* scene, uint32_t entityID) {
     RigidBody rigidbody;
     rigidbody.entityID = entityID;
@@ -175,6 +185,10 @@ void removePlayer(EntityGroup* scene, uint32_t entityID) {
 
 void removeAnimator(EntityGroup* scene, uint32_t entityID) {
     destroyComponent(scene->animators, scene->animatorIndexMap, entityID);
+}
+
+void removeCamera(EntityGroup* scene, uint32_t entityID) {
+    destroyComponent(scene->cameras, scene->cameraIndexMap, entityID);
 }
 
 void setRigidbodyMoving(EntityGroup* scene, uint32_t entityID) {
@@ -271,70 +285,10 @@ void destroyEntity(EntityGroup* entityGroup, uint32_t entityID, JPH::BodyInterfa
     removeAnimator(entityGroup, entityID);
     removeRigidbody(entityGroup, entityID, bodyInterface);
     removePlayer(entityGroup, entityID);
+    removeCamera(entityGroup, entityID);
     removeSpotLight(entityGroup, entityID);
     removePointLight(entityGroup, entityID);
     destroyComponent(entityGroup->entities, entityGroup->entityIndexMap, entityID);
-}
-
-void mapAnimationChannels(EntityGroup* scene, Animator* animator, uint32_t entityID) {
-    size_t entityIndex = scene->entityIndexMap[entityID];
-    Entity* entity = &scene->entities[entityIndex];
-
-    size_t transformIndex = scene->transformIndexMap[entityID];
-    Transform* transform = &scene->transforms[transformIndex];
-
-    for (Animation* animation : animator->animations) {
-        for (AnimationChannel* channel : animation->channels) {
-            if (entity->name == channel->name) {
-                animator->channelMap[channel] = entity->entityID;
-            }
-        }
-    }
-
-    for (int i = 0; i < transform->childEntityIds.size(); i++) {
-        mapAnimationChannels(scene, animator, transform->childEntityIds[i]);
-    }
-}
-
-Animator* addAnimator(EntityGroup* scene, uint32_t entityID, Model* model) {
-    Animator animator;
-    animator.entityID = entityID;
-    size_t index = scene->animators.size();
-    scene->animators.push_back(animator);
-    scene->animatorIndexMap[entityID] = index;
-    Animator* animatorPtr = &scene->animators[index];
-
-    for (Animation* animation : model->animations) {
-        animatorPtr->animations.push_back(animation);
-    }
-
-    for (Animation* animation : animatorPtr->animations) {
-        animatorPtr->animationMap[animation->name] = animation;
-    }
-
-    // mapAnimationChannels(scene, animatorPtr, entityID);
-
-    animatorPtr->currentAnimation = animatorPtr->animations[0];
-    return animatorPtr;
-}
-
-Animator* addAnimator(EntityGroup* scene, uint32_t entityID, std::vector<Animation*> animations) {
-    Animator animator;
-    animator.entityID = entityID;
-    animator.animations = animations;
-
-    for (Animation* animation : animator.animations) {
-        animator.animationMap[animation->name] = animation;
-    }
-
-    size_t index = scene->animators.size();
-    scene->animators.push_back(animator);
-    scene->animatorIndexMap[entityID] = index;
-    Animator* animatorPtr = &scene->animators[index];
-
-    // mapAnimationChannels(scene, animatorPtr, entityID);
-    animatorPtr->currentAnimation = animatorPtr->animations[0];
-    return animatorPtr;
 }
 
 uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic) {
@@ -396,6 +350,7 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
     newTransform->localRotation = templateTransform->localRotation;
     newTransform->localScale = templateTransform->localScale;
     newTransform->worldTransform = templateTransform->worldTransform;
+    newTransform->parentEntityID = parentID;
     setParent(copier->toGroup, newEntity, parentID);
 
     for (int i = 0; i < templateTransform->childEntityIds.size(); i++) {
@@ -414,17 +369,20 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
     if (meshRenderer != nullptr) {
         MeshRenderer* newMeshRenderer = addMeshRenderer(copier->toGroup, newEntity);
         newMeshRenderer->boneMatrices = meshRenderer->boneMatrices;
-        newMeshRenderer->boneMatricesSet = meshRenderer->boneMatricesSet;
+        newMeshRenderer->boneMatricesSet = false;
         newMeshRenderer->materials = meshRenderer->materials;
         newMeshRenderer->mesh = meshRenderer->mesh;
         newMeshRenderer->subMeshes = meshRenderer->subMeshes;
         newMeshRenderer->vao = meshRenderer->vao;
-        mapBones(scene, newMeshRenderer);  // this might not work
+        newMeshRenderer->rootEntity = meshRenderer->rootEntity;
+        copier->meshRenderersTemp.push_back(newMeshRenderer->entityID);
+        initializeMeshRenderer(copier->toGroup, newMeshRenderer);
     }
 
     if (animator != nullptr) {
-        Animator* newAnimator = addAnimator(copier->toGroup, newEntity, animator->animations);
-        mapAnimationChannels(copier->toGroup, newAnimator, newAnimator->entityID);
+        Animator* newAnimator = addAnimator(copier->toGroup, newEntity);
+        newAnimator->animations = animator->animations;
+        initializeAnimator(copier->toGroup, newAnimator);
     }
 
     if (rb != nullptr) {
@@ -435,6 +393,7 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
         newRB->halfHeight = rb->halfHeight;
         newRB->layer = rb->layer;
         newRB->motionType = rb->motionType;
+        newRB->center = rb->center;
         newRB->radius = rb->radius;
         newRB->rotationLocked = rb->rotationLocked;
         initializeRigidbody(newRB, &scene->physicsScene, copier->toGroup);
@@ -490,6 +449,12 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
 
 uint32_t copyEntity(Scene* scene, EntityCopier* copier) {
     uint32_t newID = copyEntityInternal(scene, copier, INVALID_ID);
+
+    for (int i = 0; i < copier->meshRenderersTemp.size(); i++) {
+        MeshRenderer* meshRenderer = getMeshRenderer(copier->toGroup, copier->meshRenderersTemp[i]);
+        meshRenderer->rootEntity = copier->relativeIDMap[meshRenderer->rootEntity];
+    }
+
     copier->meshRenderersTemp.clear();
     copier->animatorsTemp.clear();
     copier->rigidbodiesTemp.clear();

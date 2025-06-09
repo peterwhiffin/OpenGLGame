@@ -15,26 +15,18 @@
 static void spawnTrashCan(Scene* scene, Resources* resources, Player* player) {
     EntityGroup* entities = &scene->entities;
     JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;
-    Model* trashcanModel = resources->modelMap["trashcan.gltf"];
-    uint32_t trashcanID = createEntityFromModel(entities, &scene->physicsScene, trashcanModel->rootNode, INVALID_ID, false, INVALID_ID, true, true);
-    Transform* transform = getTransform(entities, trashcanID);
-    JPH::CylinderShapeSettings floor_shape_settings(trashcanModel->rootNode->mesh->extent.GetY(), trashcanModel->rootNode->mesh->extent.GetX());
-    JPH::ShapeSettings::ShapeResult floor_shape_result = floor_shape_settings.Create();
-    JPH::ShapeRefC floor_shape = floor_shape_result.Get();  // We don't expect an error here, but you can check floor_shape_result for HasError() / GetError()
-    JPH::ObjectLayer layer = Layers::MOVING;
-    JPH::EActivation shouldActivate = JPH::EActivation::Activate;
-    JPH::EMotionType motionType = JPH::EMotionType::Dynamic;
-    JPH::BodyCreationSettings floor_settings(floor_shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, layer);
-    JPH::Body* floor = bodyInterface->CreateBody(floor_settings);
-    bodyInterface->AddBody(floor->GetID(), shouldActivate);
 
-    RigidBody* rb = addRigidbody(entities, trashcanID);
-    rb->joltBody = floor->GetID();
+    scene->copier.fromGroup = &resources->prefabGroup;
+    scene->copier.toGroup = &scene->entities;
+    scene->copier.templateID = resources->prefabMap["TrashcanBase2.prefab"];
+    uint32_t id = copyEntity(scene, &scene->copier);
+    RigidBody* rb = getRigidbody(&scene->entities, id);
+
     vec3 camForward = transformForward(entities, player->cameraController.camera->entityID);
     bodyInterface->SetPosition(rb->joltBody, getPosition(entities, player->cameraController.camera->entityID) + camForward, JPH::EActivation::Activate);
     bodyInterface->SetLinearVelocity(rb->joltBody, camForward * 20);
-    rb->lastPosition = getPosition(entities, trashcanID);
-    rb->lastRotation = getRotation(entities, trashcanID);
+    rb->lastPosition = getPosition(entities, id);
+    rb->lastRotation = getRotation(entities, id);
     entities->movingRigidbodies.insert(rb->entityID);
 }
 

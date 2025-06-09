@@ -14,6 +14,7 @@
 #include "renderer.h"
 #include "physics.h"
 #include "animation.h"
+#include "meshrenderer.h"
 
 void buildTextRow(std::string label, std::string value) {
     ImGui::TableNextRow();
@@ -212,6 +213,9 @@ void buildMeshRendererInspector(Scene* scene, Resources* resources, MeshRenderer
                 ImGui::EndCombo();
             }
 
+            Entity* rootEntity = getEntity(&scene->entities, renderer->rootEntity);
+            buildTextRow("Root Bone: ", rootEntity->name);
+
             if (renderer->mesh != nullptr) {
                 Material* mat = renderer->mesh->subMeshes[0].material;
                 mat = buildMaterialInspector(resources, mat, true);
@@ -260,6 +264,7 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
     JPH::EShapeSubType shapeType = shape->GetSubType();
     JPH::Color color(0, 255, 0);
     JPH::AABox localBox;
+
     float radius = 0.5f;
     float halfHeight = 0.5f;
     std::string shapeComboPreview = "NULL";
@@ -365,6 +370,7 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
             std::string motionTypeString = motionType == JPH::EMotionType::Dynamic ? "Dynamic" : "Static";
             const JPH::BoxShape* box = static_cast<const JPH::BoxShape*>(shape);
             vec3 halfExtents = box->GetHalfExtent();
+            buildFloat3Row("Center: ", rigidbody->center.mF32);
 
             if (shapeType == JPH::EShapeSubType::Box) {
                 if (buildFloat3Row("Half Extents: ", halfExtents.mF32, 0.01f, 0.1f)) {
@@ -448,6 +454,12 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
                 ImGui::EndCombo();
             }
 
+            rigidbody->motionType = motionType;
+            rigidbody->shape = shapeType;
+            rigidbody->halfExtents = halfExtents;
+            rigidbody->halfHeight = halfHeight;
+            rigidbody->radius = radius;
+            rigidbody->layer = objectLayer;
             ImGui::EndTable();
         }
     }
@@ -619,6 +631,7 @@ void buildAddComponentCombo(Scene* scene, EditorState* editor) {
                 createSpotLightShadowMap(light);
             }
         }
+
         ImGui::EndCombo();
     }
 }
