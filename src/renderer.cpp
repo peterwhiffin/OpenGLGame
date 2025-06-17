@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "renderer.h"
+#include "glm/gtc/type_ptr.hpp"
 #include "scene.h"
 #include "transform.h"
 #include "shader.h"
@@ -823,7 +824,44 @@ void updateBufferData(RenderState* renderer, Scene* scene) {
     vec3 position = getPosition(entities, camera->entityID);
 
     renderer->matricesUBOData.view = mat4::sLookAt(position, position + transformForward(entities, camera->entityID), transformUp(entities, camera->entityID));
-    renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
+    if (camera->isPerspective) {
+        renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
+    } else {
+        float orthoSize = camera->fov;
+        glm::mat4 proj = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, camera->nearPlane, camera->farPlane);
+        mat4 jProj = mat4::sIdentity();
+        vec4 col0;
+        vec4 col1;
+        vec4 col2;
+        vec4 col3;
+
+        col0.SetX(proj[0][0]);
+        col0.SetY(proj[0][1]);
+        col0.SetZ(proj[0][2]);
+        col0.SetW(proj[0][3]);
+
+        col1.SetX(proj[1][0]);
+        col1.SetY(proj[1][1]);
+        col1.SetZ(proj[1][2]);
+        col1.SetW(proj[1][3]);
+
+        col2.SetX(proj[2][0]);
+        col2.SetY(proj[2][1]);
+        col2.SetZ(proj[2][2]);
+        col2.SetW(proj[2][3]);
+
+        col3.SetX(proj[3][0]);
+        col3.SetY(proj[3][1]);
+        col3.SetZ(proj[3][2]);
+        col3.SetW(proj[3][3]);
+
+        jProj.SetColumn4(0, col0);
+        jProj.SetColumn4(1, col1);
+        jProj.SetColumn4(2, col2);
+        jProj.SetColumn4(3, col3);
+
+        renderer->matricesUBOData.projection = jProj;
+    }
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
 }
