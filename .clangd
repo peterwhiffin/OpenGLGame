@@ -1,0 +1,15 @@
+CompileFlags:
+  Add:
+    - -std=c++17
+    - -I
+    - X:/Repos/OpenGLGame/include
+    - -I
+    - X:/Repos/JoltPhysics-5.3.0
+    - -I
+    - X:/Repos/OpenAL-soft/include/AL
+    - -DWIN32
+    - -DUNICODE
+    - -D_DEBUG
+    - -D_UNICODE
+    - -DJPH_DEBUG_RENDERER
+    - -DPETES_EDITOR

@@ -1,0 +1,7 @@
+[[language]]
+name = "cpp"
+scope = "source.cpp"
+injection-regex = "mylang"
+file-types = ["cpp", "h"]
+auto-format = true
+language-servers = [ "clangd" ]

@@ -824,6 +824,7 @@ void updateBufferData(RenderState* renderer, Scene* scene) {
 
     renderer->matricesUBOData.view = mat4::sLookAt(position, position + transformForward(entities, camera->entityID), transformUp(entities, camera->entityID));
     renderer->matricesUBOData.projection = mat4::sPerspective(camera->fovRadians, renderer->windowData.aspectRatio, camera->nearPlane, camera->farPlane);
+
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUBO), &renderer->matricesUBOData);
 }
 

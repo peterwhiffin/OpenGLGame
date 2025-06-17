@@ -1,0 +1,10 @@
+Material {
+textures: white, white, black, white, blue
+textureTiling: 1.000000, 1.000000
+baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+roughness: 1.000000
+metalness: 1.000000
+aoStrength: 1.000000
+normalStrength: 1.000000
+}
+

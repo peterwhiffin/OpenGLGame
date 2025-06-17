@@ -1,7 +1,8 @@
-#include <iostream>
+// #include <iostream>
 #include <filesystem>
-#include <fstream>
+// #include <fstream>
 
+// #include "Jolt/Math/Math.h"
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"
 #include "utils/imgui_impl_opengl3.h"
@@ -636,6 +637,27 @@ void buildAddComponentCombo(Scene* scene, EditorState* editor) {
     }
 }
 
+void buildCameraInspector(Scene* scene, Camera* camera) {
+    bool isOpen = ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen);
+
+    if (isOpen) {
+        if (ImGui::BeginTable("Camera Table", 2, ImGuiTableFlags_SizingFixedSame)) {
+            ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_None, 0.0f, 200.0f);
+            ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
+
+            buildBoolRow("Perspective: ", &camera->isPerspective);
+
+            if (buildFloatRow("FOV: ", &camera->fov, 0.01f, 0.1f, 180.0f)) {
+                camera->fovRadians = JPH::DegreesToRadians(camera->fov);
+            }
+
+            buildFloatRow("Near Plane: ", &camera->nearPlane);
+            buildFloatRow("Far Plane: ", &camera->farPlane);
+            ImGui::EndTable();
+        }
+    }
+}
+
 void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* resources, EditorState* editor) {
     EntityGroup* entities = &scene->entities;
     uint32_t entityID = editor->nodeClicked;
@@ -645,6 +667,7 @@ void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* r
     RigidBody* rigidbody = getRigidbody(entities, entityID);
     SpotLight* spotLight = getSpotLight(entities, entityID);
     PointLight* pointLight = getPointLight(entities, entityID);
+    Camera* camera = getCamera(entities, entityID);
 
     buildTransformInspector(scene, transform);
 
@@ -665,6 +688,10 @@ void buildSceneEntityInspector(Scene* scene, RenderState* renderer, Resources* r
 
     if (meshRenderer != nullptr) {
         buildMeshRendererInspector(scene, resources, meshRenderer);
+    }
+
+    if (camera != nullptr) {
+        buildCameraInspector(scene, camera);
     }
 
     buildAddComponentCombo(scene, editor);

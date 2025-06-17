@@ -6,6 +6,7 @@ struct RenderState;
 
 struct Camera {
     uint32_t entityID;
+    bool isPerspective;
     float fov;
     float fovRadians;
     float nearPlane;
