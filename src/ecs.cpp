@@ -1,4 +1,6 @@
 #include "ecs.h"
+#include <cstdint>
+#include "player.h"
 #include "scene.h"
 #include "loader.h"
 #include "sceneloader.h"
@@ -337,56 +339,61 @@ uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, M
 }
 
 static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t parentID) {
+    EntityGroup* templateGroup = copier->fromGroup;
+    EntityGroup* newGroup = copier->toGroup;
+
     uint32_t templateID = copier->templateID;
-    Entity* templateEntity = getEntity(copier->fromGroup, copier->templateID);
-    std::string name = templateEntity->name;
-    bool isActive = templateEntity->isActive;
-    uint32_t newEntity = getNewEntity(copier->toGroup, name)->entityID;
-    copier->relativeIDMap[templateID] = newEntity;
-    Transform* templateTransform = getTransform(copier->fromGroup, copier->templateID);
-    Transform* newTransform = getTransform(copier->toGroup, newEntity);
-    // newTransform->childEntityIds = templateTransform->childEntityIds;
+    Entity* templateEntity = getEntity(templateGroup, templateID);
+    Transform* templateTransform = getTransform(templateGroup, copier->templateID);
+
+    Entity* newEntity = getNewEntity(newGroup);
+    newEntity->name = templateEntity->name;
+    newEntity->isActive = templateEntity->isActive;
+    uint32_t newEntityID = newEntity->entityID;
+
+    Transform* newTransform = getTransform(newGroup, newEntityID);
     newTransform->localPosition = templateTransform->localPosition;
     newTransform->localRotation = templateTransform->localRotation;
     newTransform->localScale = templateTransform->localScale;
     newTransform->worldTransform = templateTransform->worldTransform;
     newTransform->parentEntityID = parentID;
-    setParent(copier->toGroup, newEntity, parentID);
+    setParent(copier->toGroup, newEntityID, parentID);
+
+    copier->idMap[templateID] = newEntityID;
 
     for (int i = 0; i < templateTransform->childEntityIds.size(); i++) {
         copier->templateID = templateTransform->childEntityIds[i];
-        copyEntityInternal(scene, copier, newEntity);
+        copyEntityInternal(scene, copier, newEntityID);
     }
 
-    MeshRenderer* meshRenderer = getMeshRenderer(copier->fromGroup, templateID);
-    Animator* animator = getAnimator(copier->fromGroup, templateID);
-    RigidBody* rb = getRigidbody(copier->fromGroup, templateID);
-    PointLight* pointLight = getPointLight(copier->fromGroup, templateID);
-    SpotLight* spotLight = getSpotLight(copier->fromGroup, templateID);
-    Camera* camera = getCamera(copier->fromGroup, templateID);
-    Player* player = getPlayer(copier->fromGroup, templateID);
+    MeshRenderer* meshRenderer = getMeshRenderer(templateGroup, templateID);
+    Animator* animator = getAnimator(templateGroup, templateID);
+    RigidBody* rb = getRigidbody(templateGroup, templateID);
+    PointLight* pointLight = getPointLight(templateGroup, templateID);
+    SpotLight* spotLight = getSpotLight(templateGroup, templateID);
+    Camera* camera = getCamera(templateGroup, templateID);
+    Player* player = getPlayer(templateGroup, templateID);
 
     if (meshRenderer != nullptr) {
-        MeshRenderer* newMeshRenderer = addMeshRenderer(copier->toGroup, newEntity);
+        MeshRenderer* newMeshRenderer = addMeshRenderer(newGroup, newEntityID);
         newMeshRenderer->boneMatrices = meshRenderer->boneMatrices;
         newMeshRenderer->boneMatricesSet = false;
         newMeshRenderer->materials = meshRenderer->materials;
         newMeshRenderer->mesh = meshRenderer->mesh;
         newMeshRenderer->subMeshes = meshRenderer->subMeshes;
-        newMeshRenderer->vao = meshRenderer->vao;
         newMeshRenderer->rootEntity = meshRenderer->rootEntity;
+        newMeshRenderer->vao = meshRenderer->vao;
         copier->meshRenderersTemp.push_back(newMeshRenderer->entityID);
-        initializeMeshRenderer(copier->toGroup, newMeshRenderer);
     }
 
     if (animator != nullptr) {
-        Animator* newAnimator = addAnimator(copier->toGroup, newEntity);
+        Animator* newAnimator = addAnimator(newGroup, newEntityID);
         newAnimator->animations = animator->animations;
-        initializeAnimator(copier->toGroup, newAnimator);
+        copier->animatorsTemp.push_back(newAnimator->entityID);
     }
 
     if (rb != nullptr) {
-        RigidBody* newRB = addRigidbody(copier->toGroup, newEntity);
+        RigidBody* newRB = addRigidbody(newGroup, newEntityID);
         newRB->shape = rb->shape;
         newRB->mass = rb->mass;
         newRB->halfExtents = rb->halfExtents;
@@ -396,18 +403,18 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
         newRB->center = rb->center;
         newRB->radius = rb->radius;
         newRB->rotationLocked = rb->rotationLocked;
-        initializeRigidbody(newRB, &scene->physicsScene, copier->toGroup);
+        initializeRigidbody(newRB, &scene->physicsScene, newGroup);
     }
 
     if (pointLight != nullptr) {
-        PointLight* newLight = addPointLight(copier->toGroup, newEntity);
+        PointLight* newLight = addPointLight(newGroup, newEntityID);
         newLight->brightness = pointLight->brightness;
         newLight->color = pointLight->color;
         newLight->isActive = pointLight->isActive;
     }
 
     if (spotLight != nullptr) {
-        SpotLight* newLight = addSpotLight(copier->toGroup, newEntity);
+        SpotLight* newLight = addSpotLight(newGroup, newEntityID);
         newLight->blockerSearchUV = spotLight->blockerSearchUV;
         newLight->lightRadiusUV = spotLight->lightRadiusUV;
         newLight->brightness = spotLight->brightness;
@@ -425,7 +432,7 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
     }
 
     if (camera != nullptr) {
-        Camera* newCam = addCamera(copier->toGroup, newEntity);
+        Camera* newCam = addCamera(newGroup, newEntityID);
         newCam->fov = camera->fov;
         newCam->fovRadians = JPH::DegreesToRadians(newCam->fov);
         newCam->nearPlane = camera->nearPlane;
@@ -433,18 +440,19 @@ static uint32_t copyEntityInternal(Scene* scene, EntityCopier* copier, uint32_t 
     }
 
     if (player != nullptr) {
-        Player* newPlayer = addPlayer(copier->toGroup, newEntity);
+        Player* newPlayer = addPlayer(newGroup, newEntityID);
         CameraController* newCamController = &newPlayer->cameraController;
-        newPlayer->armsID = copier->relativeIDMap[player->armsID];
+        newPlayer->armsID = player->armsID;
         newPlayer->groundCheckDistance = player->groundCheckDistance;
         newPlayer->jumpHeight = player->jumpHeight;
         newPlayer->moveSpeed = player->moveSpeed;
-        newCamController->cameraTargetEntityID = copier->relativeIDMap[player->cameraController.cameraTargetEntityID];
+        newCamController->cameraTargetEntityID = player->cameraController.cameraTargetEntityID;
         newCamController->moveSpeed = player->cameraController.moveSpeed;
         newCamController->sensitivity = player->cameraController.sensitivity;
+        copier->playersTemp.push_back(newPlayer->entityID);
     }
 
-    return newEntity;
+    return newEntityID;
 }
 
 uint32_t copyEntity(Scene* scene, EntityCopier* copier) {
@@ -452,7 +460,20 @@ uint32_t copyEntity(Scene* scene, EntityCopier* copier) {
 
     for (int i = 0; i < copier->meshRenderersTemp.size(); i++) {
         MeshRenderer* meshRenderer = getMeshRenderer(copier->toGroup, copier->meshRenderersTemp[i]);
-        meshRenderer->rootEntity = copier->relativeIDMap[meshRenderer->rootEntity];
+        meshRenderer->rootEntity = copier->idMap[meshRenderer->rootEntity];
+        initializeMeshRenderer(copier->toGroup, meshRenderer);
+    }
+
+    for (int i = 0; i < copier->playersTemp.size(); i++) {
+        Player* player = getPlayer(copier->toGroup, copier->playersTemp[i]);
+        CameraController* cameraController = &player->cameraController;
+        player->armsID = copier->idMap[player->armsID];
+        cameraController->cameraTargetEntityID = copier->idMap[cameraController->cameraTargetEntityID];
+    }
+
+    for (int i = 0; i < copier->animatorsTemp.size(); i++) {
+        Animator* animator = getAnimator(copier->toGroup, copier->animatorsTemp[i]);
+        initializeAnimator(copier->toGroup, animator);
     }
 
     copier->meshRenderersTemp.clear();
@@ -462,6 +483,6 @@ uint32_t copyEntity(Scene* scene, EntityCopier* copier) {
     copier->spotLightsTemp.clear();
     copier->camerasTemp.clear();
     copier->playersTemp.clear();
-    copier->relativeIDMap.clear();
+    copier->idMap.clear();
     return newID;
 }

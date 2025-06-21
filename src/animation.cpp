@@ -124,7 +124,7 @@ static void mapAnimationChannels(EntityGroup* scene, Animator* animator, Animati
 
     for (AnimationChannel* channel : animation->channels) {
         if (entity->name == channel->name) {
-            animator->channelMap[channel] = entity->entityID;
+            animator->channelMap[channel] = entityID;
         }
     }
 

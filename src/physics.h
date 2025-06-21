@@ -16,10 +16,13 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
 
+#include "ecs.h"
 #include "utils/mathutils.h"
-#include "forward.h"
+// #include "forward.h"
 
 JPH_SUPPRESS_WARNINGS
+struct Scene;
+struct EntityGroup;
 
 struct PhysicsScene {
     JPH::PhysicsSystem* physicsSystem;
@@ -71,6 +74,7 @@ void initPhysics(Scene* scene);
 void updatePhysics(Scene* scene);
 void destroyPhysicsSystem();
 void updatePhysicsBodyPositions(Scene* scene);
+void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup* entities);
 
 class MyObjectLayerPairFilter : public JPH::ObjectLayerPairFilter {
    public:

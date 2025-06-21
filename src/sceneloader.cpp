@@ -520,48 +520,6 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
     rb->layer = objectLayer;
 }
 
-void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup* entities) {
-    JPH::ObjectLayer objectLayer = rb->layer;
-    JPH::EMotionType motionType = rb->motionType;
-    JPH::EShapeSubType shapeType = rb->shape;
-
-    JPH::ShapeSettings::ShapeResult shapeResult;
-    JPH::ShapeRefC shape;
-
-    if (shapeType == JPH::EShapeSubType::Box) {
-        JPH::BoxShapeSettings boxSettings(rb->halfExtents);
-        shapeResult = boxSettings.Create();
-        shape = shapeResult.Get();
-    } else if (shapeType == JPH::EShapeSubType::Sphere) {
-        JPH::SphereShapeSettings sphereSettings(rb->radius);
-        shapeResult = sphereSettings.Create();
-        shape = shapeResult.Get();
-    } else if (shapeType == JPH::EShapeSubType::Capsule) {
-        JPH::CapsuleShapeSettings capsuleSettings(rb->halfHeight, rb->radius);
-        shapeResult = capsuleSettings.Create();
-        shape = shapeResult.Get();
-    } else if (shapeType == JPH::EShapeSubType::Cylinder) {
-        JPH::CylinderShapeSettings cylinderSettings(rb->halfHeight, rb->radius);
-        shapeResult = cylinderSettings.Create();
-        shape = shapeResult.Get();
-    }
-
-    JPH::BodyCreationSettings bodySettings(shape, JPH::RVec3(0.0_r, 0.0_r, 0.0_r), quat::sIdentity(), motionType, objectLayer);
-    if (rb->rotationLocked) {
-        bodySettings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;
-    }
-
-    bodySettings.mAllowDynamicOrKinematic = true;
-    JPH::Body* body = physicsScene->bodyInterface->CreateBody(bodySettings);
-    physicsScene->bodyInterface->AddBody(body->GetID(), JPH::EActivation::DontActivate);
-
-    rb->joltBody = body->GetID();
-
-    if (rb->layer == Layers::MOVING) {
-        entities->movingRigidbodies.insert(rb->entityID);
-    }
-}
-
 void createAnimator(EntityGroup* scene, Resources* resources, ComponentBlock block) {
     uint32_t entityID = INVALID_ID;
     std::vector<Animation*> animations;

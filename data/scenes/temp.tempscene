@@ -3160,6 +3160,432 @@ name: NewEntity
 isActive: false
 }
 
+Entity {
+id: 526
+name: Root
+isActive: true
+}
+
+Entity {
+id: 527
+name: SK_Chr_Asian_Gangster_Male_01
+isActive: true
+}
+
+Entity {
+id: 528
+name: Pelvis
+isActive: true
+}
+
+Entity {
+id: 529
+name: spine_01
+isActive: true
+}
+
+Entity {
+id: 530
+name: spine_02
+isActive: true
+}
+
+Entity {
+id: 531
+name: spine_03
+isActive: true
+}
+
+Entity {
+id: 532
+name: neck_01
+isActive: true
+}
+
+Entity {
+id: 533
+name: head
+isActive: true
+}
+
+Entity {
+id: 534
+name: eyes
+isActive: true
+}
+
+Entity {
+id: 535
+name: eyes_end
+isActive: true
+}
+
+Entity {
+id: 536
+name: eyebrows
+isActive: true
+}
+
+Entity {
+id: 537
+name: eyebrows_end
+isActive: true
+}
+
+Entity {
+id: 538
+name: clavicle_l
+isActive: true
+}
+
+Entity {
+id: 539
+name: UpperArm_L
+isActive: true
+}
+
+Entity {
+id: 540
+name: lowerarm_l
+isActive: true
+}
+
+Entity {
+id: 541
+name: Hand_L
+isActive: true
+}
+
+Entity {
+id: 542
+name: thumb_01_l
+isActive: true
+}
+
+Entity {
+id: 543
+name: thumb_02_l
+isActive: true
+}
+
+Entity {
+id: 544
+name: thumb_03_l
+isActive: true
+}
+
+Entity {
+id: 545
+name: thumb_03_l_end
+isActive: true
+}
+
+Entity {
+id: 546
+name: indexFinger_01_l
+isActive: true
+}
+
+Entity {
+id: 547
+name: indexFinger_02_l
+isActive: true
+}
+
+Entity {
+id: 548
+name: indexFinger_03_l
+isActive: true
+}
+
+Entity {
+id: 549
+name: indexFinger_04_l
+isActive: true
+}
+
+Entity {
+id: 550
+name: indexFinger_04_l_end
+isActive: true
+}
+
+Entity {
+id: 551
+name: finger_01_l
+isActive: true
+}
+
+Entity {
+id: 553
+name: finger_02_l
+isActive: true
+}
+
+Entity {
+id: 554
+name: finger_03_l
+isActive: true
+}
+
+Entity {
+id: 555
+name: finger_04_l
+isActive: true
+}
+
+Entity {
+id: 556
+name: finger_04_l_end
+isActive: true
+}
+
+Entity {
+id: 558
+name: clavicle_r
+isActive: true
+}
+
+Entity {
+id: 559
+name: UpperArm_R
+isActive: true
+}
+
+Entity {
+id: 560
+name: lowerarm_r
+isActive: true
+}
+
+Entity {
+id: 561
+name: Hand_R
+isActive: true
+}
+
+Entity {
+id: 562
+name: thumb_01_r
+isActive: true
+}
+
+Entity {
+id: 563
+name: thumb_02_r
+isActive: true
+}
+
+Entity {
+id: 564
+name: thumb_03_r
+isActive: true
+}
+
+Entity {
+id: 565
+name: thumb_03_r_end
+isActive: true
+}
+
+Entity {
+id: 566
+name: indexFinger_01_r
+isActive: true
+}
+
+Entity {
+id: 567
+name: indexFinger_02_r
+isActive: true
+}
+
+Entity {
+id: 568
+name: indexFinger_03_r
+isActive: true
+}
+
+Entity {
+id: 569
+name: indexFinger_04_r
+isActive: true
+}
+
+Entity {
+id: 570
+name: indexFinger_04_r_end
+isActive: true
+}
+
+Entity {
+id: 571
+name: finger_01_r
+isActive: true
+}
+
+Entity {
+id: 572
+name: finger_02_r
+isActive: true
+}
+
+Entity {
+id: 573
+name: finger_03_r
+isActive: true
+}
+
+Entity {
+id: 574
+name: finger_04_r
+isActive: true
+}
+
+Entity {
+id: 575
+name: finger_04_r_end
+isActive: true
+}
+
+Entity {
+id: 576
+name: Thigh_R
+isActive: true
+}
+
+Entity {
+id: 577
+name: calf_r
+isActive: true
+}
+
+Entity {
+id: 578
+name: Foot_R
+isActive: true
+}
+
+Entity {
+id: 579
+name: ball_r
+isActive: true
+}
+
+Entity {
+id: 580
+name: toes_r
+isActive: true
+}
+
+Entity {
+id: 581
+name: toes_r_end
+isActive: true
+}
+
+Entity {
+id: 582
+name: Thigh_L
+isActive: true
+}
+
+Entity {
+id: 583
+name: calf_l
+isActive: true
+}
+
+Entity {
+id: 584
+name: Foot_L
+isActive: true
+}
+
+Entity {
+id: 585
+name: ball_l
+isActive: true
+}
+
+Entity {
+id: 586
+name: toes_l
+isActive: true
+}
+
+Entity {
+id: 587
+name: toes_l_end
+isActive: true
+}
+
+Entity {
+id: 588
+name: ik_foot_root
+isActive: true
+}
+
+Entity {
+id: 589
+name: ik_foot_l
+isActive: true
+}
+
+Entity {
+id: 590
+name: ik_foot_l_end
+isActive: true
+}
+
+Entity {
+id: 591
+name: ik_foot_r
+isActive: true
+}
+
+Entity {
+id: 592
+name: ik_foot_r_end
+isActive: true
+}
+
+Entity {
+id: 593
+name: ik_hand_root
+isActive: true
+}
+
+Entity {
+id: 594
+name: ik_hand_gun
+isActive: true
+}
+
+Entity {
+id: 595
+name: ik_hand_l
+isActive: true
+}
+
+Entity {
+id: 596
+name: ik_hand_l_end
+isActive: true
+}
+
+Entity {
+id: 597
+name: ik_hand_r
+isActive: true
+}
+
+Entity {
+id: 598
+name: ik_hand_r_end
+isActive: true
+}
+
 Transform {
 entityID: 1
 parentEntityID: -1
@@ -7871,8 +8297,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 9.595346, 4.807652, -6.399201
-localRotation: -0.081878, 0.772128, -0.101654, -0.621917
+localPosition: 24.704491, 7.067823, 12.217539
+localRotation: -0.047073, 0.926307, -0.123595, -0.352794
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -7900,6 +8326,645 @@ parentEntityID: -1
 childEntityIds: None
 localPosition: 2.100000, 9.500000, -9.430000
 localRotation: 0.707107, 0.000000, 0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 526
+parentEntityID: -1
+childEntityIds: 527, 528, 588, 593
+localPosition: 23.774864, 6.092481, 10.739532
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 527
+parentEntityID: 526
+childEntityIds: None
+localPosition: 0.000000, 0.000000, 0.000000
+localRotation: -0.000000, -0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 528
+parentEntityID: 526
+childEntityIds: 529, 576, 582
+localPosition: 0.161887, 0.816074, 0.096046
+localRotation: -0.072162, -0.707792, 0.109706, 0.694109
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 529
+parentEntityID: 528
+childEntityIds: 530
+localPosition: -0.000000, 0.103933, 0.000000
+localRotation: 0.099679, 0.995020, -0.000000, -0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 530
+parentEntityID: 529
+childEntityIds: 531
+localPosition: -0.000000, 0.181512, 0.000000
+localRotation: 0.098003, 0.995186, 0.000000, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 531
+parentEntityID: 530
+childEntityIds: 532, 538, 558
+localPosition: 0.000000, 0.179037, 0.000000
+localRotation: 0.111090, 0.993810, 0.000000, -0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 532
+parentEntityID: 531
+childEntityIds: 533
+localPosition: 0.000000, 0.111889, 0.000000
+localRotation: -0.000000, -0.000000, 0.041733, 0.999129
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 533
+parentEntityID: 532
+childEntityIds: 534, 536
+localPosition: 0.000000, 0.121645, 0.000000
+localRotation: 0.458571, -0.538250, 0.458571, 0.538250
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 534
+parentEntityID: 533
+childEntityIds: 535
+localPosition: 0.000000, 0.122722, -0.094475
+localRotation: -0.000000, -0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 535
+parentEntityID: 534
+childEntityIds: None
+localPosition: -0.000000, 0.165982, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 536
+parentEntityID: 533
+childEntityIds: 537
+localPosition: 0.000000, 0.122722, -0.127668
+localRotation: -0.000000, -0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 537
+parentEntityID: 536
+childEntityIds: None
+localPosition: -0.000000, 0.165982, -0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 538
+parentEntityID: 531
+childEntityIds: 539
+localPosition: -0.041915, 0.058012, 0.074472
+localRotation: 0.632486, 0.578548, 0.352513, 0.375471
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 539
+parentEntityID: 538
+childEntityIds: 540
+localPosition: 0.000000, 0.131979, -0.000000
+localRotation: -0.236860, 0.011328, 0.033806, 0.970889
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 540
+parentEntityID: 539
+childEntityIds: 541
+localPosition: -0.001449, 0.339474, 0.001436
+localRotation: -0.040749, 0.001684, -0.041251, 0.998316
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 541
+parentEntityID: 540
+childEntityIds: 542, 546, 551
+localPosition: 0.000000, 0.271145, 0.000381
+localRotation: 0.035831, -0.000000, -0.000000, 0.999358
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 542
+parentEntityID: 541
+childEntityIds: 543
+localPosition: -0.011707, 0.035141, -0.045055
+localRotation: -0.276843, 0.025481, 0.088040, 0.956534
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 543
+parentEntityID: 542
+childEntityIds: 544
+localPosition: -0.000000, 0.063702, -0.000000
+localRotation: 0.117840, -0.039940, 0.141634, 0.982068
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 544
+parentEntityID: 543
+childEntityIds: 545
+localPosition: 0.000000, 0.056656, 0.000000
+localRotation: 0.152035, -0.036407, -0.229992, 0.960554
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 545
+parentEntityID: 544
+childEntityIds: None
+localPosition: -0.000000, 0.056656, 0.000000
+localRotation: 0.000000, 0.000002, -0.000002, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 546
+parentEntityID: 541
+childEntityIds: 547
+localPosition: 0.003987, 0.103966, -0.026727
+localRotation: -0.065794, 0.000281, 0.004253, 0.997824
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 547
+parentEntityID: 546
+childEntityIds: 548
+localPosition: 0.000000, 0.040936, 0.000000
+localRotation: 0.010742, -0.001153, 0.098331, 0.995095
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 548
+parentEntityID: 547
+childEntityIds: 549
+localPosition: 0.000000, 0.037912, -0.000000
+localRotation: 0.025717, -0.006913, 0.057003, 0.998019
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 549
+parentEntityID: 548
+childEntityIds: 550
+localPosition: 0.000000, 0.037798, 0.000000
+localRotation: 0.028040, -0.004520, -0.159068, 0.986859
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 550
+parentEntityID: 549
+childEntityIds: None
+localPosition: -0.000000, 0.037798, 0.000000
+localRotation: -0.000000, -0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 551
+parentEntityID: 541
+childEntityIds: 553
+localPosition: -0.001160, 0.099825, 0.032833
+localRotation: 0.043880, -0.002487, 0.056521, 0.997434
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 553
+parentEntityID: 551
+childEntityIds: 554
+localPosition: 0.000000, 0.042488, 0.000000
+localRotation: -0.019491, 0.002642, 0.021261, 0.999581
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 554
+parentEntityID: 553
+childEntityIds: 555
+localPosition: 0.000000, 0.035134, -0.000000
+localRotation: 0.071478, -0.018156, 0.092522, 0.992976
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 555
+parentEntityID: 554
+childEntityIds: 556
+localPosition: 0.000000, 0.030032, -0.000000
+localRotation: -0.096527, 0.016645, -0.169130, 0.980714
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 556
+parentEntityID: 555
+childEntityIds: None
+localPosition: 0.000000, 0.030032, 0.000000
+localRotation: 0.000000, 0.000004, -0.000004, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 558
+parentEntityID: 531
+childEntityIds: 559
+localPosition: -0.041914, 0.058015, -0.074471
+localRotation: -0.352513, 0.375471, -0.632486, 0.578547
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 559
+parentEntityID: 558
+childEntityIds: 560
+localPosition: 0.000006, 0.131979, 0.000000
+localRotation: -0.236860, -0.011328, -0.033806, 0.970889
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 560
+parentEntityID: 559
+childEntityIds: 561
+localPosition: 0.001448, 0.339474, 0.001436
+localRotation: -0.040750, -0.001684, 0.041252, 0.998316
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 561
+parentEntityID: 560
+childEntityIds: 562, 566, 571
+localPosition: -0.000001, 0.271145, 0.000381
+localRotation: 0.035831, -0.000000, 0.000000, 0.999358
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 562
+parentEntityID: 561
+childEntityIds: 563
+localPosition: 0.011711, 0.035140, -0.045055
+localRotation: -0.276843, -0.025481, -0.088040, 0.956534
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 563
+parentEntityID: 562
+childEntityIds: 564
+localPosition: -0.000007, 0.063701, 0.000001
+localRotation: 0.117840, 0.039942, -0.141636, 0.982068
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 564
+parentEntityID: 563
+childEntityIds: 565
+localPosition: 0.000000, 0.056655, -0.000000
+localRotation: 0.152035, 0.036403, 0.229996, 0.960553
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 565
+parentEntityID: 564
+childEntityIds: None
+localPosition: 0.000000, 0.056655, -0.000000
+localRotation: -0.000000, 0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 566
+parentEntityID: 561
+childEntityIds: 567
+localPosition: -0.003989, 0.103966, -0.026727
+localRotation: -0.065794, -0.000280, -0.004253, 0.997824
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 567
+parentEntityID: 566
+childEntityIds: 568
+localPosition: 0.000001, 0.040936, -0.000000
+localRotation: 0.010742, 0.001153, -0.098330, 0.995095
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 568
+parentEntityID: 567
+childEntityIds: 569
+localPosition: 0.000003, 0.037912, -0.000000
+localRotation: 0.025717, 0.006912, -0.057001, 0.998019
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 569
+parentEntityID: 568
+childEntityIds: 570
+localPosition: -0.000005, 0.037794, -0.000000
+localRotation: 0.028040, 0.004520, 0.159066, 0.986859
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 570
+parentEntityID: 569
+childEntityIds: None
+localPosition: 0.000000, 0.037793, -0.000000
+localRotation: 0.000000, 0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 571
+parentEntityID: 561
+childEntityIds: 572
+localPosition: 0.001161, 0.099825, 0.032833
+localRotation: 0.043880, 0.002487, -0.056521, 0.997434
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 572
+parentEntityID: 571
+childEntityIds: 573
+localPosition: 0.000000, 0.042488, 0.000000
+localRotation: -0.019492, -0.002635, -0.021270, 0.999580
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 573
+parentEntityID: 572
+childEntityIds: 574
+localPosition: -0.000000, 0.035133, -0.000000
+localRotation: 0.071479, 0.018140, -0.092502, 0.992978
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 574
+parentEntityID: 573
+childEntityIds: 575
+localPosition: 0.000001, 0.030031, 0.000000
+localRotation: -0.096525, -0.016640, 0.169124, 0.980716
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 575
+parentEntityID: 574
+childEntityIds: None
+localPosition: -0.000000, 0.030031, -0.000000
+localRotation: -0.000000, -0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 576
+parentEntityID: 528
+childEntityIds: 577
+localPosition: -0.026921, -0.041158, 0.098967
+localRotation: 0.705873, -0.041775, 0.704189, 0.064160
+localScale: 0.999999, 1.000001, 1.000000
+}
+
+Transform {
+entityID: 577
+parentEntityID: 576
+childEntityIds: 578
+localPosition: -0.000000, 0.399309, 0.000000
+localRotation: -0.024461, 0.644380, -0.004739, 0.764300
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 578
+parentEntityID: 577
+childEntityIds: 579
+localPosition: -0.000000, 0.377124, -0.000002
+localRotation: -0.507213, 0.857670, 0.039749, -0.074543
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 579
+parentEntityID: 578
+childEntityIds: 580
+localPosition: 0.000000, 0.112840, -0.000000
+localRotation: -0.000000, 0.000000, -0.270016, 0.962856
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 580
+parentEntityID: 579
+childEntityIds: 581
+localPosition: -0.000000, 0.072958, -0.000000
+localRotation: 0.707106, 0.000000, -0.000000, 0.707108
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 581
+parentEntityID: 580
+childEntityIds: None
+localPosition: 0.000000, 0.072958, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 582
+parentEntityID: 528
+childEntityIds: 583
+localPosition: -0.026921, -0.041158, -0.098967
+localRotation: 0.704188, -0.064158, 0.705873, 0.041776
+localScale: 1.000002, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 583
+parentEntityID: 582
+childEntityIds: 584
+localPosition: -0.000001, 0.399310, -0.000000
+localRotation: -0.024458, -0.644381, 0.004741, 0.764299
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 584
+parentEntityID: 583
+childEntityIds: 585
+localPosition: -0.000000, 0.377124, -0.000004
+localRotation: 0.507213, 0.857671, 0.039745, 0.074542
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 585
+parentEntityID: 584
+childEntityIds: 586
+localPosition: -0.000000, 0.112840, -0.000001
+localRotation: -0.000001, 0.000001, 0.270016, 0.962856
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 586
+parentEntityID: 585
+childEntityIds: 587
+localPosition: -0.000000, 0.072958, -0.000000
+localRotation: 0.707104, 0.000002, -0.000002, 0.707109
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 587
+parentEntityID: 586
+childEntityIds: None
+localPosition: -0.000000, 0.072958, 0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 588
+parentEntityID: 526
+childEntityIds: 589, 591
+localPosition: 0.208740, -0.053800, 0.190829
+localRotation: 0.543487, -0.508630, -0.481854, -0.462314
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 589
+parentEntityID: 588
+childEntityIds: 590
+localPosition: 0.036874, -0.114443, 0.055694
+localRotation: -0.707107, -0.000000, -0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 590
+parentEntityID: 589
+childEntityIds: None
+localPosition: -0.000000, 0.132509, -0.000000
+localRotation: -0.000000, -0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 591
+parentEntityID: 588
+childEntityIds: 592
+localPosition: 0.036874, 0.114443, 0.055694
+localRotation: -0.000000, 0.707107, 0.707107, -0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 592
+parentEntityID: 591
+childEntityIds: None
+localPosition: 0.000000, 0.132509, -0.000000
+localRotation: 0.000000, 0.000000, 0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 593
+parentEntityID: 526
+childEntityIds: 594
+localPosition: 0.208740, -0.053800, 0.190829
+localRotation: -0.053974, -0.007659, 0.027198, 0.998142
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 594
+parentEntityID: 593
+childEntityIds: 595, 597
+localPosition: -0.799632, 1.360940, -0.034174
+localRotation: -0.500000, -0.500000, 0.500000, 0.500000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 595
+parentEntityID: 594
+childEntityIds: 596
+localPosition: 0.000001, -0.000000, -1.599264
+localRotation: -0.000000, -0.707107, 0.707107, 0.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 596
+parentEntityID: 595
+childEntityIds: None
+localPosition: 0.000000, 0.799632, -0.000001
+localRotation: -0.000000, -0.000000, -0.000000, 1.000000
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 597
+parentEntityID: 594
+childEntityIds: 598
+localPosition: 0.000000, -0.000000, 0.000000
+localRotation: -0.707107, 0.000000, 0.000000, 0.707107
+localScale: 1.000000, 1.000000, 1.000000
+}
+
+Transform {
+entityID: 598
+parentEntityID: 597
+childEntityIds: None
+localPosition: -0.000000, 0.799632, 0.000000
+localRotation: 0.000000, -0.000000, -0.000000, 1.000000
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -11254,6 +12319,13 @@ entityID: 520
 rootEntity: 480
 mesh: WrenchWheel.002
 materials: wrenchMaterial.mat
+}
+
+MeshRenderer {
+entityID: 527
+rootEntity: 526
+mesh: SK_Chr_Asian_Gangster_Male_01
+materials: lambert.003
 }
 
 Animator {

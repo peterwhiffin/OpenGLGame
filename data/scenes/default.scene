@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 9.595346, 4.807652, -6.399201
-localRotation: -0.081878, 0.772128, -0.101654, -0.621917
+localPosition: 47.422180, 6.983200, -11.327078
+localRotation: -0.026220, 0.954046, -0.087665, -0.285348
 localScale: 1.000000, 1.000000, 1.000000
 }
 
@@ -17529,3 +17529,4 @@ cameraControllerCameraTargetEntityID: 523
 cameraControllerCameraEntityID: 524
 cameraControllerSensitivity: 0.300000
 }
+

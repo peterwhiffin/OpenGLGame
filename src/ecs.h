@@ -4,11 +4,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "forward.h"
-#include "physics.h"
+// #include "physics.h"
 #include "meshrenderer.h"
+#include "physics.h"
 
 constexpr uint32_t INVALID_ID = 0xFFFFFFFF;
 struct Player;
+struct PhysicsScene;
 
 enum ContextMenuType {
     WindowInspector,
@@ -56,7 +58,7 @@ struct EntityCopier {
     EntityGroup* fromGroup;
     EntityGroup* toGroup;
 
-    std::unordered_map<uint32_t, uint32_t> relativeIDMap;
+    std::unordered_map<uint32_t, uint32_t> idMap;
 
     std::vector<uint32_t> transformsTemp;
     std::vector<uint32_t> meshRenderersTemp;
@@ -70,7 +72,7 @@ struct EntityCopier {
 
 uint32_t createEntityFromModel(EntityGroup* scene, PhysicsScene* physicsScene, ModelNode* node, uint32_t parentEntityID, bool addColliders, uint32_t rootEntity, bool first, bool isDynamic);
 uint32_t getEntityID(EntityGroup* scene);
-Entity* getNewEntity(EntityGroup* scene, std::string name, uint32_t id = -1, bool createTransform = true);
+Entity* getNewEntity(EntityGroup* scene, std::string name = "NewEntity", uint32_t id = -1, bool createTransform = true);
 
 Transform* addTransform(EntityGroup* scene, uint32_t entityID);
 MeshRenderer* addMeshRenderer(EntityGroup* scene, uint32_t entityID);

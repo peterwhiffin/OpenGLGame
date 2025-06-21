@@ -44,5 +44,4 @@ void writeTextureSettings(TextureSettings settings);
 void writeTempScene(Scene* scene);
 void loadTempScene(Resources* resources, Scene* scene);
 void loadPrefab(Resources* resources, std::filesystem::path path);
-void initializeRigidbody(RigidBody* rb, PhysicsScene* physicsScene, EntityGroup* entities);
 std::string writeNewPrefab(Scene* scene, uint32_t entityID);
