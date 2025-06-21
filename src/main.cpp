@@ -1,10 +1,12 @@
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
-#include <al.h>
 #include <stdlib.h>
 
-#include "loader.h"
 #include "sceneloader.h"
+#include "miniaudio.h"
+#include "soloud.h"
+#include "soloud_wav.h"
+#include "loader.h"
 #include "scene.h"
 #include "renderer.h"
 #include "shader.h"
@@ -58,6 +60,12 @@ int main() {
     initRendererEditor(renderer);
     initEditor(editor, renderer->window);
     loadFirstFoundScene(scene, resources);
+
+    SoLoud::Soloud* gSoloud = new SoLoud::Soloud();
+    SoLoud::Wav* sound = new SoLoud::Wav();
+    gSoloud->init();
+    sound->load("x:/repos/openglgame/resources/sounds/Ambiance_Cicadas_Loop_Stereo.wav");
+    gSoloud->play(*sound);
 
     scene->currentFrame = static_cast<float>(glfwGetTime());
     scene->lastFrame = scene->currentFrame;

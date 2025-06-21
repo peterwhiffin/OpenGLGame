@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <filesystem>
 #include "physics.h"
-#include "ecs.h"
+// #include "ecs.h"
 // #include "forward.h"
 
 constexpr char* scenePath = "../data/scenes/";
