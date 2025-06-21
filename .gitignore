@@ -7,5 +7,7 @@
 /Resources/Arms
 /include
 /lib
+/.cache
 /build
+/cmakebuild
 /art

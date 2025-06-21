@@ -1,0 +1,164 @@
+[
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\animation.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\animation.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\animation.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\animation.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\camera.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\camera.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\camera.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\camera.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\ecs.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\ecs.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\ecs.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\ecs.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\editor.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\editor.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\editor.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\editor.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\game.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\game.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\game.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\game.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\input.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\input.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\input.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\input.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\inspector.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\inspector.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\inspector.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\inspector.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\loader.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\loader.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\loader.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\loader.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\main.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\main.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\main.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\main.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\meshrenderer.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\meshrenderer.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\meshrenderer.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\meshrenderer.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\physics.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\physics.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\physics.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\physics.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\player.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\player.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\player.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\player.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\prefab.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\prefab.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\prefab.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\prefab.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\renderer.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\renderer.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\renderer.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\renderer.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\scene.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\scene.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\scene.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\scene.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\sceneloader.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\sceneloader.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\sceneloader.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\sceneloader.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\shader.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\shader.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\shader.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\shader.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\transform.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\transform.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\transform.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\transform.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_demo.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_demo.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_demo.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_demo.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_draw.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_draw.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_draw.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_draw.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_impl_glfw.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_impl_glfw.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_impl_glfw.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_impl_glfw.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_impl_opengl3.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_impl_opengl3.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_impl_opengl3.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_impl_opengl3.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_stdlib.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_stdlib.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_stdlib.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_stdlib.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_tables.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_tables.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_tables.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_tables.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\imgui_widgets.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\imgui_widgets.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\imgui_widgets.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\imgui_widgets.cpp.obj"
+},
+{
+  "directory": "X:/Repos/OpenGLGame/cmakebuild",
+  "command": "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1443~1.348\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJPH_DEBUG_RENDERER -DPETES_EDITOR -IX:\\Repos\\OpenGLGame\\include -IX:\\Repos\\OpenGLGame\\..\\JoltPhysics-5.3.0 -IX:\\Repos\\OpenGLGame\\..\\OpenAL-soft\\include\\AL /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 /FoCMakeFiles\\dummy.dir\\src\\utils\\stb_image.cpp.obj /FdCMakeFiles\\dummy.dir\\ /FS -c X:\\Repos\\OpenGLGame\\src\\utils\\stb_image.cpp",
+  "file": "X:\\Repos\\OpenGLGame\\src\\utils\\stb_image.cpp",
+  "output": "CMakeFiles\\dummy.dir\\src\\utils\\stb_image.cpp.obj"
+}
+]

@@ -1,11 +1,5 @@
-// #include <iostream>
 #include <filesystem>
-// #include <fstream>
-
-// #include "Jolt/Math/Math.h"
 #include "utils/imgui.h"
-#include "utils/imgui_impl_glfw.h"
-#include "utils/imgui_impl_opengl3.h"
 #include "inspector.h"
 #include "editor.h"
 #include "scene.h"
@@ -293,33 +287,37 @@ void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* e
             ImGui::TableSetupColumn("##Widget", ImGuiTableColumnFlags_WidthStretch);
 
             switch (shapeType) {
-                case JPH::EShapeSubType::Box:
+                case JPH::EShapeSubType::Box: {
                     shapeComboPreview = "Box";
                     box = static_cast<const JPH::BoxShape*>(shape);
                     vec3 halfExtents = box->GetHalfExtent();
                     localBox = JPH::AABox(-halfExtents, halfExtents);
                     renderer->debugRenderer->DrawBox(bodyInterface->GetWorldTransform(rigidbody->joltBody), localBox, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
-                case JPH::EShapeSubType::Sphere:
+                }
+                case JPH::EShapeSubType::Sphere: {
                     shapeComboPreview = "Sphere";
                     sphere = static_cast<const JPH::SphereShape*>(shape);
                     radius = sphere->GetRadius();
                     renderer->debugRenderer->DrawSphere(bodyInterface->GetPosition(rigidbody->joltBody), radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
-                case JPH::EShapeSubType::Capsule:
+                }
+                case JPH::EShapeSubType::Capsule: {
                     shapeComboPreview = "Capsule";
                     capsule = static_cast<const JPH::CapsuleShape*>(shape);
                     halfHeight = capsule->GetHalfHeightOfCylinder();
                     radius = capsule->GetRadius();
                     renderer->debugRenderer->DrawCapsule(bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
-                case JPH::EShapeSubType::Cylinder:
+                }
+                case JPH::EShapeSubType::Cylinder: {
                     shapeComboPreview = "Cylinder";
                     cylinder = static_cast<const JPH::CylinderShape*>(shape);
                     halfHeight = cylinder->GetHalfHeight();
                     radius = cylinder->GetRadius();
                     renderer->debugRenderer->DrawCylinder(bodyInterface->GetWorldTransform(rigidbody->joltBody), halfHeight, radius, color, JPH::DebugRenderer::ECastShadow::Off, JPH::DebugRenderer::EDrawMode::Wireframe);
                     break;
+                }
             }
 
             ImGui::TableNextRow();
