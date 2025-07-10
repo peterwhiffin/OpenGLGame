@@ -1,5 +1,4 @@
 #include "transform.h"
-#include "scene.h"
 #include "ecs.h"
 
 void updateTransformMatrices(EntityGroup* scene, Transform* transform) {

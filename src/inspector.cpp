@@ -248,6 +248,7 @@ void buildAnimatorInspector(Scene* scene, Animator* animator) {
     }
 }
 
+// this whole function is outrageous and shameful
 void buildRigidbodyInspector(Scene* scene, RenderState* renderer, EditorState* editor, RigidBody* rigidbody) {
     EntityGroup* entities = &scene->entities;
     JPH::BodyInterface* bodyInterface = scene->physicsScene.bodyInterface;

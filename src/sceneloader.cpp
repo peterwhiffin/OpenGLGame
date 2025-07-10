@@ -9,7 +9,6 @@
 void parseList(std::string memberString, std::vector<uint32_t>* out) {
     size_t currentPos = 0;
     size_t commaPos = 0;
-    int currentIndex = 0;
 
     while (commaPos != std::string::npos) {
         commaPos = memberString.find(",", currentPos);
@@ -217,10 +216,7 @@ void createTransform(EntityGroup* scene, ComponentBlock block) {
     vec3 localScale = vec3(1.0f, 1.0f, 1.0f);
 
     std::string memberString;
-    size_t currentPos = 0;
-    size_t commaPos = 0;
     float floatComps[4];
-    int currentIndex = 0;
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
@@ -428,8 +424,8 @@ void createRigidbody(EntityGroup* scene, ComponentBlock block) {
     JPH::EShapeSubType shapeType = JPH::EShapeSubType::Box;
     vec3 center = vec3(0.0f, 0.0f, 0.0f);
     vec3 halfExtents = vec3(1.0f, 1.0f, 1.0f);
-    float halfHeight;
-    float radius;
+    float halfHeight = 0.5f;
+    float radius = 0.5f;
     float mass = 1.0f;
     float floatComps[3];
     bool rotationLocked = false;
@@ -527,7 +523,6 @@ void createAnimator(EntityGroup* scene, Resources* resources, ComponentBlock blo
     std::string animationName;
     size_t currentPos = 0;
     size_t commaPos = 0;
-    int currentIndex = 0;
 
     if (block.memberValueMap.count("entityID")) {
         entityID = std::stoi(block.memberValueMap["entityID"]);
@@ -832,43 +827,6 @@ void createComponents(EntityGroup* scene, Resources* resources, std::vector<Comp
     }
 }
 
-void loadDefaultScene(Scene* scene, Resources* resources) {
-    /* for (int i = 0; i < 2; i++) {
-        Entity* pointLightEntity = getNewEntity(scene, "PointLight");
-        PointLight* pointLight = addPointLight(scene, pointLightEntity->entityID);
-        setPosition(scene, pointLightEntity->entityID, vec3(2.0f + i / 2, 3.0f, 1.0f + i / 2));
-        pointLight->color = vec3(1.0f, 1.0f, 1.0f);
-        pointLight->isActive = true;
-        pointLight->brightness = 1.0f;
-    }
-
-    uint32_t spotLightEntityID = getNewEntity(scene, "SpotLight")->entityID;
-    SpotLight* spotLight = addSpotLight(scene, spotLightEntityID);
-    spotLight->isActive = true;
-    spotLight->color = vec3(1.0f, 1.0f, 1.0f);
-    spotLight->brightness = 6.0f;
-    spotLight->cutoff = 15.5f;
-    spotLight->outerCutoff = 55.5f;
-    spotLight->shadowWidth = 800;
-    spotLight->shadowHeight = 600;
-
-    const uint32_t levelEntity = createEntityFromModel(scene, resources->modelMap["testroom.gltf"]->rootNode, INVALID_ID, true, INVALID_ID, true, false);
-    const uint32_t armsID = createEntityFromModel(scene, resources->modelMap["WrenchArms.gltf"]->rootNode, INVALID_ID, false, INVALID_ID, true, false);
-    Transform* armsTransform = getTransform(scene, armsID);
-    addAnimator(scene, armsID, resources->modelMap["WrenchArms.gltf"]);
-
-    Entity* wrenchParent = getNewEntity(scene, "WrenchParent");
-    Player* player = buildPlayer(scene);
-    player->armsID = armsID;
-    setParent(scene, armsID, wrenchParent->entityID);
-    setParent(scene, wrenchParent->entityID, player->cameraController->cameraTargetEntityID);
-    setParent(scene, spotLightEntityID, player->cameraController->cameraEntityID);
-    setLocalRotation(scene, wrenchParent->entityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
-    // setLocalPosition(scene, wrenchParent->entityID, scene->wrenchOffset);
-    setLocalRotation(scene, spotLightEntityID, quat::sEulerAngles(vec3(0.0f, 0.0f, 0.0f)));
-    setLocalPosition(scene, spotLightEntityID, vec3(0.0f, 0.0f, 1.0f)); */
-}
-
 void loadMaterials(Resources* resources, RenderState* renderer) {
     for (const std::filesystem::directory_entry& dir : std::filesystem::directory_iterator("..\\resources\\")) {
         if (dir.is_regular_file()) {
@@ -1064,7 +1022,7 @@ void loadScene(Resources* resources, Scene* scene) {
 
 void loadFirstFoundScene(Scene* scene, Resources* resources) {
     if (!findLastScene(scene)) {
-        loadDefaultScene(scene, resources);
+        std::cerr << "ERROR::SCENE_LOAD::Couldn't find a scene to load" << std::endl;
         return;
     }
 
