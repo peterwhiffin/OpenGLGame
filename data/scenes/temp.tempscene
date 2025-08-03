@@ -7871,8 +7871,8 @@ Transform {
 entityID: 524
 parentEntityID: -1
 childEntityIds: 3
-localPosition: 7.574349, 2.974524, -14.728629
-localRotation: 0.070424, -0.075659, 0.005357, 0.994629
+localPosition: 7.588858, 2.865675, -14.102821
+localRotation: 0.083668, -0.015652, 0.001314, 0.996370
 localScale: 1.000000, 1.000000, 1.000000
 }
 
