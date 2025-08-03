@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "player.h"
 #include "sceneloader.h"
 #include "scene.h"
 #include "loader.h"

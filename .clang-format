@@ -1,4 +1,8 @@
+Language: C
 BasedOnStyle: Google
 IndentWidth: 4
 ColumnLimit: 0
 SortIncludes: false
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+PointerAlignment: Left

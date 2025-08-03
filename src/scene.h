@@ -1,8 +1,6 @@
 #pragma once
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
-#include <unordered_map>
-#include <unordered_set>
 #include <string>
 
 #include "renderer.h"
@@ -10,7 +8,6 @@
 #include "physics.h"
 #include "transform.h"
 #include "animation.h"
-#include "player.h"
 #include "camera.h"
 #include "shader.h"
 #include "ecs.h"

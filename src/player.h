@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "forward.h"
 
 struct CameraController {
