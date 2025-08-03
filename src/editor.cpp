@@ -1,6 +1,4 @@
-#include <iostream>
 #include <filesystem>
-#include <fstream>
 
 #include "utils/imgui.h"
 #include "utils/imgui_impl_glfw.h"

@@ -10,7 +10,14 @@
 struct Scene;
 struct Resources;
 struct GLFWwindow;
-enum InspectorState;
+// enum InspectorState;
+
+enum InspectorState {
+    Empty,
+    SceneEntity,
+    Prefab,
+    Resource
+};
 
 struct EditorCameraController {
     uint32_t entityID;

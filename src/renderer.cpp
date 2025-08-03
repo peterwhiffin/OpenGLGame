@@ -52,7 +52,6 @@ void drawPickingScene(RenderState* renderer, EntityGroup* entities) {
 
         for (int i = 0; i < mesh->subMeshes.size(); i++) {
             subMesh = &mesh->subMeshes[i];
-            glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void*)(subMesh->indexOffset * sizeof(unsigned int)));
         }
     }
 }
@@ -829,6 +828,7 @@ void updateBufferData(RenderState* renderer, Scene* scene) {
     } else {
         float orthoSize = camera->fov;
         glm::mat4 proj = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, camera->nearPlane, camera->farPlane);
+
         mat4 jProj = mat4::sIdentity();
         vec4 col0;
         vec4 col1;

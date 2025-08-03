@@ -1,6 +1,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "transform.h"
+#include "player.h"
 
 void updateEditorCamera(EditorState* editor, Scene* scene, RenderState* renderer) {
     EntityGroup* entities = &scene->entities;
