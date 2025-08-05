@@ -23,6 +23,7 @@ layout (std140, binding = 0) uniform global{
     mat4 projection;
 };
 
+
 out VertToFrag{
     vec2 texCoord;
     highp vec3 fragPos;

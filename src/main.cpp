@@ -80,7 +80,7 @@ int main() {
     updateSceneEditor(scene, resources, renderer, editor);
     updateBufferData(renderer, scene);
     drawPickingScene(renderer, &scene->entities);
-    renderScene(renderer, &scene->entities);
+    renderScene(renderer, &scene->entities, scene);
     renderDebug(renderer);
     glfwSwapBuffers(renderer->window);
   }

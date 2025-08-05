@@ -66,7 +66,7 @@ layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BloomColor;
 layout (location = 2) out vec3 ViewPosition;
 layout (location = 3) out vec3 ViewNormal;
-layout (location = 4) out vec3 ambientColor;
+//layout (location = 4) out vec3 ambientColor;
 
 const int POISSON_SAMPLES = 16;
 const vec2 poissonDisk[POISSON_SAMPLES] = vec2[](
