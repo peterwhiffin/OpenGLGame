@@ -23,7 +23,6 @@ layout (std140, binding = 0) uniform global{
     mat4 projection;
 };
 
-
 out VertToFrag{
     vec2 texCoord;
     highp vec3 fragPos;
@@ -38,25 +37,25 @@ out VertToFrag{
 
 void main(){
     mat3 normalMatrix = transpose(inverse(mat3(model)));
-    
-        
-    highp vec4 totalPosition = vec4(0.0); 
+
+
+    highp vec4 totalPosition = vec4(0.0);
     vec3 totalNormal = vec3(0.0);
- 
+
     for(int i = 0; i < MAX_BONE_INFLUENCE; i++){
-        if(boneIds[i] == -1) 
+        if(boneIds[i] == -1)
             continue;
 
-         if(boneIds[i] >= MAX_BONES) 
+         if(boneIds[i] >= MAX_BONES)
         {
             totalPosition = vec4(aPos, 1.0);
             totalNormal = aNormal;
             break;
-        }  
+        }
 
         vec4 localPosition = finalBoneMatrices[boneIds[i]] * vec4(aPos,1.0);
         totalPosition += localPosition * weights[i];
-        vec3 localNormal = mat3(finalBoneMatrices[boneIds[i]]) * aNormal;   
+        vec3 localNormal = mat3(finalBoneMatrices[boneIds[i]]) * aNormal;
         totalNormal += localNormal * weights[i];
     }
 
@@ -66,20 +65,20 @@ void main(){
 
     // modelPos = model * finalBoneMatrices[boneIds[0]] * vec4(aPos, 1.0);
     // modelPos = model * vec4(aPos, 1.0);
-    vec4 viewFrag = view * modelPos; 
+    vec4 viewFrag = view * modelPos;
 
     toFrag.fragPos = modelPos.xyz;
     toFrag.texCoord = aTexCoord;
-    // toFrag.normal = normalMatrix * aNormal; 
-    toFrag.normal = normalMatrix * totalNormal; 
+    // toFrag.normal = normalMatrix * aNormal;
+    toFrag.normal = normalMatrix * totalNormal;
     toFrag.gNormal = mat3(view) * toFrag.normal;
-    toFrag.numSpotLights = numSpotLights; 
+    toFrag.numSpotLights = numSpotLights;
     toFrag.numPointLights = numPointLights;
     toFrag.gPosition = viewFrag.xyz;
 
     gl_Position = projection * viewFrag;
- 
-    
+
+
     for(int i = 0; i < numSpotLights; i++){
         toFrag.fragPosLightSpace[i] = lightSpaceMatrix[i] * modelPos;
     }
@@ -87,8 +86,8 @@ void main(){
     vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(toFrag.normal);
     T = normalize(T - N * dot(N, T));
-    vec3 B = cross(N, T); 
-    
+    vec3 B = cross(N, T);
+
     if(dot(cross(T, N), B) < 0.0f){
         T = T * -1.0f;
     }

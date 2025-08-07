@@ -1,5 +1,6 @@
 #pragma once
 #include "forward.h"
+#include "glfw/glfw3.h"
 #include "meshrenderer.h"
 #include "physics.h"
 #include "utils/mathutils.h"
@@ -140,6 +141,7 @@ struct GlobalUBO {
 struct RenderTexture {
     GLuint  id;
     GLenum  target;
+    GLenum  attachment;
     GLenum  level;
     GLint   internalFormat;
     GLsizei width;
@@ -154,24 +156,28 @@ struct RenderTexture {
 struct RenderBuffer {
     GLuint  id;
     GLenum  internalFormat;
+    GLenum  attachment;
     GLsizei width;
     GLsizei height;
 };
 
 struct FrameBuffer {
     GLuint                     id;
+    int                        clearBits;
     std::vector<RenderTexture> renderTextures;
     std::vector<RenderBuffer>  renderBuffers;
 };
 
 struct RenderState {
-    GLFWwindow *window;
-    WindowData  windowData;
-    GLuint      litFBO, litRBO, ssaoFBO;
-    GLuint      litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
-    GLuint      blurFBO[2], blurSwapTex[2];
-    GLuint      fullscreenVAO, fullscreenVBO;
-    GLuint      lightingShader, postProcessShader, blurShader, simpleBlurShader,
+    GLFWwindow              *window;
+    WindowData               windowData;
+    std::vector<FrameBuffer> frameBuffers;
+    GLuint                   litFBO;
+    GLuint                   litRBO, ssaoFBO;
+    GLuint                   litColorTex, bloomSSAOTex, blurTex, ssaoNoiseTex, ssaoPosTex, ssaoNormalTex;
+    GLuint                   blurFBO[2], blurSwapTex[2];
+    GLuint                   fullscreenVAO, fullscreenVBO;
+    GLuint                   lightingShader, postProcessShader, blurShader, simpleBlurShader,
         depthShader, ssaoShader, shadowBlurShader, debugShader;
     GLuint finalBuffer = 0;
 
@@ -187,6 +193,7 @@ struct RenderState {
     JPH::DebugRendererSimple *debugRenderer;
 
     bool  crazyTown = false;
+    bool  resize = false;
     float exposure = 1.0f;
     float bloomThreshold = 0.39f;
     float bloomAmount = 0.1f;
@@ -216,6 +223,7 @@ void initRendererEditor(RenderState *renderer);
 void updateBufferData(RenderState *renderer, Scene *scene);
 void drawPickingScene(RenderState *renderer, EntityGroup *scene);
 void renderDebug(RenderState *scene);
+void resizeBuffers(RenderState *renderer);
 
 class MyDebugRenderer : public JPH::DebugRendererSimple {
    public:

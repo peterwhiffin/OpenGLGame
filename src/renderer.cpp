@@ -9,6 +9,7 @@
 #include <random>
 #include <vector>
 
+#include "Jolt/Core/Core.h"
 #include "camera.h"
 #include "ecs.h"
 #include "glm/ext/matrix_transform.hpp"
@@ -68,25 +69,20 @@ void drawPickingScene(RenderState *renderer, EntityGroup *entities) {
 }
 
 static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
-    vec3  position;
-    mat4  viewMatrix;
-    mat4  projectionMatrix;
-    mat4  viewProjection;
-    mat4  model;
-    GLint boneMatrixLoc =
-        glGetUniformLocation(renderer->depthShader, "finalBoneMatrices[0]");
+    vec3          position;
+    mat4          viewMatrix;
+    mat4          projectionMatrix;
+    mat4          viewProjection;
+    mat4          model;
     MeshRenderer *meshRenderer;
     Mesh         *mesh;
     SubMesh      *subMesh;
+    GLint         boneMatrixLoc = glGetUniformLocation(renderer->depthShader, "finalBoneMatrices[0]");
 
     for (int i = 0; i < entities->spotLights.size(); i++) {
         SpotLight *light = &entities->spotLights[i];
         if (!light->enableShadows || !light->isActive) {
             continue;
-        }
-
-        if (true) {
-        } else {
         }
 
         position = getPosition(entities, light->entityID);
@@ -106,8 +102,8 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
         glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"),
                     200.0f);
 
-        for (int i = 0; i < entities->meshRenderers.size(); i++) {
-            meshRenderer = &entities->meshRenderers[i];
+        for (int k = 0; k < entities->meshRenderers.size(); k++) {
+            meshRenderer = &entities->meshRenderers[k];
             mesh = meshRenderer->mesh;
             if (mesh == nullptr) {
                 continue;
@@ -116,8 +112,8 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
             model = getTransform(entities, meshRenderer->entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 
-            if (!meshRenderer->boneMatricesSet &&
-                meshRenderer->boneMatrices.size() > 0) {
+            if (!meshRenderer->boneMatricesSet && meshRenderer->boneMatrices.size() > 0) {
+                std::cout << meshRenderer->mesh->name << " : " << i << std::endl;
                 Transform *boneTransform;
                 uint32_t   index;
                 mat4       offset;
@@ -128,21 +124,17 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
                     index = pair.second.id;
                     offset = pair.second.offset;
                     meshRenderer->boneMatrices[index] =
-                        (getTransform(entities, meshRenderer->rootEntity)->worldTransform)
-                            .Inversed() *
-                        boneTransform->worldTransform * offset;
+                        (getTransform(entities, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
                 }
 
-                glUniformMatrix4fv(boneMatrixLoc, meshRenderer->boneMatrices.size(),
-                                   GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
+                glUniformMatrix4fv(boneMatrixLoc, meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
             }
 
             glBindVertexArray(mesh->VAO);
 
-            for (int i = 0; i < mesh->subMeshes.size(); i++) {
-                subMesh = &mesh->subMeshes[i];
-                glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT,
-                               (void *)(subMesh->indexOffset * sizeof(GLsizei)));
+            for (int l = 0; l < mesh->subMeshes.size(); l++) {
+                subMesh = &mesh->subMeshes[l];
+                glDrawElements(GL_TRIANGLES, subMesh->indexCount, GL_UNSIGNED_INT, (void *)(subMesh->indexOffset * sizeof(GLsizei)));
             }
         }
 
@@ -159,8 +151,7 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
                renderer->windowData.viewportHeight);
 }
 
-static void drawScene(RenderState *renderer, EntityGroup *entities,
-                      Scene *scene) {
+static void drawScene(RenderState *renderer, EntityGroup *entities, Scene *scene) {
     uint32_t      offset;
     mat4          model;
     MeshRenderer *meshRenderer;
@@ -171,8 +162,10 @@ static void drawScene(RenderState *renderer, EntityGroup *entities,
     SpotLight    *spotLight;
     Camera       *camera = &entities->cameras[0];
 
-    glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->frameBuffers[0].id);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(renderer->frameBuffers[0].clearBits);
 
     glUseProgram(renderer->lightingShader);
     glUniform3fv(8, 1, getLocalPosition(entities, camera->entityID).mF32);
@@ -579,21 +572,25 @@ static void createShadowMapDepthBuffers(
     }
 }
 
-static RenderBuffer createRenderBuffer(GLenum internalFormat, GLsizei width, GLsizei height) {
+static GLuint createRenderBuffer(FrameBuffer *fb, GLenum internalFormat, GLsizei width, GLsizei height, GLenum attachment) {
     RenderBuffer buffer;
     GLuint       id;
 
-    glGenRenderbuffers(GL_FRAMEBUFFER, &id);
+    glGenRenderbuffers(1, &id);
+
     glBindRenderbuffer(GL_RENDERBUFFER, id);
     glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
 
+    buffer.id = id;
+    buffer.attachment = attachment;
     buffer.width = width;
     buffer.height = height;
     buffer.internalFormat = internalFormat;
-    return buffer;
+    fb->renderBuffers.push_back(buffer);
+    return id;
 }
 
-static RenderTexture createRenderTexture(GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum dataType, GLint filterType, GLint wrapType) {
+static GLuint createRenderTexture(FrameBuffer *fb, GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum dataType, GLint filterType, GLint wrapType, GLenum attachment) {
     RenderTexture tex;
     GLuint        id;
 
@@ -616,92 +613,61 @@ static RenderTexture createRenderTexture(GLint internalFormat, GLsizei width, GL
     tex.dataType = dataType;
     tex.filterType = filterType;
     tex.wrapType = wrapType;
-    return tex;
+    tex.attachment = attachment;
+    fb->renderTextures.push_back(tex);
+    return id;
 }
 
-static FrameBuffer *getNewFrameBuffer(std::vector<FrameBuffer> *framebuffers) {
+static FrameBuffer *getNewFrameBuffer(std::vector<FrameBuffer> *framebuffers, int clearBits) {
     size_t index = framebuffers->size();
     framebuffers->push_back(FrameBuffer{});
-    return &framebuffers->at(index);
+    FrameBuffer *fb = &framebuffers->at(index);
+    fb->clearBits = clearBits;
+    return fb;
 }
 
-// static void initFrameBuffer(FrameBuffer *fb) {
-//     glGenFramebuffers(1, &fb->id);
-//     glBindFramebuffer(GL_FRAMEBUFFER, fb->id);
-//     GLuint numRT = fb->renderTextures.size() - 1;
-//     GLuint numFB = fb->renderBuffers.size() - 1;
-//     GLenum attachments[numRT];
-//
-//     for (int i = 0; i < numRT + 1; i++) {
-//         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, fb->renderTextures[i].id, 0);
-//         attachments[i] = GL_COLOR_ATTACHMENT0 + i;
-//     }
-//
-//     glDrawBuffers(4, attachments);
-//
-//     for (int i = 0; i < numFB + 1; i++) {
-//         glFramebufferRenderbuffer(GL_FRAMEBUFFER, fb->renderBuffers[i].internalFormat, GL_RENDERBUFFER, fb->renderBuffers[i].id);
-//     }
-// }
+static void initFrameBuffer(FrameBuffer *fb) {
+    GLsizei             numRT = fb->renderTextures.size();
+    GLsizei             numRB = fb->renderBuffers.size();
+    std::vector<GLenum> attachments;
 
-static void createForwardFBO(RenderState *renderer) {
-}
+    glGenFramebuffers(1, &fb->id);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb->id);
 
-static void createForwardBuffer(RenderState *renderer) {
-    GLsizei width = renderer->windowData.viewportWidth;
-    GLsizei height = renderer->windowData.viewportHeight;
-    GLenum  attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    for (int i = 0; i < numRT; i++) {
+        RenderTexture *rt = &fb->renderTextures[i];
+        attachments.push_back(rt->attachment);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, rt->attachment, GL_TEXTURE_2D, rt->id, 0);
+    }
 
-    glGenFramebuffers(1, &renderer->litFBO);
-    glGenTextures(1, &renderer->litColorTex);
-    glGenTextures(1, &renderer->bloomSSAOTex);
-    glGenTextures(1, &renderer->ssaoNormalTex);
-    glGenTextures(1, &renderer->ssaoPosTex);
-    glGenRenderbuffers(1, &renderer->litRBO);
+    glDrawBuffers(numRT, attachments.data());
 
-    glBindTexture(GL_TEXTURE_2D, renderer->litColorTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    for (int i = 0; i < numRB; i++) {
+        RenderBuffer *rb = &fb->renderBuffers[i];
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, rb->attachment, GL_RENDERBUFFER, rb->id);
+    }
 
-    glBindTexture(GL_TEXTURE_2D, renderer->bloomSSAOTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glBindTexture(GL_TEXTURE_2D, renderer->ssaoPosTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // normal color buffer
-    glBindTexture(GL_TEXTURE_2D, renderer->ssaoNormalTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glBindRenderbuffer(GL_RENDERBUFFER, renderer->litRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->litColorTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderer->bloomSSAOTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderer->ssaoPosTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, renderer->ssaoNormalTex, 0);
-
-    glDrawBuffers(4, attachments);
-
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderer->litRBO);
-
+    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->renderBuffers[0].id);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cerr << "ERROR::FRAMEBUFFER:: Forward Framebuffer is not complete!"
                   << std::endl;
     }
+}
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+static void createForwardFBO(RenderState *renderer) {
+    GLsizei width = renderer->windowData.viewportWidth;
+    GLsizei height = renderer->windowData.viewportHeight;
+    int     clearBits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
+
+    FrameBuffer *fb = getNewFrameBuffer(&renderer->frameBuffers, clearBits);
+
+    createRenderBuffer(fb, GL_DEPTH_COMPONENT, width, height, GL_DEPTH_ATTACHMENT);
+    renderer->litColorTex = createRenderTexture(fb, GL_RGBA16F, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT0);
+    renderer->bloomSSAOTex = createRenderTexture(fb, GL_RGBA16F, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT1);
+    renderer->ssaoPosTex = createRenderTexture(fb, GL_RGBA16F, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT2);
+    renderer->ssaoNormalTex = createRenderTexture(fb, GL_RGBA16F, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT3);
+
+    initFrameBuffer(fb);
 }
 
 static void createEditorBuffer(RenderState *renderer) {
@@ -760,15 +726,13 @@ static void createBlurBuffers(RenderState *renderer) {
     for (unsigned int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->blurFBO[i]);
         glBindTexture(GL_TEXTURE_2D, renderer->blurSwapTex[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA,
-                     GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                               renderer->blurSwapTex[i], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->blurSwapTex[i], 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             std::cerr << "ERROR::FRAMEBUFFER:: Blur framebuffer is not complete!"
@@ -777,46 +741,68 @@ static void createBlurBuffers(RenderState *renderer) {
     }
 }
 
-static void resizeBuffers(RenderState *renderer) {
+static void resizeBuffer(FrameBuffer *fb, uint32_t width, uint32_t height) {
+    GLsizei             numRT = fb->renderTextures.size();
+    GLsizei             numRB = fb->renderBuffers.size();
+    std::vector<GLenum> attachments;
+
+    for (int i = 0; i < numRT; i++) {
+        RenderTexture *rt = &fb->renderTextures[i];
+        rt->width = width;
+        rt->height = height;
+        glBindTexture(GL_TEXTURE_2D, rt->id);
+        glTexImage2D(GL_TEXTURE_2D, rt->level, rt->internalFormat, width, height, rt->border, rt->format, rt->dataType, NULL);
+    }
+
+    for (int i = 0; i < numRB; i++) {
+        RenderBuffer *rb = &fb->renderBuffers[i];
+        glBindRenderbuffer(GL_RENDERBUFFER, rb->id);
+        rb->width = width;
+        rb->height = height;
+        glRenderbufferStorage(GL_RENDERBUFFER, rb->internalFormat, width, height);
+    }
+}
+
+void resizeBuffers(RenderState *renderer) {
     uint32_t width = renderer->windowData.viewportWidth;
     uint32_t height = renderer->windowData.viewportHeight;
-    GLenum   attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-                               GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
 
-    glBindFramebuffer(GL_FRAMEBUFFER, renderer->litFBO);
-    glBindTexture(GL_TEXTURE_2D, renderer->litColorTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA,
-                 GL_FLOAT, NULL);
-    glBindTexture(GL_TEXTURE_2D, renderer->bloomSSAOTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA,
-                 GL_FLOAT, NULL);
-    glBindTexture(GL_TEXTURE_2D, renderer->ssaoPosTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA,
-                 GL_FLOAT, NULL);
-    glBindTexture(GL_TEXTURE_2D, renderer->ssaoNormalTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA,
-                 GL_FLOAT, NULL);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderer->litRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           renderer->litColorTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
-                           renderer->bloomSSAOTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D,
-                           renderer->ssaoPosTex, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D,
-                           renderer->ssaoNormalTex, 0);
-
-    glDrawBuffers(4, attachments);
-
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                              GL_RENDERBUFFER, renderer->litRBO);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR::FRAMEBUFFER:: GBuffer framebuffer is not complete!"
-                  << std::endl;
+    for (int i = 0; i < renderer->frameBuffers.size(); i++) {
+        resizeBuffer(&renderer->frameBuffers[i], width, height);
     }
+
+    // GLenum attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+    //                          GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+
+    // glBindTexture(GL_TEXTURE_2D, renderer->litColorTex);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    // glBindTexture(GL_TEXTURE_2D, renderer->bloomSSAOTex);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    // glBindTexture(GL_TEXTURE_2D, renderer->ssaoPosTex);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    // glBindTexture(GL_TEXTURE_2D, renderer->ssaoNormalTex);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+    // glBindRenderbuffer(GL_RENDERBUFFER, renderer->litRBO);
+    // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+
+    // glBindFramebuffer(GL_FRAMEBUFFER, renderer->frameBuffers[0].id);
+
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer->litColorTex, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, renderer->bloomSSAOTex, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, renderer->ssaoPosTex, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, renderer->ssaoNormalTex, 0);
+
+    // glDrawBuffers(4, attachments);
+    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderer->frameBuffers[0].renderBuffers[0].id);
+
+    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    //     std::cerr << "ERROR::FRAMEBUFFER:: GBuffer framebuffer is not complete!"
+    //               << std::endl;
+    // }
 
     for (unsigned int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, renderer->blurFBO[i]);
@@ -967,8 +953,8 @@ void deleteBuffers(RenderState *renderer, Resources *resources) {
                                 renderer->bloomSSAOTex, renderer->blurTex,
                                 renderer->ssaoNoiseTex};
     unsigned int rbo[2] = {renderer->pickingRBO, renderer->litRBO};
-    unsigned int frameBuffers[3] = {renderer->pickingFBO, renderer->ssaoFBO,
-                                    renderer->litFBO};
+    // unsigned int frameBuffers[3] = {renderer->pickingFBO, renderer->ssaoFBO, renderer->litFBO};
+    unsigned int frameBuffers[2] = {renderer->pickingFBO, renderer->ssaoFBO};
 
     glDeleteTextures(5, textures);
     glDeleteRenderbuffers(2, rbo);
@@ -1082,7 +1068,8 @@ void createCameraUBO(RenderState *renderer) {
 void initRenderer(RenderState *renderer, Scene *scene) {
     setInitialFlags();
     createSSAOBuffer(renderer);
-    createForwardBuffer(renderer);
+    // createForwardBuffer(renderer);
+    createForwardFBO(renderer);
     createBlurBuffers(renderer);
     createFullScreenQuad(renderer);
     generateSSAOKernel(renderer);
