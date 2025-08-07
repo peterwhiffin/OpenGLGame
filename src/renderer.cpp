@@ -97,10 +97,8 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
 
         glUseProgram(renderer->depthShader);
         glUniformMatrix4fv(1, 1, GL_FALSE, &viewProjection(0, 0));
-        glUniform3fv(glGetUniformLocation(renderer->depthShader, "lightPos"), 1,
-                     position.mF32);
-        glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"),
-                    200.0f);
+        glUniform3fv(glGetUniformLocation(renderer->depthShader, "lightPos"), 1, position.mF32);
+        glUniform1f(glGetUniformLocation(renderer->depthShader, "farPlane"), 200.0f);
 
         for (int k = 0; k < entities->meshRenderers.size(); k++) {
             meshRenderer = &entities->meshRenderers[k];
@@ -112,19 +110,19 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
             model = getTransform(entities, meshRenderer->entityID)->worldTransform;
             glUniformMatrix4fv(2, 1, GL_FALSE, &model(0, 0));
 
-            if (!meshRenderer->boneMatricesSet && meshRenderer->boneMatrices.size() > 0) {
-                std::cout << meshRenderer->mesh->name << " : " << i << std::endl;
-                Transform *boneTransform;
-                uint32_t   index;
-                mat4       offset;
-                meshRenderer->boneMatricesSet = true;
+            if (meshRenderer->boneMatrices.size() > 0) {
+                if (meshRenderer->boneMatricesSet) {
+                    Transform *boneTransform;
+                    uint32_t   index;
+                    mat4       offset;
+                    meshRenderer->boneMatricesSet = true;
 
-                for (const auto &pair : meshRenderer->transformBoneMap) {
-                    boneTransform = getTransform(entities, pair.first);
-                    index = pair.second.id;
-                    offset = pair.second.offset;
-                    meshRenderer->boneMatrices[index] =
-                        (getTransform(entities, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    for (const auto &pair : meshRenderer->transformBoneMap) {
+                        boneTransform = getTransform(entities, pair.first);
+                        index = pair.second.id;
+                        offset = pair.second.offset;
+                        meshRenderer->boneMatrices[index] = (getTransform(entities, meshRenderer->rootEntity)->worldTransform).Inversed() * boneTransform->worldTransform * offset;
+                    }
                 }
 
                 glUniformMatrix4fv(boneMatrixLoc, meshRenderer->boneMatrices.size(), GL_FALSE, &meshRenderer->boneMatrices[0](0, 0));
@@ -147,8 +145,7 @@ static void drawShadowMaps(RenderState *renderer, EntityGroup *entities) {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
-    glViewport(0, 0, renderer->windowData.viewportWidth,
-               renderer->windowData.viewportHeight);
+    glViewport(0, 0, renderer->windowData.viewportWidth, renderer->windowData.viewportHeight);
 }
 
 static void drawScene(RenderState *renderer, EntityGroup *entities, Scene *scene) {
